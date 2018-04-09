@@ -33,6 +33,7 @@ function httpRequest(opts) {
       params = Object.keys(params)
         .map(function(key) {
           return (
+
             encodeURIComponent(key) +
             "=" +
             encodeURIComponent(params[key])
@@ -46,13 +47,23 @@ function httpRequest(opts) {
 
 function _search(params, callback, offset, annos, replies, progressId) {
 
+  var max = 2000;
+  if (params.max) {
+    max = params.max;
+  }
+
+  var limit = 200;
+  if (max <= limit) {
+    limit = max;
+  }
+
   if (progressId) {
     getById(progressId).innerHTML += '.';
   }
 
   var opts = {
     method: 'get',
-    url: `https://hypothes.is/api/search?_separate_replies=true&limit=200&offset=${offset}`,
+    url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}&offset=${offset}`,
   };
 
   var facets = ['group', 'user', 'tag', 'url', 'any'];
@@ -69,16 +80,16 @@ function _search(params, callback, offset, annos, replies, progressId) {
   httpRequest(opts)
     .then( function (data) {
       data = JSON.parse(data.response);
-      if ( data.rows.length === 0 || annos.length >= 2000 ) {
-        if (progressId) {
-          getById(progressId).innerHTML = '';
-        }
+      annos = annos.concat(data.rows);
+      replies = replies.concat(data.replies);
+      if ( data.rows.length === 0 || annos.length >= max ) {
         callback (annos, replies);
       }
       else {
-        annos = annos.concat(data.rows);
-        replies = replies.concat(data.replies);
-        _search(params, callback, offset+200, annos, replies, progressId)
+        if (progressId) {
+          getById(progressId).innerHTML = '';
+        }
+        _search(params, callback, offset+limit, annos, replies, progressId)
       }
     });
   }
@@ -327,7 +338,7 @@ function createApiTokenInputForm (e) {
   var msg = 'to write (or read private/group) annotations, include <a href="https://hypothes.is/profile/developer">API token</a>)';
   var form = `
 <div class="formLabel">API Token</div>
-<div class="inputForm"><input type="password" value="${token}" onchange="setToken()"  size="40" id="tokenForm"></input></div>
+<div class="inputForm"><input autocomplete="nope" type="password" value="${token}" onchange="setToken()"  size="40" id="tokenForm"></input></div>
 <div class="formMessage">${msg}</div>`;
   e.innerHTML += form;
 }
@@ -337,7 +348,7 @@ function createUserInputForm (e) {
   var msg = '';
   var form = `
 <div class="formLabel">Hypothesis username</div>
-<div class="inputForm"><input type="text" size="20" value="${user}" onchange="setUser()" id="userForm"></input></div> 
+<div class="inputForm"><input autocomplete="nope" type="text" size="20" value="${user}" onchange="setUser()" id="userForm"></input></div> 
 <div class="formMessage">${msg}</div>`; 
   e.innerHTML += form;
 }
@@ -347,7 +358,7 @@ function createGroupInputForm (e) {
   var msg = 'ID from https://hypothes.is/groups/ID';
   var form = `
 <div class="formLabel">Hypothesis Group ID</div>
-<div class="inputForm"><input type="text" size="20" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 
+<div class="inputForm"><input autocomplete="nope" type="text" size="20" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 
 <div class="formMessage">${msg}</div>`; 
   e.innerHTML += form;
 }
