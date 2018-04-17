@@ -86,9 +86,6 @@ function _search(params, callback, offset, annos, replies, progressId) {
         callback (annos, replies);
       }
       else {
-        if (progressId) {
-          getById(progressId).innerHTML = '';
-        }
         _search(params, callback, offset+limit, annos, replies, progressId)
       }
     });
@@ -337,7 +334,7 @@ function createApiTokenInputForm (e) {
   var token = getToken();
   var msg = 'to write (or read private/group) annotations, include <a href="https://hypothes.is/profile/developer">API token</a>)';
   var form = `
-<div class="formLabel">API Token</div>
+<div class="formLabel">Hypothesis API Token</div>
 <div class="inputForm"><input autocomplete="nope" type="password" value="${token}" onchange="setToken()"  size="40" id="tokenForm"></input></div>
 <div class="formMessage">${msg}</div>`;
   e.innerHTML += form;
