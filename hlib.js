@@ -6,7 +6,8 @@ function httpRequest(opts) {
       if (this.status >= 200 && this.status < 300) {
         resolve({
           response: xhr.response, 
-          status: xhr.status
+          status: xhr.status,
+          headers: parseResponseHeaders(xhr.getAllResponseHeaders()),
         });
       } else {
         console.log("http", opts.url, this.status);
@@ -86,7 +87,7 @@ function _search(params, callback, offset, annos, replies, progressId) {
         callback (annos, replies);
       }
       else {
-        _search(params, callback, offset+limit, annos, replies, progressId)
+        _search(params, callback, offset+limit, annos, replies, progressId);
       }
     });
   }
@@ -332,10 +333,10 @@ function updateAnnotation(id, token, payload) {
 
 function createApiTokenInputForm (e) {
   var token = getToken();
-  var msg = 'to write (or read private/group) annotations, include <a href="https://hypothes.is/profile/developer">API token</a>)';
+  var msg = 'to write (or read protected) annotations, paste your <a href="https://hypothes.is/profile/developer">token</a> here';
   var form = `
 <div class="formLabel">Hypothesis API Token</div>
-<div class="inputForm"><input autocomplete="nope" type="password" value="${token}" onchange="setToken()"  size="40" id="tokenForm"></input></div>
+<div class="inputForm"><input autocomplete="nope" type="password" value="${token}" onchange="setToken()"  id="tokenForm"></input></div>
 <div class="formMessage">${msg}</div>`;
   e.innerHTML += form;
 }
@@ -345,7 +346,7 @@ function createUserInputForm (e) {
   var msg = '';
   var form = `
 <div class="formLabel">Hypothesis username</div>
-<div class="inputForm"><input autocomplete="nope" type="text" size="20" value="${user}" onchange="setUser()" id="userForm"></input></div> 
+<div class="inputForm"><input autocomplete="nope" type="text" value="${user}" onchange="setUser()" id="userForm"></input></div> 
 <div class="formMessage">${msg}</div>`; 
   e.innerHTML += form;
 }
@@ -355,9 +356,36 @@ function createGroupInputForm (e) {
   var msg = 'ID from https://hypothes.is/groups/ID';
   var form = `
 <div class="formLabel">Hypothesis Group ID</div>
-<div class="inputForm"><input autocomplete="nope" type="text" size="20" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 
+<div class="inputForm"><input autocomplete="nope" type="text" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 
 <div class="formMessage">${msg}</div>`; 
   e.innerHTML += form;
 }
 
 
+// https://gist.github.com/monsur/706839
+
+/**
+ * XmlHttpRequest's getAllResponseHeaders() method returns a string of response
+ * headers according to the format described here:
+ * http://www.w3.org/TR/XMLHttpRequest/#the-getallresponseheaders-method
+ * This method parses that string into a user-friendly key/value pair object.
+ */
+function parseResponseHeaders(headerStr) {
+  var headers = {};
+  if (!headerStr) {
+    return headers;
+  }
+  var headerPairs = headerStr.split('\u000d\u000a');
+  for (var i = 0; i < headerPairs.length; i++) {
+    var headerPair = headerPairs[i];
+    // Can't use split() here because it does the wrong thing
+    // if the header value has the string ": " in it.
+    var index = headerPair.indexOf('\u003a\u0020');
+    if (index > 0) {
+      var key = headerPair.substring(0, index);
+      var val = headerPair.substring(index + 2);
+      headers[key] = val;
+    }
+  }
+  return headers;
+}
