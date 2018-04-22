@@ -276,7 +276,7 @@ function getFromUrlParamOrLocalStorage(key, _default) {
     value = localStorage.getItem(`${key}`);
   }
 
-  if ( ( ! value || value === '' ) && _default ) {
+  if ( ! value || value === '' ) {
     value = _default;
   }
 
@@ -398,11 +398,18 @@ function createGroupInputForm (e) {
   e.innerHTML += form;
 }
 
-function createNamedInputForm(e, longName, shortName, value, onChange, type, msg) {
+/*
+var zoteroUserContainer = getById('zoteroUserContainer');
+createNamedInputForm(zoteroUserContainer, 'Zotero Numeric User ID', 'zoteroUserId', getZoteroUserId(), 'setZoteroUserId',
+  '', 'Zotero numeric user id from <a href="https://www.zotero.org/settings/keys">https://www.zotero.org/settings/keys</a>'
+);
+*/
+
+function createNamedInputForm(e, name, id, value, onChange, type, msg) {
   var form =
     `
-<div class="formLabel">${longName}</div>
-<div class="${shortName}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${shortName}Form"></input></div>
+<div class="formLabel">${name}</div>
+<div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
 <div class="formMessage">${msg}</div>`;
   e.innerHTML += form;
 }
