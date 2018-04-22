@@ -93,6 +93,7 @@ function _search(params, callback, offset, annos, replies, progressId) {
         _search(params, callback, offset+limit, annos, replies, progressId);
       }
     });
+
   }
 
 function hApiSearch(params, callback, progressId) {
@@ -393,6 +394,85 @@ function createGroupInputForm (e) {
 <div class="inputForm"><input autocomplete="nope" type="text" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 
 <div class="formMessage">${msg}</div>`; 
   e.innerHTML += form;
+}
+
+function formatTags(tags) {
+  var formattedTags = [];
+  tags.forEach(function (tag) {
+    var formattedTag = `<a target="_tag" href="./?tag=${tag}"><span class="annotationTag">${tag}</span></a>`;
+    formattedTags.push(formattedTag);
+  });
+  return formattedTags.join(' ');
+}
+
+function csvRow(level, anno) {
+  var fields = [level.toString(), anno.updated, anno.url, anno.user, anno.id, anno.group, anno.tags.join(', '), anno.quote, anno.text];
+  fields = fields.map(function (field) {
+    field = field.replace(/"/g, '""'); // escape double quotes
+    field = field.replace(/\r?\n|\r/g, ' '); // remove cr lf
+    field = `"${field}"`; // quote the field
+    return field;
+  });
+  return fields.join(',');
+}
+
+function showAnnotation(eltId, anno, id, level) {
+  var dt = new Date(anno.updated);
+  var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ');
+
+  var converter = new Showdown.converter();
+  var text = anno.text == null ? '' : anno.text;
+  var html = converter.makeHtml(text);
+
+  var tags = '';
+  if (anno.tags.length) {
+    tags = formatTags(anno.tags);
+  }
+
+  var user = anno.user.replace('acct:', '').replace('@hypothes.is', '');
+
+  var quote = anno.quote;
+
+  if (anno.quote) {
+    quote = `<div class="annotationQuote">${anno.quote}</div>`;
+  }
+
+  var standaloneAnnotationUrl = `https://hypothes.is/a/${anno.id}`;
+
+  var marginLeft = level * 20;
+
+  var groupSlug = 'in Public';
+  if (anno.group !== '__world__') {
+    groupSlug = `
+in group 
+<span class="groupid"><a title="search group" target="_group" href="./?group=${anno.group}">${anno.group}</a>
+</span>`;
+  }
+
+  var output = `
+<div class="annotationCard" style="display:block; margin-left:${marginLeft}px;">
+  <div class="csvRow">${csvRow(level,anno)}</div>
+  <div class="annotationHeader">
+    <span class="user">
+      <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
+    </span>
+    <span class="timestamp"><a title="view/edit/reply"  target="_standalone" href="${standaloneAnnotationUrl}">${dt_str}</a>
+    </span>
+
+  ${groupSlug}
+
+  </div>
+  <div class="annotationBody">
+    ${quote}
+     <div>
+       ${html}
+     </div>
+     <div class="annotationTags">
+        ${tags}
+     </div>
+  </div>  
+</div>`
+  return output;
 }
 
 // https://gist.github.com/monsur/706839
