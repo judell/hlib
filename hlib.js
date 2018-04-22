@@ -334,7 +334,7 @@ function postAnnotation(payload, token, resultElement, queryFragment) {
     url: url,
   };
 
-  opts = setApiTokenHeaders(opts);
+  opts = setApiTokenHeaders(opts, token);
 
   httpRequest(opts)
     .then( function(data) {
