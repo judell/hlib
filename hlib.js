@@ -1,3 +1,6 @@
+// promisifed xhr
+// replace with fetch when it is sufficiently standard
+
 function httpRequest(opts) {
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
@@ -153,6 +156,7 @@ function parseAnnotation(row) {
   };
 }
 
+// get url parameters
 function gup(name, str) {
   if (! str) {
     str = window.location.href;
@@ -229,17 +233,10 @@ function getFromUrlParamOrLocalStorage(key, _default) {
     value = localStorage.getItem(`${key}`);
   }
 
-  if ( key === 'h_token') {
-    return value;
+  if ( ( ! value || value === '' ) && _default ) {
+    value = _default;
   }
 
-  if ( ! value ) {
-    if ( _default ) {
-      value = _default;
-    } else {
-      value = '';
-    }
-  }
   return value;
 }
 
@@ -319,16 +316,13 @@ function updateAnnotation(id, token, payload) {
     url: url,
   };
 
-  opts.headers = {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json;charset=utf-8',
-    };
+  opts = setApiTokenHeaders(opts);
 
   httpRequest(opts)
     .then( function(data) {
-      console.log(data);
+      // placeholder 
       return(data);
-    } );
+    });
 }
 
 function createApiTokenInputForm (e) {
@@ -361,9 +355,7 @@ function createGroupInputForm (e) {
   e.innerHTML += form;
 }
 
-
 // https://gist.github.com/monsur/706839
-
 /**
  * XmlHttpRequest's getAllResponseHeaders() method returns a string of response
  * headers according to the format described here:
