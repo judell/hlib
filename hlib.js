@@ -434,7 +434,7 @@ function csvRow(level, anno) {
   return fields.join(',');
 }
 
-function showAnnotation(eltId, anno, id, level) {
+function showAnnotation(eltId, anno, level) {
   var dt = new Date(anno.updated);
   var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ');
 
