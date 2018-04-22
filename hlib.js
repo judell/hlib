@@ -77,7 +77,7 @@ function _search(params, callback, offset, annos, replies, progressId) {
       var encodedValue = encodeURIComponent(params[facet]);
       opts.url += `&${facet}=${encodedValue}`;
     }   
-  })
+  });
 
   opts = setApiTokenHeaders(opts);
 
@@ -395,6 +395,15 @@ function createGroupInputForm (e) {
 <div class="formLabel">Hypothesis Group ID</div>
 <div class="inputForm"><input autocomplete="nope" type="text" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 
 <div class="formMessage">${msg}</div>`; 
+  e.innerHTML += form;
+}
+
+function createNamedInputForm(e, longName, shortName, value, onChange, type, msg) {
+  var form =
+    `
+<div class="formLabel">${longName}</div>
+<div class="${shortName}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${shortName}Form"></input></div>
+<div class="formMessage">${msg}</div>`;
   e.innerHTML += form;
 }
 
