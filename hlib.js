@@ -102,6 +102,46 @@ function hApiSearch(params, callback, progressId) {
   _search(params, callback, offset, annos, replies, progressId)
 }
 
+// organize a set of annotations, from https://hypothes.is/api/search, by url
+function gatherAnnotationsByUrl(rows) {
+  var urls = {};
+  var ids = {};
+  var titles = {};
+  var urlUpdates = {};
+  var annos = {};
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var annotation = parseAnnotation(row); // parse the annotation
+    var id = annotation.id;
+    annos[id] = annotation; // save it by id
+    var url = annotation.url; // remember these things
+    url = url.replace(/\/$/, ""); // strip trailing slash
+    var updated = annotation.updated;
+    var title = annotation.title;
+    if (!title)
+      title = url;
+    if (url in urls) {   // add/update this url's info
+      urls[url] += 1;
+      ids[url].push(id);
+      if (updated > urlUpdates.url)
+        urlUpdates[url] = updated;
+    } else {            // init this url's info
+      urls[url] = 1;
+      ids[url] = [id];
+      titles[url] = title;
+      urlUpdates[url] = updated;
+    }
+  }
+
+  return {
+    ids: ids,
+    urlUpdates: urlUpdates,
+    annos: annos,
+    titles: titles,
+    urls: urls
+  };
+}
+
 function parseAnnotation(row) {
   var id = row.id;
   var url = row.uri;
