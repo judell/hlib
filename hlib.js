@@ -227,8 +227,10 @@ function getDomainFromUrl(url) {
   return a.hostname;
 } 
 
-function setApiTokenHeaders(opts) {
-  var token = getToken()
+function setApiTokenHeaders(opts, token) {
+  if (! token ) {
+    token = getToken();
+  }
   if ( token ) {
     opts.headers = {
       'Authorization': 'Bearer ' + token,
@@ -357,7 +359,7 @@ function updateAnnotation(id, token, payload) {
     url: url,
   };
 
-  opts = setApiTokenHeaders(opts);
+  opts = setApiTokenHeaders(opts, token);
 
   httpRequest(opts)
     .then( function(data) {
