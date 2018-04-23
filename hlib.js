@@ -177,7 +177,7 @@ function parseAnnotation(row) {
       title = url;
     }
   } catch (e) {
-    console.log(e);
+    title = url;
   }
 
   var isReply = refs.length > 0;
@@ -455,11 +455,13 @@ function formatTags(tags) {
 function csvRow(level, anno) {
   var fields = [level.toString(), anno.updated, anno.url, anno.user, anno.id, anno.group, anno.tags.join(', '), anno.quote, anno.text];
   fields = fields.map(function (field) {
-    field = field.replace(/"/g, '""'); // escape double quotes
-    field = field.replace(/\r?\n|\r/g, ' '); // remove cr lf
-    field = `"${field}"`; // quote the field
+    if (field) {
+      field = field.replace(/"/g, '""'); // escape double quotes
+      field = field.replace(/\r?\n|\r/g, ' '); // remove cr lf
+      field = `"${field}"`; // quote the field
+    }
     return field;
-  });
+    });
   return fields.join(',');
 }
 
