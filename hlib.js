@@ -197,6 +197,7 @@ function parseAnnotation(row) {
     quote: quote,
     tags: tags,
     group: group,
+    target: row.target,
   };
 }
 
