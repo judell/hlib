@@ -201,6 +201,31 @@ function parseAnnotation(row) {
   };
 }
 
+function parseSelectors(target) {
+  var parsedSelectors = {};
+  var firstTarget = target[0];
+  if (firstTarget) {
+    var selectors = firstTarget.selector;
+    if (selectors) {
+      var textQuote = selectors.filter(x => x.type === 'TextQuoteSelector');
+      if ( textQuote.length ) {
+        parsedSelectors['TextQuote'] = {
+          'exact': textQuote[0].exact,
+          'prefix': textQuote[0].prefix,
+          'suffix': textQuote[0].suffix,
+        };
+      }
+      var textPosition = selectors.filter(x => x.type === 'TextPositionSelector');
+      if ( textPosition.length ) {
+        parsedSelectors['TextPosition'] = {
+          'start': textPosition[0].start,
+          'end': textPosition[0].end,
+        };
+      }
+    }
+  }
+  return parsedSelectors;
+}
 // get url parameters
 function gup(name, str) {
   if (! str) {
