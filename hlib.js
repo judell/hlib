@@ -182,6 +182,8 @@ function parseAnnotation(row) {
 
   var isReply = refs.length > 0;
 
+  var isPagenote = row.target && ! row.target[0].hasOwnProperty('selector');
+
   return {
     id: id,
     url: url,
@@ -189,11 +191,12 @@ function parseAnnotation(row) {
     title: title,
     refs: refs,
     isReply: isReply,
+    isPagenote: isPagenote,
     user: user,
     text: text,
     quote: quote,
     tags: tags,
-    group: group
+    group: group,
   };
 }
 
@@ -434,7 +437,7 @@ function csvRow(level, anno) {
   return fields.join(',');
 }
 
-function showAnnotation(eltId, anno, level) {
+function showAnnotation(anno, level) {
   var dt = new Date(anno.updated);
   var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ');
 
