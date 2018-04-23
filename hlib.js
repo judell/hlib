@@ -276,7 +276,7 @@ function getFromUrlParamOrLocalStorage(key, _default) {
     value = localStorage.getItem(`${key}`);
   }
 
-  if ( ! value || value === '' ) {
+  if ( (! value || value === '') && _default ) {
     value = _default;
   }
 
