@@ -1,0 +1,46 @@
+
+@import url(https://fonts.googleapis.com/css?family=Raleway:500,400,300,800,700);
+
+body {
+  font-family: Raleway;
+  font-weight: 500;
+  margin-left: .25in;
+  margin-top: .25in;
+  }
+
+input {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+button {
+  margin-bottom:  14px;
+}
+
+.help {
+  font-size:smaller;
+}
+
+.inputForm {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.formField {
+  margin-bottom: 14px;
+}
+
+.formMessage {
+  font-size: smaller;
+}
+
+.formLabel {
+  font-weight: bold;
+  font-size: smaller;
+}
+
+.csvRow {
+  display: none;
+}
+
+
