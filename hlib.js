@@ -465,13 +465,16 @@ function csvRow(level, anno) {
   return fields.join(',');
 }
 
-function showAnnotation(anno, level) {
+function showAnnotation(anno, level, renderMarkdown) {
   var dt = new Date(anno.updated);
   var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ');
 
-  var converter = new Showdown.converter();
-  var text = anno.text == null ? '' : anno.text;
-  var html = converter.makeHtml(text);
+  var html = anno.text == null ? '' : anno.text;
+
+  if (renderMarkdown) {
+    var converter = new Showdown.converter();
+    html = converter.makeHtml(html);
+  }
 
   var tags = '';
   if (anno.tags.length) {
