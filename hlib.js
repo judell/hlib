@@ -399,7 +399,7 @@ function updateAnnotation(id, token, payload) {
 
 function createApiTokenInputForm (e) {
   var token = getToken();
-  var msg = 'to write (or read protected) annotations, paste your <a href="https://hypothes.is/profile/developer">token</a> here';
+  var msg = 'to write (or read protected) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>';
   var form = `
 <div class="formLabel">Hypothesis API Token</div>
 <div class="inputForm"><input autocomplete="nope" type="password" value="${token}" onchange="setToken()"  id="tokenForm"></input></div>
@@ -419,7 +419,7 @@ function createUserInputForm (e) {
 
 function createGroupInputForm (e) {
   var group = getGroup();
-  var msg = 'ID from https://hypothes.is/groups/ID';
+  var msg = 'e.g. <b>8vWJ9vkM</b> from https://hypothes.is/groups/<b>8vWJ9vkM</b>/sample-group';
   var form = `
 <div class="formLabel">Hypothesis Group ID</div>
 <div class="inputForm"><input autocomplete="nope" type="text" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 

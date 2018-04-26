@@ -32,6 +32,7 @@ button {
 
 .formMessage {
   font-size: smaller;
+  word-break: break-all;
 }
 
 .formLabel {
