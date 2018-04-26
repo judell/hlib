@@ -316,6 +316,10 @@ function getFromUrlParamOrLocalStorage(key, _default) {
     value = _default;
   }
 
+  if (! value) {
+    value = '';
+  }
+
   return value;
 }
 
