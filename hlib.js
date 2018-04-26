@@ -103,6 +103,13 @@ function hApiSearch(params, callback, progressId) {
   _search(params, callback, offset, annos, replies, progressId)
 }
 
+function findRepliesForId(id, replies) {
+  var _replies = replies.filter(function (x) {
+    return (x.references.indexOf(id) != -1);
+  });
+  return _replies.map(a => parseAnnotation(a)).reverse();
+}
+
 // organize a set of annotations, from https://hypothes.is/api/search, by url
 function gatherAnnotationsByUrl(rows) {
   var urls = {};
@@ -426,13 +433,6 @@ function createGroupInputForm (e) {
 <div class="formMessage">${msg}</div>`; 
   e.innerHTML += form;
 }
-
-/*
-var zoteroUserContainer = getById('zoteroUserContainer');
-createNamedInputForm(zoteroUserContainer, 'Zotero Numeric User ID', 'zoteroUserId', getZoteroUserId(), 'setZoteroUserId',
-  '', 'Zotero numeric user id from <a href="https://www.zotero.org/settings/keys">https://www.zotero.org/settings/keys</a>'
-);
-*/
 
 function createNamedInputForm(e, name, id, value, onChange, type, msg) {
   var form =
