@@ -430,7 +430,7 @@ function createUserInputForm (e) {
 
 function createGroupInputForm (e) {
   var group = getGroup();
-  var msg = 'e.g. <b>8vWJ9vkM</b> from https://hypothes.is/groups/<b>8vWJ9vkM</b>/sample-group';
+  var msg = 'e.g. <b>8vWJ9vkM</b> from <br>https://hypothes.is/groups/<b>8vWJ9vkM</b>/sample-group';
   var form = `
 <div class="formLabel">Hypothesis Group ID</div>
 <div class="inputForm"><input autocomplete="nope" type="text" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 
