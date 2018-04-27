@@ -428,15 +428,19 @@ function createUserInputForm (e) {
   e.innerHTML += form;
 }
 
+function setSelectedGroup() {
+  var selectedGroup = getSelectedGroup();
+  if (selectedGroup != '') {
+    localStorage.setItem('h_group', selectedGroup);
+  }
+}
+
 function getSelectedGroup() {
   var selectedGroup;
   var groupSelector = document.querySelector('#groupsList');
   if ( getToken() && groupSelector) {
     var selectedGroupIndex = groupSelector.selectedIndex;
     selectedGroup = groupSelector[selectedGroupIndex].value;
-    if (selectedGroup != '') {
-      localStorage.setItem('h_group', selectedGroup);
-    }
   }
   else {
     selectedGroup = '';
@@ -447,7 +451,7 @@ function getSelectedGroup() {
 function createGroupInputForm (e) {
 
   function createGroupSelector(groups) {
-    var currentGroup = getSelectedGroup();
+    var currentGroup = getGroup();
     var options = '';
     groups.forEach(g =>{
       var selected = ''
@@ -458,7 +462,7 @@ function createGroupInputForm (e) {
       options += `<option ${selected} value="${groupId}">${g.name}</option>\n`;
     });
     var selector = `
-<select id="groupsList">
+<select onchange="setSelectedGroup()" id="groupsList">
 ${options}
 </select>`;
   return selector;
