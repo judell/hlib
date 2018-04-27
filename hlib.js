@@ -441,6 +441,7 @@ function getSelectedGroup() {
   else {
     selectedGroup = '';
   }
+  return selectedGroup;
 }
 
 function createGroupInputForm (e) {
