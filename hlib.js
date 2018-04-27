@@ -428,14 +428,63 @@ function createUserInputForm (e) {
   e.innerHTML += form;
 }
 
+function getSelectedGroup() {
+  var selectedGroup;
+  var groupSelector = document.querySelector('#groupsList');
+  if ( getToken() && groupSelector) {
+    var selectedGroupIndex = groupSelector.selectedIndex;
+    selectedGroup = groupSelector[selectedGroupIndex].value;
+    if (selectedGroup != '') {
+      localStorage.setItem('h_group', selectedGroup);
+    }
+  }
+  else {
+    selectedGroup = '';
+  }
+}
+
 function createGroupInputForm (e) {
-  var group = getGroup();
-  var msg = 'e.g. <b>8vWJ9vkM</b> from <br>https://hypothes.is/groups/<b>8vWJ9vkM</b>/sample-group';
-  var form = `
-<div class="formLabel">Hypothesis Group ID</div>
-<div class="inputForm"><input autocomplete="nope" type="text" value="${group}" onchange="setGroup()" id="groupForm"></input></div> 
+
+  function createGroupSelector(groups) {
+    var currentGroup = getSelectedGroup();
+    var options = '';
+    groups.forEach(g =>{
+      var selected = ''
+      if (currentGroup == g.id) {
+        selected = 'selected';
+      }
+      var groupId = g.id != '__world__' ? g.id : '';
+      options += `<option ${selected} value="${groupId}">${g.name}</option>\n`;
+    });
+    var selector = `
+<select id="groupsList">
+${options}
+</select>`;
+  return selector;
+  }
+  
+  var token = getToken();
+  var opts = {
+    method: 'get',
+    url: 'https://hypothes.is/api/profile',
+  }
+  opts = setApiTokenHeaders(opts, token);
+  httpRequest(opts)
+    .then( data => {
+      var response = JSON.parse(data.response);
+      var msg = '';
+      if (! token) {
+        msg = 'add token (below) to see all groups here';
+      }
+      var form = `
+<div class="formLabel">Hypothesis Group</div>
+<div class="inputForm">${createGroupSelector(response.groups)}</div> 
 <div class="formMessage">${msg}</div>`; 
-  e.innerHTML += form;
+       e.innerHTML += form;
+      })
+      .catch (e => {
+        console.log(e);
+      });
 }
 
 function createNamedInputForm(e, name, id, value, onChange, type, msg) {
