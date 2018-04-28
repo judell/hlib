@@ -233,6 +233,7 @@ function parseSelectors(target) {
   }
   return parsedSelectors;
 }
+
 // get url parameters
 function gup(name, str) {
   if (! str) {
@@ -388,7 +389,10 @@ function postAnnotation(payload, token, resultElement, queryFragment) {
         url += '#' + queryFragment;
       }
       location.href = url;
-    } );
+    })
+    .catch(e => {
+      console.log(e);
+    });
 }
 
 function updateAnnotation(id, token, payload) {
@@ -405,6 +409,9 @@ function updateAnnotation(id, token, payload) {
     .then( function(data) {
       // placeholder 
       return(data);
+    })
+    .catch(e => {
+      console.log(e);
     });
 }
 
@@ -430,9 +437,7 @@ function createUserInputForm (e) {
 
 function setSelectedGroup() {
   var selectedGroup = getSelectedGroup();
-  if (selectedGroup != '') {
-    localStorage.setItem('h_group', selectedGroup);
-  }
+  localStorage.setItem('h_group', selectedGroup);
 }
 
 function getSelectedGroup() {
@@ -479,7 +484,7 @@ ${options}
       var response = JSON.parse(data.response);
       var msg = '';
       if (! token) {
-        msg = 'add token (below) to see all groups here';
+        msg = 'add token and refresh to see all groups here';
       }
       var form = `
 <div class="formLabel">Hypothesis Group</div>
