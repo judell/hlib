@@ -1,0 +1,103 @@
+<html>
+<head>
+<script src="tinytest.js"></script>
+<script src="https://jonudell.info/hlib/hlib.js"></script>
+</head>
+
+<body>
+
+<div><input id="tokenForm"/></div>
+
+<script>
+
+function delay(seconds) {
+  return new Promise( resolve => setTimeout(resolve, seconds * 1000));
+}
+
+async function waitSeconds(seconds) {
+  await delay(seconds);
+  return;
+  }
+
+function appendBody(element) {
+  document.body.appendChild(element);
+}
+
+function createGroupContainer() {
+  var groupContainer = document.createElement('div');
+  groupContainer.id = 'groupContainer';
+  document.body.append(groupContainer);
+  return groupContainer;
+}    
+
+tests({ 
+
+'gets token': function() {
+   let token = getToken();
+   let slice = token.slice(0,9);
+   eq(slice, '6879-358c');
+ },
+
+'gets "" when no user': function() {
+   delete localStorage['h_user'];
+   let user = getUser();
+   eq(user, "");
+ },
+
+'username input form saves and retrieves value': function() {
+   let formElement = document.createElement('div');
+   let args = {
+     element: formElement,
+     name: 'Hypothesis username',
+     id: 'user',
+     value: '',
+     onChange: 'setUser',
+     type: '',
+     msg: ''
+   };
+   let form = createNamedInputForm(args);
+   appendBody(form);
+   let inputElement = getById('userForm');
+   inputElement.value = 'judell';
+   let evt = document.createEvent("HTMLEvents");
+   evt.initEvent("change", false, true);
+   inputElement.dispatchEvent(evt);
+   eq(getUser(), 'judell');
+   delete localStorage['h_user'];
+   form.remove();
+ },
+
+'creates group picklist with > 1 groups when token': function() {
+   var groupContainer = createGroupContainer();
+   createGroupInputForm(groupContainer);
+   waitSeconds(2)
+     .then( r => {
+       let groupList = getById('groupsList');
+       assert(groupList);
+       let options = groupList.querySelectorAll('option');
+       assert(groupList.length > 1, `got ${groupList.length}`);
+       groupContainer.remove();
+     });
+ },
+
+'creates group picklist with 1 group when no token': function() {
+  var token = getToken();
+  delete localStorage['h_token'];
+  var groupContainer = createGroupContainer();     
+  createGroupInputForm(groupContainer);
+  waitSeconds(2)
+    .then( r => {
+      let groupList = getById('groupsList');
+      assert(groupList);
+      let options = groupList.querySelectorAll('option');
+      eq(groupList.length, 1);
+      localStorage.setItem('h_token', token);
+      groupContainer.remove();
+     });
+ },
+
+});
+</script>
+
+</body>
+</html>
