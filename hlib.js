@@ -420,21 +420,24 @@ function updateAnnotation(id, token, payload) {
     });
 }
 
-function createApiTokenInputForm (e) {
-  var token = getToken();
-  var msg = 'to write (or read protected) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>';
-  var form = `
-<div class="formLabel">Hypothesis API Token</div>
-<div class="inputForm"><input autocomplete="nope" type="password" value="${token}" onchange="setToken()"  id="tokenForm"></input></div>
-<div class="formMessage">${msg}</div>`;
-  e.innerHTML += form;
+function createApiTokenInputForm (element) {
+  let tokenArgs = {
+    element: element,
+    name: 'Hypothesis API token',
+    id: 'token',
+    value: getToken(),
+    onChange: 'setToken',
+    type: 'password',
+    msg: 'to write (or read protected) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>',
+  }
+  createNamedInputForm(tokenArgs);
 }
 
 function createUserInputForm (element) {
   let userArgs = {
     element: element,
     name: 'Hypothesis username',
-    id: 'userForm',
+    id: 'user',
     value: getUser(),
     onChange: 'setUser',
     type: '',
