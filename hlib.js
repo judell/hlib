@@ -258,6 +258,10 @@ function getById(id) {
   return document.getElementById(id);
 }
 
+function appendBody(element) {
+  document.body.appendChild(element);
+}
+
 function getDomainFromUrl(url) {
   var a = document.createElement('a');
   a.href = url;
@@ -290,6 +294,7 @@ function getGroup() {
 }
 
 function setToken() {
+
   setLocalStorageFromForm('tokenForm', 'h_token');
 }
 
@@ -425,14 +430,17 @@ function createApiTokenInputForm (e) {
   e.innerHTML += form;
 }
 
-function createUserInputForm (e) {
-  var user = getUser();
-  var msg = '';
-  var form = `
-<div class="formLabel">Hypothesis username</div>
-<div class="inputForm"><input autocomplete="nope" type="text" value="${user}" onchange="setUser()" id="userForm"></input></div> 
-<div class="formMessage">${msg}</div>`; 
-  e.innerHTML += form;
+function createUserInputForm (element) {
+  let userArgs = {
+    element: element,
+    name: 'Hypothesis username',
+    id: 'userForm',
+    value: getUser(),
+    onChange: 'setUser',
+    type: '',
+    msg: '',
+    };
+  createNamedInputForm(userArgs);
 }
 
 function setSelectedGroup() {
@@ -497,13 +505,14 @@ ${options}
       });
 }
 
-function createNamedInputForm(e, name, id, value, onChange, type, msg) {
-  var form =
-    `
+function createNamedInputForm(args) {
+  let {element, name, id, value, onChange, type, msg} = args;
+  let form =`
 <div class="formLabel">${name}</div>
 <div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
 <div class="formMessage">${msg}</div>`;
-  e.innerHTML += form;
+  element.innerHTML += form;
+  return element;
 }
 
 function formatTags(tags) {
