@@ -37,6 +37,11 @@
  * -Joe Walnes
  * MIT License. See https://github.com/joewalnes/jstinytest/
  */
+
+const green = '#99ff99';
+
+const red =  '#ff9999';
+
 const TinyTest = {
 
     run: function(tests) {
@@ -54,7 +59,7 @@ const TinyTest = {
         }
         setTimeout(function() { // Give document a chance to complete
             if (window.document && document.body) {
-                document.body.style.backgroundColor = (failures == 0 ? '#99ff99' : '#ff9999');
+                document.body.style.backgroundColor = (failures == 0 ? green : red);
             }
         }, 0);
     },
@@ -81,6 +86,10 @@ const TinyTest = {
         }
     },
 
+    failHard: function() {
+        document.body.style.backgroundColor = red;
+    }
+
 };
 
 const fail                = TinyTest.fail,
@@ -88,4 +97,5 @@ const fail                = TinyTest.fail,
       assertEquals        = TinyTest.assertEquals,
       eq                  = TinyTest.assertEquals, // alias for assertEquals
       assertStrictEquals  = TinyTest.assertStrictEquals,
+      failHard            = TinyTest.failHard,
       tests               = TinyTest.run;
