@@ -599,6 +599,15 @@ in group
   return output;
 }
 
+function delay(seconds) {
+  return new Promise( resolve => setTimeout(resolve, seconds * 1000));
+}
+
+async function waitSeconds(seconds) {
+  await delay(seconds);
+  return;
+}
+
 // https://gist.github.com/monsur/706839
 /**
  * XmlHttpRequest's getAllResponseHeaders() method returns a string of response
