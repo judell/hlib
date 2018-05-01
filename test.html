@@ -6,7 +6,7 @@
 
 <body>
 
-<div style="display:none"><input id="tokenForm"/></div>
+<div style="display:none"><input id="token"/></div>
 
 <script>
 
@@ -28,7 +28,14 @@ function createGroupContainer() {
   groupContainer.id = 'groupContainer';
   document.body.append(groupContainer);
   return groupContainer;
-}    
+}
+
+function removeGroupContainer() {
+  var groupContainer = getById('groupContainer');
+  if (groupContainer) {
+    groupContainer.remove();
+  }
+}
 
 tests({ 
 
@@ -75,25 +82,34 @@ tests({
        let groupList = getById('groupsList');
        assert(groupList);
        let options = groupList.querySelectorAll('option');
-       assert(groupList.length > 1, `got ${groupList.length}`);
-       groupContainer.remove();
-     });
+       assert(groupList.length > 1, `expected > 1, got ${groupList.length}`);
+     })
+     .catch (e => {
+       console.log(e.message);
+       failHard();
+     })
+     .finally(removeGroupContainer);
  },
 
 'creates group picklist with 1 group when no token': function() {
   var token = getToken();
+  getById('token').value = token;
   delete localStorage['h_token'];
   var groupContainer = createGroupContainer();     
   createGroupInputForm(groupContainer);
   waitSeconds(2)
     .then( r => {
+      localStorage['h_token'] = getById('token').value;
       let groupList = getById('groupsList');
       assert(groupList);
       let options = groupList.querySelectorAll('option');
-      eq(groupList.length, 1);
-      localStorage.setItem('h_token', token);
-      groupContainer.remove();
-     });
+      assert(groupList.length == 1, `expected 1, got ${groupList.length}`);
+     })
+     .catch (e => {
+       console.log(e.message);
+       failHard();
+     })
+     .finally(removeGroupContainer);
  },
 
 });
