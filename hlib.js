@@ -20,9 +20,10 @@ function httpRequest(opts) {
         });
       }
     };
-    xhr.onerror = function() {
-      console.log("makeRequest", opts.url, this.status);
+    xhr.onerror = function(e) {
+      console.log("httpRequest", opts.url, this.status);
       reject({
+        error: e,
         status: this.status,
         statusText: xhr.statusText
       });
@@ -290,7 +291,8 @@ function getUser() {
 }
 
 function getGroup() {
-  return getFromUrlParamOrLocalStorage('h_group');
+  var group = getFromUrlParamOrLocalStorage('h_group');
+  return group != '' ? group : '__world__';
 }
 
 function setToken() {
@@ -338,41 +340,86 @@ function createPermissions(username, group) {
   return permissions;
 }
 
-function createAnnotationPayload(uri, exact, username, group, text, tags, extra, pagenote){
+function createTextQuoteSelector(exact, prefix, suffix) {
+  var selector = {
+    type: "TextQuoteSelector",
+    exact: exact,
+  }
+  if (prefix) {
+    selector.prefix = prefix;
+  }
+  if (suffix) {
+    selector.suffix = suffix;
+  }
+  return selector;
+}
+
+function createTextPositionSelector(start, end) {
+  return {
+    type: "TextPositionSelector",
+    start: start,
+    end: end
+  }
+}
+
+/* 
+Expects an object with these keys:
+  uri: Target to which annotation will post
+  exact, prefix, suffix: Info for TextQuoteSelector, only exact is required
+  start, stop: Info for TextPositionSelector, optional
+  username: Hypothesis username
+  group: Hypothesis group (use '__world__' for Public)
+  text: Body of annotation (could be markdown or html, whatever the Hypothesis editor supports)
+  tags: Hypothesis tags
+  extra: Extra data, invisible to user but available through H API
+*/
+function createAnnotationPayload(params) {
+  //uri, exact, username, group, text, tags, extra){
+  var textQuoteSelector, textPositionSelector;
+
+  if (params.exact) { // we have minimum info need for a TextQuoteSelector
+    textQuoteSelector = createTextQuoteSelector(params.exact, params.prefix, params.suffix);
+  }
+
+  if (params.start && params.end) {
+    textPositionSelector = createTextPositionSelector(params.start, params.end);
+  }
+
   var target = {
-    "source": uri,
-    "selector": [{
-      "exact": exact,
-      "prefix": '',
-      "type": "TextQuoteSelector",
-      "suffix": '',
-      }]
+    source: params.uri,
+  }
+
+  if (textQuoteSelector) { // we have minimum info for an annotation target
+    var selectors = [textQuoteSelector];
+    if (textPositionSelector) { // we can also use TextPosition
+      selectors.push(textPositionSelector);
     }
+    target['selector'] = selectors;
+  }
 
   var payload = {
-    "uri": uri,
-    "group": group,
-    "permissions": createPermissions(username, group),
-    "text": text,
-    "target": [target],
+    "uri": params.uri,
+    "group": params.group,
+    "permissions": createPermissions(params.username, params.group),
+    "text": params.text,
     "document": {
-      "title": [uri],
+      "title": [params.uri],
     },
-    "tags": tags ? tags : [],
+    "tags": params.tags ? params.tags : [],
   }
 
-  if (extra) {
-    payload.extra = extra;
+  if (target) {
+    payload.target = [target];
   }
 
-  if (pagenote) {
-    delete payload.target;
+  if (params.extra) {
+    payload.extra = params.extra;
   }
 
   return JSON.stringify(payload);
 }
 
-function postAnnotation(payload, token, resultElement, queryFragment) {
+function postAnnotation(payload, token) {
   var url = 'https://hypothes.is/api/annotations'
   var opts = {
     method: 'post',
@@ -382,14 +429,18 @@ function postAnnotation(payload, token, resultElement, queryFragment) {
 
   opts = setApiTokenHeaders(opts, token);
 
-  httpRequest(opts)
-    .then( function(data) {
+  return httpRequest(opts);
+}
 
+function postAnnotationAndRedirect(payload, token, queryFragment) {
+  return postAnnotation(payload, token)
+    .then(data => {
+      var response = JSON.parse(data.response);
       if (data.status != 200) {
         alert(`hlib status ${data.status}`);
         return;
       }
-      var url = JSON.parse(data.response).uri;
+      var url = response.uri;
       if (queryFragment) {
         url += '#' + queryFragment;
       }
@@ -407,17 +458,18 @@ function updateAnnotation(id, token, payload) {
     params: payload,
     url: url,
   };
-
   opts = setApiTokenHeaders(opts, token);
+  return httpRequest(opts);
+}
 
-  httpRequest(opts)
-    .then( function(data) {
-      // placeholder 
-      return(data);
-    })
-    .catch(e => {
-      console.log(e);
-    });
+function deleteAnnotation(id, token) {
+  var url = `https://hypothes.is/api/annotations/${id}`;
+  var opts = {
+    method: 'delete',
+    url: url,
+  };
+  opts = setApiTokenHeaders(opts, token);
+  return httpRequest(opts);
 }
 
 function createApiTokenInputForm (element) {
@@ -469,13 +521,12 @@ function createGroupInputForm (e) {
   function createGroupSelector(groups) {
     var currentGroup = getGroup();
     var options = '';
-    groups.forEach(g =>{
+    groups.forEach(g => {
       var selected = ''
       if (currentGroup == g.id) {
         selected = 'selected';
       }
-      var groupId = g.id != '__world__' ? g.id : '';
-      options += `<option ${selected} value="${groupId}">${g.name}</option>\n`;
+      options += `<option ${selected} value="${g.id}">${g.name}</option>\n`;
     });
     var selector = `
 <select onchange="setSelectedGroup()" id="groupsList">

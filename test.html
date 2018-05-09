@@ -1,7 +1,7 @@
 <html>
 <head>
 <script src="tinytest.js"></script>
-<script src="https://jonudell.info/hlib/hlib.js"></script>
+<script src="hlib.js"></script> 
 </head>
 
 <body>
@@ -10,13 +10,15 @@
 
 <script>
 
+var scratchUri = 'https://jonudell.net/h/scratch.html';
+
 function delay(seconds) {
   return new Promise( resolve => setTimeout(resolve, seconds * 1000));
 }
 
-async function waitSeconds(seconds) {
+async function waitSeconds(seconds, data) {
   await delay(seconds);
-  return;
+  return data;
   }
 
 function appendBody(element) {
@@ -36,6 +38,22 @@ function removeGroupContainer() {
     groupContainer.remove();
   }
 }
+
+function checkAndDeleteTestAnnotation(data, token) {
+  try {	
+    var response = JSON.parse(data.response);
+    assert(response.id);
+    assert(response.updated);
+    deleteAnnotation(response.id, token)
+     .then(data => {
+        console.log('deleted test annotation', data);
+     });
+  } catch(e) {
+	console.error(e);  
+	failHard();
+  }
+}
+
 
 tests({ 
 
@@ -77,15 +95,15 @@ tests({
 'creates group picklist with > 1 groups when token': function() {
    var groupContainer = createGroupContainer();
    createGroupInputForm(groupContainer);
-   waitSeconds(2)
+   waitSeconds(1)
      .then( r => {
        let groupList = getById('groupsList');
        assert(groupList);
        let options = groupList.querySelectorAll('option');
-       assert(groupList.length > 1, `expected > 1, got ${groupList.length}`);
+       assert(groupList.length > 1);
      })
      .catch (e => {
-       console.log(e.message);
+       console.error(e);
        failHard();
      })
      .finally(removeGroupContainer);
@@ -93,24 +111,57 @@ tests({
 
 'creates group picklist with 1 group when no token': function() {
   var token = getToken();
-  getById('token').value = token;
+  getById('token').setAttribute('value',token);
   delete localStorage['h_token'];
   var groupContainer = createGroupContainer();     
   createGroupInputForm(groupContainer);
-  waitSeconds(2)
+  waitSeconds(1)
     .then( r => {
-      localStorage['h_token'] = getById('token').value;
+      localStorage['h_token'] = getById('token').value;  // not in effect for subsequent tests
       let groupList = getById('groupsList');
       assert(groupList);
       let options = groupList.querySelectorAll('option');
       assert(groupList.length == 1, `expected 1, got ${groupList.length}`);
      })
      .catch (e => {
-       console.log(e.message);
+       console.log(e);
        failHard();
      })
      .finally(removeGroupContainer);
  },
+
+ 'creates a pagenote': function() {
+   var token = getById('token').value;
+   var params = {};
+   params.uri = scratchUri,
+   params.group = '__world__';
+   params.text = 'hlib test';
+   var payload = createAnnotationPayload(params);
+   postAnnotation(payload, token)
+     .then(data => {
+       waitSeconds(1, data)
+         .then(data => {
+           checkAndDeleteTestAnnotation(data, token);
+          });
+       });
+ },
+
+ 'creates an annotation': function() {
+   var token = getById('token').value;
+   var params = {};
+   params.uri = scratchUri,
+   params.group = '__world__';
+   params.text = 'hlib test';
+   params.exact = 'First para';
+   var payload = createAnnotationPayload(params);
+   postAnnotation(payload, token)
+     .then(data => {
+       waitSeconds(1, data)
+       .then(data => {
+         checkAndDeleteTestAnnotation(data, token);
+       });
+     });
+ }
 
 });
 </script>
