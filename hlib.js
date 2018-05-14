@@ -650,6 +650,15 @@ in group
   return output;
 }
 
+function download(text, type) {
+  var a = document.createElement('a');
+  a.href = 'data:attachment/' + type + ',' + encodeURIComponent(text);
+  a.target = '_blank';
+  a.download = 'hypothesis.' + type;
+  document.body.appendChild(a);
+  a.click();
+}
+
 function delay(seconds) {
   return new Promise( resolve => setTimeout(resolve, seconds * 1000));
 }
