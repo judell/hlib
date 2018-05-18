@@ -4,8 +4,9 @@
 body {
   font-family: Raleway;
   font-weight: 500;
-  margin-left: .25in;
-  margin-top: .25in;
+  margin-left: .5in;
+  margin-top: .5in;
+  margin-right: .25in;
   }
 
 input {
@@ -44,5 +45,7 @@ button {
 .csvRow {
   display: none;
 }
+
+
 
 
