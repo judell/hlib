@@ -694,3 +694,63 @@ function parseResponseHeaders(headerStr) {
   }
   return headers;
 }
+
+// functions used by the facet tool
+
+function collapseAll() {
+  var togglers = document.querySelectorAll('.urlHeading .toggle');
+  togglers.forEach(function (toggler) {
+    setToggleControlCollapse(toggler);
+  });
+  var cards = document.querySelectorAll('.annotationCard');
+  hideCards(cards);
+}
+
+function expandAll() {
+  var togglers = document.querySelectorAll('.urlHeading .toggle');
+  togglers.forEach(function (toggler) {
+    setToggleControlExpand(toggler);
+  });
+  var cards = document.querySelectorAll('.annotationCard');
+  showCards(cards);
+}
+
+function setToggleControlCollapse(toggler) {
+  toggler.innerText = '\u25b6';
+  toggler.title = 'expand';
+}
+
+function setToggleControlExpand(toggler) {
+  toggler.innerText = '\u25bc';
+  toggler.title = 'collapse';
+}
+
+function showCards(cards) {
+  for (var i = 0; i < cards.length; i++) {
+    cards[i].style.display = 'block';
+  }
+}
+
+function hideCards(cards) {
+  for (var i = 0; i < cards.length; i++) {
+    cards[i].style.display = 'none';
+  }
+}
+
+function toggle(id) {
+  var heading = getById('heading_' + id);
+  var toggler = heading.querySelector('.toggle');
+
+  var cardsId = `cards_${id}`;
+  var selector = `#${cardsId} .annotationCard`;
+  var perUrlCards = document.querySelectorAll(selector);
+  var cardsDisplay = perUrlCards[0].style.display;
+
+  if (cardsDisplay === 'block') {
+    setToggleControlCollapse(toggler);
+    hideCards(perUrlCards);
+  } else {
+    setToggleControlExpand(toggler);
+    showCards(perUrlCards);
+  }
+}
