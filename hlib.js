@@ -651,8 +651,10 @@ in group
 }
 
 function download(text, type) {
+  var blob = new Blob([text], {type:"application/octet-stream"});
+  var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  a.href = 'data:attachment/' + type + ',' + encodeURIComponent(text);
+  a.href = url;
   a.target = '_blank';
   a.download = 'hypothesis.' + type;
   document.body.appendChild(a);
