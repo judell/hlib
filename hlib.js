@@ -498,6 +498,14 @@ function createUserInputForm (element) {
   createNamedInputForm(userArgs);
 }
 
+function createFacetInputForm(e, facet, msg) {
+  var form = `
+<div class="formLabel">${facet}</div>
+<div class="${facet}Form"><input id="${facet}Form"></input></div>
+<div class="formMessage">${msg}</div>`;
+  e.innerHTML += form;
+}
+
 function setSelectedGroup() {
   var selectedGroup = getSelectedGroup();
   localStorage.setItem('h_group', selectedGroup);
