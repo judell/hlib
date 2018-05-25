@@ -590,6 +590,9 @@ function csvRow(level, anno) {
   var fields = [level.toString(), anno.updated, anno.url, anno.user, anno.id, anno.group, anno.tags.join(', '), anno.quote, anno.text];
   fields = fields.map(function (field) {
     if (field) {
+      field = field.replace(/&/g, '&amp;');  // the resulting text will be added as html to the dom
+      field = field.replace(/</g, '&lt;');
+      field = field.replace(/\s+/g, ' ');   // normalize whitespace
       field = field.replace(/"/g, '""'); // escape double quotes
       field = field.replace(/\r?\n|\r/g, ' '); // remove cr lf
       field = `"${field}"`; // quote the field
