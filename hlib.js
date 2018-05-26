@@ -1,144 +1,135 @@
 // promisifed xhr
 // replace with fetch when it is sufficiently standard
 
-function httpRequest(opts) {
-  return new Promise(function(resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.open(opts.method, opts.url);
-    xhr.onload = function() {
+function httpRequest (opts) {
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest()
+    xhr.open(opts.method, opts.url)
+    xhr.onload = function () {
       if (this.status >= 200 && this.status < 300) {
         resolve({
-          response: xhr.response, 
+          response: xhr.response,
           status: xhr.status,
-          headers: parseResponseHeaders(xhr.getAllResponseHeaders()),
-        });
+          headers: parseResponseHeaders(xhr.getAllResponseHeaders())
+        })
       } else {
-        console.log("http", opts.url, this.status);
+        console.log('http', opts.url, this.status)
         reject({
           status: this.status,
           statusText: xhr.statusText
-        });
+        })
       }
-    };
-    xhr.onerror = function(e) {
-      console.log("httpRequest", opts.url, this.status);
+    }
+    xhr.onerror = function (e) {
+      console.log('httpRequest', opts.url, this.status)
       reject({
         error: e,
         status: this.status,
         statusText: xhr.statusText
-      });
-    };
+      })
+    }
     if (opts.headers) {
-      Object.keys(opts.headers).forEach(function(key) {
-        xhr.setRequestHeader(key, opts.headers[key]);
-      });
+      Object.keys(opts.headers).forEach(function (key) {
+        xhr.setRequestHeader(key, opts.headers[key])
+      })
     }
-    var params = opts.params;
-    if (params && typeof params === "object") {
+    var params = opts.params
+    if (params && typeof params === 'object') {
       params = Object.keys(params)
-        .map(function(key) {
-          return (
-
-            encodeURIComponent(key) +
-            "=" +
-            encodeURIComponent(params[key])
-          );
-        })
-        .join("&");
+                .map(function (key) {
+                  return encodeURIComponent(key) + '=' + encodeURIComponent(params[key])
+                })
+                .join('&')
     }
-    xhr.send(params);
-  });
+    xhr.send(params)
+  })
 }
 
-function _search(params, callback, offset, annos, replies, progressId) {
-
-  var max = 2000;
+function _search (params, callback, offset, annos, replies, progressId) {
+  var max = 2000
   if (params.max) {
-    max = params.max;
+    max = params.max
   }
 
-  var limit = 200;
+  var limit = 200
   if (max <= limit) {
-    limit = max;
+    limit = max
   }
 
   if (progressId) {
-    getById(progressId).innerHTML += '.';
+    getById(progressId).innerHTML += '.'
   }
 
   var opts = {
     method: 'get',
-    url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}&offset=${offset}`,
-  };
+    url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}&offset=${offset}`
+  }
 
-  var facets = ['group', 'user', 'tag', 'url', 'any'];
+  var facets = ['group', 'user', 'tag', 'url', 'any']
 
-  facets.forEach(function(facet){
+  facets.forEach(function (facet) {
     if (params[facet]) {
-      var encodedValue = encodeURIComponent(params[facet]);
-      opts.url += `&${facet}=${encodedValue}`;
-    }   
-  });
+      var encodedValue = encodeURIComponent(params[facet])
+      opts.url += `&${facet}=${encodedValue}`
+    }
+  })
 
-  opts = setApiTokenHeaders(opts);
+  opts = setApiTokenHeaders(opts)
 
-  httpRequest(opts)
-    .then( function (data) {
-      data = JSON.parse(data.response);
-      annos = annos.concat(data.rows);
-      replies = replies.concat(data.replies);
-      if ( data.rows.length === 0 || annos.length >= max ) {
-        callback (annos, replies);
-      }
-      else {
-        _search(params, callback, offset+limit, annos, replies, progressId);
-      }
-    });
-
+  httpRequest(opts).then(function (data) {
+    data = JSON.parse(data.response)
+    annos = annos.concat(data.rows)
+    replies = replies.concat(data.replies)
+    if (data.rows.length === 0 || annos.length >= max) {
+      callback(annos, replies)
+    } else {
+      _search(params, callback, offset + limit, annos, replies, progressId)
+    }
+  })
 }
 
-function hApiSearch(params, callback, progressId) {
-  var offset = 0;
-  var annos = [];
-  var replies = [];
+function hApiSearch (params, callback, progressId) {
+  var offset = 0
+  var annos = []
+  var replies = []
   _search(params, callback, offset, annos, replies, progressId)
 }
 
-function findRepliesForId(id, replies) {
+function findRepliesForId (id, replies) {
   var _replies = replies.filter(function (x) {
-    return (x.references.indexOf(id) != -1);
-  });
-  return _replies.map(a => parseAnnotation(a)).reverse();
+    return x.references.indexOf(id) != -1
+  })
+  return _replies.map(a => parseAnnotation(a)).reverse()
 }
 
 // organize a set of annotations, from https://hypothes.is/api/search, by url
-function gatherAnnotationsByUrl(rows) {
-  var urls = {};
-  var ids = {};
-  var titles = {};
-  var urlUpdates = {};
-  var annos = {};
+function gatherAnnotationsByUrl (rows) {
+  var urls = {}
+  var ids = {}
+  var titles = {}
+  var urlUpdates = {}
+  var annos = {}
   for (var i = 0; i < rows.length; i++) {
-    var row = rows[i];
-    var annotation = parseAnnotation(row); // parse the annotation
-    var id = annotation.id;
-    annos[id] = annotation; // save it by id
-    var url = annotation.url; // remember these things
-    url = url.replace(/\/$/, ""); // strip trailing slash
-    var updated = annotation.updated;
-    var title = annotation.title;
-    if (!title)
-      title = url;
-    if (url in urls) {   // add/update this url's info
-      urls[url] += 1;
-      ids[url].push(id);
-      if (updated > urlUpdates.url)
-        urlUpdates[url] = updated;
-    } else {            // init this url's info
-      urls[url] = 1;
-      ids[url] = [id];
-      titles[url] = title;
-      urlUpdates[url] = updated;
+    var row = rows[i]
+    var annotation = parseAnnotation(row) // parse the annotation
+    var id = annotation.id
+    annos[id] = annotation // save it by id
+    var url = annotation.url // remember these things
+    url = url.replace(/\/$/, '') // strip trailing slash
+    var updated = annotation.updated
+    var title = annotation.title
+    if (!title) title = url
+    if (url in urls) {
+            // add/update this url's info
+      urls[url] += 1
+      ids[url].push(id)
+      if (updated > urlUpdates.url) urlUpdates[url] = updated
+    } else {
+            // init this url's info
+      urls[url] = 1
+      ids[url] = [id]
+      titles[url] = title
+      urlUpdates[url] = updated
     }
   }
 
@@ -148,49 +139,47 @@ function gatherAnnotationsByUrl(rows) {
     annos: annos,
     titles: titles,
     urls: urls
-  };
+  }
 }
 
-function parseAnnotation(row) {
-  var id = row.id;
-  var url = row.uri;
-  var updated = row.updated.slice(0, 19);
-  var group = row.group;
-  var title = url;
-  var refs = row.references ? row.references : [];
-  var user = row.user.replace("acct:", "").replace("@hypothes.is", "");
-  var quote = "";
-  if ( row.target && row.target.length )
-    {
-    var selectors = row.target[0].selector;
+function parseAnnotation (row) {
+  var id = row.id
+  var url = row.uri
+  var updated = row.updated.slice(0, 19)
+  var group = row.group
+  var title = url
+  var refs = row.references ? row.references : []
+  var user = row.user.replace('acct:', '').replace('@hypothes.is', '')
+  var quote = ''
+  if (row.target && row.target.length) {
+    var selectors = row.target[0].selector
     if (selectors) {
       for (var i = 0; i < selectors.length; i++) {
-        selector = selectors[i];
-        if ( selector.type === "TextQuoteSelector" ) {
-          quote = selector.exact;
+        selector = selectors[i]
+        if (selector.type === 'TextQuoteSelector') {
+          quote = selector.exact
         }
       }
     }
   }
-  var text = row.text ? row.text : "";
+  var text = row.text ? row.text : ''
 
-  var tags = row.tags;
+  var tags = row.tags
 
   try {
-    title = row.document.title;
-    if (typeof title === "object") {
-      title = title[0];
-    }
-    else {
-      title = url;
+    title = row.document.title
+    if (typeof title === 'object') {
+      title = title[0]
+    } else {
+      title = url
     }
   } catch (e) {
-    title = url;
+    title = url
   }
 
-  var isReply = refs.length > 0;
+  var isReply = refs.length > 0
 
-  var isPagenote = row.target && ! row.target[0].hasOwnProperty('selector');
+  var isPagenote = row.target && !row.target[0].hasOwnProperty('selector')
 
   return {
     id: id,
@@ -205,164 +194,161 @@ function parseAnnotation(row) {
     quote: quote,
     tags: tags,
     group: group,
-    target: row.target,
-  };
+    target: row.target
+  }
 }
 
-function parseSelectors(target) {
-  var parsedSelectors = {};
-  var firstTarget = target[0];
+function parseSelectors (target) {
+  var parsedSelectors = {}
+  var firstTarget = target[0]
   if (firstTarget) {
-    var selectors = firstTarget.selector;
+    var selectors = firstTarget.selector
     if (selectors) {
-      var textQuote = selectors.filter(x => x.type === 'TextQuoteSelector');
-      if ( textQuote.length ) {
+      var textQuote = selectors.filter(x => x.type === 'TextQuoteSelector')
+      if (textQuote.length) {
         parsedSelectors['TextQuote'] = {
-          'exact': textQuote[0].exact,
-          'prefix': textQuote[0].prefix,
-          'suffix': textQuote[0].suffix,
-        };
+          exact: textQuote[0].exact,
+          prefix: textQuote[0].prefix,
+          suffix: textQuote[0].suffix
+        }
       }
-      var textPosition = selectors.filter(x => x.type === 'TextPositionSelector');
-      if ( textPosition.length ) {
+      var textPosition = selectors.filter(x => x.type === 'TextPositionSelector')
+      if (textPosition.length) {
         parsedSelectors['TextPosition'] = {
-          'start': textPosition[0].start,
-          'end': textPosition[0].end,
-        };
+          start: textPosition[0].start,
+          end: textPosition[0].end
+        }
       }
     }
   }
-  return parsedSelectors;
+  return parsedSelectors
 }
 
 // get url parameters
-function gup(name, str) {
-  if (! str) {
-    str = window.location.href;
+function gup (name, str) {
+  if (!str) {
+    str = window.location.href
+  } else {
+    str = '?' + str
   }
-  else {
-    str = '?' + str;
-  }
-  name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-  var regexS = "[\\?&]" + name + "=([^&#]*)";
-  var regex = new RegExp(regexS);
-  var results = regex.exec(str);
+  name = name.replace(/[\[]/, '\\\[').replace(/[\]]/, '\\\]')
+  var regexS = '[\\?&]' + name + '=([^&#]*)'
+  var regex = new RegExp(regexS)
+  var results = regex.exec(str)
   if (results == null) {
-      return "";
-  }
-  else {
-      return results[1];
+    return ''
+  } else {
+    return results[1]
   }
 }
 
-function getById(id) {
-  return document.getElementById(id);
+function getById (id) {
+  return document.getElementById(id)
 }
 
-function appendBody(element) {
-  document.body.appendChild(element);
+function appendBody (element) {
+  document.body.appendChild(element)
 }
 
-function getDomainFromUrl(url) {
-  var a = document.createElement('a');
-  a.href = url;
-  return a.hostname;
-} 
+function getDomainFromUrl (url) {
+  var a = document.createElement('a')
+  a.href = url
+  return a.hostname
+}
 
-function setApiTokenHeaders(opts, token) {
-  if (! token ) {
-    token = getToken();
+function setApiTokenHeaders (opts, token) {
+  if (!token) {
+    token = getToken()
   }
-  if ( token ) {
+  if (token) {
     opts.headers = {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json;charset=utf-8',
-    };
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json;charset=utf-8'
+    }
   }
-  return opts;
+  return opts
 }
 
-function getToken() {
-  return getFromUrlParamOrLocalStorage('h_token');
+function getToken () {
+  return getFromUrlParamOrLocalStorage('h_token')
 }
 
-function getUser() {
-  return getFromUrlParamOrLocalStorage('h_user');
+function getUser () {
+  return getFromUrlParamOrLocalStorage('h_user')
 }
 
-function getGroup() {
-  var group = getFromUrlParamOrLocalStorage('h_group');
-  return group != '' ? group : '__world__';
+function getGroup () {
+  var group = getFromUrlParamOrLocalStorage('h_group')
+  return group != '' ? group : '__world__'
 }
 
-function setToken() {
-
-  setLocalStorageFromForm('tokenForm', 'h_token');
+function setToken () {
+  setLocalStorageFromForm('tokenForm', 'h_token')
 }
 
-function setUser() {
-  setLocalStorageFromForm('userForm', 'h_user');
+function setUser () {
+  setLocalStorageFromForm('userForm', 'h_user')
 }
 
-function setGroup() {
-  setLocalStorageFromForm('groupForm', 'h_group');
+function setGroup () {
+  setLocalStorageFromForm('groupForm', 'h_group')
 }
 
-function setLocalStorageFromForm(formId, storageKey) {
-  var value = getById(formId).value;
-  localStorage.setItem(storageKey, value);
+function setLocalStorageFromForm (formId, storageKey) {
+  var value = getById(formId).value
+  localStorage.setItem(storageKey, value)
 }
 
-function getFromUrlParamOrLocalStorage(key, _default) {
-  var value = gup(key);
+function getFromUrlParamOrLocalStorage (key, _default) {
+  var value = gup(key)
 
-  if ( value === '' ) {
-    value = localStorage.getItem(`${key}`);
-  }
-
-  if ( (! value || value === '') && _default ) {
-    value = _default;
+  if (value === '') {
+    value = localStorage.getItem(`${key}`)
   }
 
-  if (! value) {
-    value = '';
+  if ((!value || value === '') && _default) {
+    value = _default
   }
 
-  return value;
+  if (!value) {
+    value = ''
+  }
+
+  return value
 }
 
-function createPermissions(username, group) {
+function createPermissions (username, group) {
   var permissions = {
-    "read": ['group:' + group],
-    "update": ['acct:' + username + '@hypothes.is'],
-    "delete": ['acct:' + username + '@hypothes.is'],
-  };
-  return permissions;
+    read: ['group:' + group],
+    update: ['acct:' + username + '@hypothes.is'],
+    delete: ['acct:' + username + '@hypothes.is']
+  }
+  return permissions
 }
 
-function createTextQuoteSelector(exact, prefix, suffix) {
+function createTextQuoteSelector (exact, prefix, suffix) {
   var selector = {
-    type: "TextQuoteSelector",
-    exact: exact,
+    type: 'TextQuoteSelector',
+    exact: exact
   }
   if (prefix) {
-    selector.prefix = prefix;
+    selector.prefix = prefix
   }
   if (suffix) {
-    selector.suffix = suffix;
+    selector.suffix = suffix
   }
-  return selector;
+  return selector
 }
 
-function createTextPositionSelector(start, end) {
+function createTextPositionSelector (start, end) {
   return {
-    type: "TextPositionSelector",
+    type: 'TextPositionSelector',
     start: start,
     end: end
   }
 }
 
-/* 
+/*
 Expects an object with these keys:
   uri: Target to which annotation will post
   exact, prefix, suffix: Info for TextQuoteSelector, only exact is required
@@ -373,103 +359,106 @@ Expects an object with these keys:
   tags: Hypothesis tags
   extra: Extra data, invisible to user but available through H API
 */
-function createAnnotationPayload(params) {
-  //uri, exact, username, group, text, tags, extra){
-  var textQuoteSelector, textPositionSelector;
+function createAnnotationPayload (params) {
+    // uri, exact, username, group, text, tags, extra){
+  var textQuoteSelector, textPositionSelector
 
-  if (params.exact) { // we have minimum info need for a TextQuoteSelector
-    textQuoteSelector = createTextQuoteSelector(params.exact, params.prefix, params.suffix);
+  if (params.exact) {
+        // we have minimum info need for a TextQuoteSelector
+    textQuoteSelector = createTextQuoteSelector(params.exact, params.prefix, params.suffix)
   }
 
   if (params.start && params.end) {
-    textPositionSelector = createTextPositionSelector(params.start, params.end);
+    textPositionSelector = createTextPositionSelector(params.start, params.end)
   }
 
   var target = {
-    source: params.uri,
+    source: params.uri
   }
 
-  if (textQuoteSelector) { // we have minimum info for an annotation target
-    var selectors = [textQuoteSelector];
-    if (textPositionSelector) { // we can also use TextPosition
-      selectors.push(textPositionSelector);
+  if (textQuoteSelector) {
+        // we have minimum info for an annotation target
+    var selectors = [textQuoteSelector]
+    if (textPositionSelector) {
+            // we can also use TextPosition
+      selectors.push(textPositionSelector)
     }
-    target['selector'] = selectors;
+    target['selector'] = selectors
   }
 
   var payload = {
-    "uri": params.uri,
-    "group": params.group,
-    "permissions": createPermissions(params.username, params.group),
-    "text": params.text,
-    "document": {
-      "title": [params.uri],
+    uri: params.uri,
+    group: params.group,
+    permissions: createPermissions(params.username, params.group),
+    text: params.text,
+    document: {
+      title: [params.uri]
     },
-    "tags": params.tags ? params.tags : [],
+    tags: params.tags ? params.tags : []
   }
 
   if (target) {
-    payload.target = [target];
+    payload.target = [target]
   }
 
   if (params.extra) {
-    payload.extra = params.extra;
+    payload.extra = params.extra
   }
 
-  return JSON.stringify(payload);
+  return JSON.stringify(payload)
 }
 
-function postAnnotation(payload, token) {
+function postAnnotation (payload, token) {
   var url = 'https://hypothes.is/api/annotations'
   var opts = {
     method: 'post',
     params: payload,
-    url: url,
-  };
+    url: url
+  }
 
-  opts = setApiTokenHeaders(opts, token);
+  opts = setApiTokenHeaders(opts, token)
 
-  return httpRequest(opts);
+  return httpRequest(opts)
 }
 
-function postAnnotationAndRedirect(payload, token, queryFragment) {
+function postAnnotationAndRedirect (payload, token, queryFragment) {
   return postAnnotation(payload, token)
-    .then(data => {
-      var response = JSON.parse(data.response);
-      if (data.status != 200) {
-        alert(`hlib status ${data.status}`);
-        return;
-      }
-      var url = response.uri;
-      if (queryFragment) {
-        url += '#' + queryFragment;
-      }
-      location.href = url;
-    })
-    .catch(e => {
-      console.log(e);
-    });
+        .then(data => {
+          var response = JSON.parse(data.response)
+          if (data.status != 200) {
+            alert(`hlib status ${data.status}`)
+            return
+          }
+          var url = response.uri
+          if (queryFragment) {
+            url += '#' + queryFragment
+          }
+          location.href = url
+        })
+        .catch(e => {
+          console.log(e)
+        })
 }
 
-function updateAnnotation(id, token, payload) {
-  var url = `https://hypothes.is/api/annotations/${id}`;
+function updateAnnotation (id, token, payload) {
+  var url = `https://hypothes.is/api/annotations/${id}`
   var opts = {
     method: 'put',
     params: payload,
-    url: url,
-  };
-  opts = setApiTokenHeaders(opts, token);
-  return httpRequest(opts);
+    url: url
+  }
+  opts = setApiTokenHeaders(opts, token)
+  return httpRequest(opts)
 }
 
-function deleteAnnotation(id, token) {
-  var url = `https://hypothes.is/api/annotations/${id}`;
+function deleteAnnotation (id, token) {
+  var url = `https://hypothes.is/api/annotations/${id}`
   var opts = {
     method: 'delete',
-    url: url,
-  };
-  opts = setApiTokenHeaders(opts, token);
-  return httpRequest(opts);
+    url: url
+  }
+  opts = setApiTokenHeaders(opts, token)
+  return httpRequest(opts)
 }
 
 function createApiTokenInputForm (element) {
@@ -480,9 +469,9 @@ function createApiTokenInputForm (element) {
     value: getToken(),
     onChange: 'setToken',
     type: 'password',
-    msg: 'to write (or read protected) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>',
+    msg: 'to write (or read protected) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>'
   }
-  createNamedInputForm(tokenArgs);
+  createNamedInputForm(tokenArgs)
 }
 
 function createUserInputForm (element) {
@@ -493,152 +482,160 @@ function createUserInputForm (element) {
     value: getUser(),
     onChange: 'setUser',
     type: '',
-    msg: '',
-    };
-  createNamedInputForm(userArgs);
+    msg: ''
+  }
+  createNamedInputForm(userArgs)
 }
 
-function createFacetInputForm(e, facet, msg) {
+function createFacetInputForm (e, facet, msg) {
   var form = `
     <div class="formLabel">${facet}</div>
     <div class="${facet}Form"><input id="${facet}Form"></input></div>
-    <div class="formMessage">${msg}</div>`;
-  e.innerHTML += form;
+    <div class="formMessage">${msg}</div>`
+  e.innerHTML += form
 }
 
-function setSelectedGroup() {
-  var selectedGroup = getSelectedGroup();
-  localStorage.setItem('h_group', selectedGroup);
+function setSelectedGroup () {
+  var selectedGroup = getSelectedGroup()
+  localStorage.setItem('h_group', selectedGroup)
 }
 
-function getSelectedGroup() {
-  var selectedGroup;
-  var groupSelector = document.querySelector('#groupsList');
-  if ( getToken() && groupSelector) {
-    var selectedGroupIndex = groupSelector.selectedIndex;
-    selectedGroup = groupSelector[selectedGroupIndex].value;
+function getSelectedGroup () {
+  var selectedGroup
+  var groupSelector = document.querySelector('#groupsList')
+  if (getToken() && groupSelector) {
+    var selectedGroupIndex = groupSelector.selectedIndex
+    selectedGroup = groupSelector[selectedGroupIndex].value
+  } else {
+    selectedGroup = ''
   }
-  else {
-    selectedGroup = '';
-  }
-  return selectedGroup;
+  return selectedGroup
 }
 
 function createGroupInputForm (e) {
-
-  function createGroupSelector(groups) {
-    var currentGroup = getGroup();
-    var options = '';
+  function createGroupSelector (groups) {
+    var currentGroup = getGroup()
+    var options = ''
     groups.forEach(g => {
       var selected = ''
       if (currentGroup == g.id) {
-        selected = 'selected';
+        selected = 'selected'
       }
-      options += `<option ${selected} value="${g.id}">${g.name}</option>\n`;
-    });
+      options += `<option ${selected} value="${g.id}">${g.name}</option>\n`
+    })
     var selector = `
       <select onchange="setSelectedGroup()" id="groupsList">
       ${options}
-      </select>`;
-    return selector;
+      </select>`
+    return selector
   }
-  
-  var token = getToken();
+
+  var token = getToken()
 
   var opts = {
     method: 'get',
-    url: 'https://hypothes.is/api/profile',
+    url: 'https://hypothes.is/api/profile'
   }
-  opts = setApiTokenHeaders(opts, token);
+  opts = setApiTokenHeaders(opts, token)
   httpRequest(opts)
-    .then( data => {
-      var response = JSON.parse(data.response);
-      var msg = '';
-      if (! token) {
-        msg = 'add token and refresh to see all groups here';
-      }
-      var form = `
+        .then(data => {
+          var response = JSON.parse(data.response)
+          var msg = ''
+          if (!token) {
+            msg = 'add token and refresh to see all groups here'
+          }
+          var form = `
         <div class="formLabel">Hypothesis Group</div>
         <div class="inputForm">${createGroupSelector(response.groups)}</div>
-        <div class="formMessage">${msg}</div>`;
-      e.innerHTML += form;
-      })
-    .catch (e => {
-        console.log(e);
-    });
+        <div class="formMessage">${msg}</div>`
+          e.innerHTML += form
+        })
+        .catch(e => {
+          console.log(e)
+        })
 }
 
-function createNamedInputForm(args) {
-  let {element, name, id, value, onChange, type, msg} = args;
-  let form =`
+function createNamedInputForm (args) {
+  let { element, name, id, value, onChange, type, msg } = args
+  let form = `
     <div class="formLabel">${name}</div>
     <div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
-    <div class="formMessage">${msg}</div>`;
-  element.innerHTML += form;
-  return element;
+    <div class="formMessage">${msg}</div>`
+  element.innerHTML += form
+  return element
 }
 
-function formatTags(tags) {
-  var formattedTags = [];
+function formatTags (tags) {
+  var formattedTags = []
   tags.forEach(function (tag) {
-    var formattedTag = `<a target="_tag" href="./?tag=${tag}"><span class="annotationTag">${tag}</span></a>`;
-    formattedTags.push(formattedTag);
-  });
-  return formattedTags.join(' ');
+    var formattedTag = `<a target="_tag" href="./?tag=${tag}"><span class="annotationTag">${tag}</span></a>`
+    formattedTags.push(formattedTag)
+  })
+  return formattedTags.join(' ')
 }
 
-function csvRow(level, anno) {
-  var fields = [level.toString(), anno.updated, anno.url, anno.user, anno.id, anno.group, anno.tags.join(', '), anno.quote, anno.text];
+function csvRow (level, anno) {
+  var fields = [
+    level.toString(),
+    anno.updated,
+    anno.url,
+    anno.user,
+    anno.id,
+    anno.group,
+    anno.tags.join(', '),
+    anno.quote,
+    anno.text
+  ]
   fields = fields.map(function (field) {
     if (field) {
-      field = field.replace(/&/g, '&amp;');  // the resulting text will be added as html to the dom
-      field = field.replace(/</g, '&lt;');
-      field = field.replace(/\s+/g, ' ');   // normalize whitespace
-      field = field.replace(/"/g, '""'); // escape double quotes
-      field = field.replace(/\r?\n|\r/g, ' '); // remove cr lf
-      field = `"${field}"`; // quote the field
+      field = field.replace(/&/g, '&amp;') // the resulting text will be added as html to the dom
+      field = field.replace(/</g, '&lt;')
+      field = field.replace(/\s+/g, ' ') // normalize whitespace
+      field = field.replace(/"/g, '""') // escape double quotes
+      field = field.replace(/\r?\n|\r/g, ' ') // remove cr lf
+      field = `"${field}"` // quote the field
     }
-    return field;
-    });
-  return fields.join(',');
+    return field
+  })
+  return fields.join(',')
 }
 
-function showAnnotation(anno, level) {
-  var dt = new Date(anno.updated);
-  var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ');
+function showAnnotation (anno, level) {
+  var dt = new Date(anno.updated)
+  var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
 
-  var html = anno.text == null ? '' : anno.text;
-  var converter = new Showdown.converter();
-  html = converter.makeHtml(html);
+  var html = anno.text == null ? '' : anno.text
+  var converter = new Showdown.converter()
+  html = converter.makeHtml(html)
 
-  var tags = '';
+  var tags = ''
   if (anno.tags.length) {
-    tags = formatTags(anno.tags);
+    tags = formatTags(anno.tags)
   }
 
-  var user = anno.user.replace('acct:', '').replace('@hypothes.is', '');
+  var user = anno.user.replace('acct:', '').replace('@hypothes.is', '')
 
-  var quote = anno.quote;
+  var quote = anno.quote
 
   if (anno.quote) {
-    quote = `<div class="annotationQuote">${anno.quote}</div>`;
+    quote = `<div class="annotationQuote">${anno.quote}</div>`
   }
 
-  var standaloneAnnotationUrl = `https://hypothes.is/a/${anno.id}`;
+  var standaloneAnnotationUrl = `https://hypothes.is/a/${anno.id}`
 
-  var marginLeft = level * 20;
+  var marginLeft = level * 20
 
-  var groupSlug = 'in Public';
+  var groupSlug = 'in Public'
   if (anno.group !== '__world__') {
     groupSlug = `
       in group
       <span class="groupid"><a title="search group" target="_group" href="./?group=${anno.group}">${anno.group}</a>
-      </span>`;
+      </span>`
   }
 
   var output = `
     <div class="annotationCard" style="display:block; margin-left:${marginLeft}px;">
-      <div class="csvRow">${csvRow(level,anno)}</div>
+      <div class="csvRow">${csvRow(level, anno)}</div>
       <div class="annotationHeader">
         <span class="user">
         <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
@@ -654,27 +651,26 @@ function showAnnotation(anno, level) {
         <div class="annotationTags">${tags}</div>
       </div>
     </div>`
-  return output;
+  return output
 }
 
-function download(text, type) {
-  var blob = new Blob([text], {type:"application/octet-stream"});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.download = 'hypothesis.' + type;
-  document.body.appendChild(a);
-  a.click();
+function download (text, type) {
+  var blob = new Blob([text], { type: 'application/octet-stream' })
+  var url = URL.createObjectURL(blob)
+  var a = document.createElement('a')
+  a.href = url
+  a.target = '_blank'
+  a.download = 'hypothesis.' + type
+  document.body.appendChild(a)
+  a.click()
 }
 
-function delay(seconds) {
-  return new Promise( resolve => setTimeout(resolve, seconds * 1000));
+function delay (seconds) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000))
 }
 
-async function waitSeconds(seconds) {
-  await delay(seconds);
-  return;
+async function waitSeconds (seconds) {
+  await delay(seconds)
 }
 
 // https://gist.github.com/monsur/706839
@@ -684,82 +680,82 @@ async function waitSeconds(seconds) {
  * http://www.w3.org/TR/XMLHttpRequest/#the-getallresponseheaders-method
  * This method parses that string into a user-friendly key/value pair object.
  */
-function parseResponseHeaders(headerStr) {
-  var headers = {};
+function parseResponseHeaders (headerStr) {
+  var headers = {}
   if (!headerStr) {
-    return headers;
+    return headers
   }
-  var headerPairs = headerStr.split('\u000d\u000a');
+  var headerPairs = headerStr.split('\u000d\u000a')
   for (var i = 0; i < headerPairs.length; i++) {
-    var headerPair = headerPairs[i];
-    // Can't use split() here because it does the wrong thing
-    // if the header value has the string ": " in it.
-    var index = headerPair.indexOf('\u003a\u0020');
+    var headerPair = headerPairs[i]
+        // Can't use split() here because it does the wrong thing
+        // if the header value has the string ": " in it.
+    var index = headerPair.indexOf('\u003a\u0020')
     if (index > 0) {
-      var key = headerPair.substring(0, index);
-      var val = headerPair.substring(index + 2);
-      headers[key] = val;
+      var key = headerPair.substring(0, index)
+      var val = headerPair.substring(index + 2)
+      headers[key] = val
     }
   }
-  return headers;
+  return headers
 }
 
 // functions used by the facet tool
 
-function collapseAll() {
-  var togglers = document.querySelectorAll('.urlHeading .toggle');
+function collapseAll () {
+  var togglers = document.querySelectorAll('.urlHeading .toggle')
   togglers.forEach(function (toggler) {
-    setToggleControlCollapse(toggler);
-  });
-  var cards = document.querySelectorAll('.annotationCard');
-  hideCards(cards);
+    setToggleControlCollapse(toggler)
+  })
+  var cards = document.querySelectorAll('.annotationCard')
+  hideCards(cards)
 }
 
-function expandAll() {
-  var togglers = document.querySelectorAll('.urlHeading .toggle');
+function expandAll () {
+  var togglers = document.querySelectorAll('.urlHeading .toggle')
   togglers.forEach(function (toggler) {
-    setToggleControlExpand(toggler);
-  });
-  var cards = document.querySelectorAll('.annotationCard');
-  showCards(cards);
+    setToggleControlExpand(toggler)
+  })
+  var cards = document.querySelectorAll('.annotationCard')
+  showCards(cards)
 }
 
-function setToggleControlCollapse(toggler) {
-  toggler.innerText = '\u25b6';
-  toggler.title = 'expand';
+function setToggleControlCollapse (toggler) {
+  toggler.innerText = '\u25b6'
+  toggler.title = 'expand'
 }
 
-function setToggleControlExpand(toggler) {
-  toggler.innerText = '\u25bc';
-  toggler.title = 'collapse';
+function setToggleControlExpand (toggler) {
+  toggler.innerText = '\u25bc'
+  toggler.title = 'collapse'
 }
 
-function showCards(cards) {
+function showCards (cards) {
   for (var i = 0; i < cards.length; i++) {
-    cards[i].style.display = 'block';
+    cards[i].style.display = 'block'
   }
 }
 
-function hideCards(cards) {
+function hideCards (cards) {
   for (var i = 0; i < cards.length; i++) {
-    cards[i].style.display = 'none';
+    cards[i].style.display = 'none'
   }
 }
 
-function toggle(id) {
-  var heading = getById('heading_' + id);
-  var toggler = heading.querySelector('.toggle');
+function toggle (id) {
+  var heading = getById('heading_' + id)
+  var toggler = heading.querySelector('.toggle')
 
-  var cardsId = `cards_${id}`;
-  var selector = `#${cardsId} .annotationCard`;
-  var perUrlCards = document.querySelectorAll(selector);
-  var cardsDisplay = perUrlCards[0].style.display;
+  var cardsId = `cards_${id}`
+  var selector = `#${cardsId} .annotationCard`
+  var perUrlCards = document.querySelectorAll(selector)
+  var cardsDisplay = perUrlCards[0].style.display
 
   if (cardsDisplay === 'block') {
-    setToggleControlCollapse(toggler);
-    hideCards(perUrlCards);
+    setToggleControlCollapse(toggler)
+    hideCards(perUrlCards)
   } else {
-    setToggleControlExpand(toggler);
-    showCards(perUrlCards);
+    setToggleControlExpand(toggler)
+    showCards(perUrlCards)
   }
 }
