@@ -95,7 +95,7 @@ function _search(params, callback, offset, annos, replies, progressId) {
       }
     });
 
-  }
+}
 
 function hApiSearch(params, callback, progressId) {
   var offset = 0;
@@ -500,9 +500,9 @@ function createUserInputForm (element) {
 
 function createFacetInputForm(e, facet, msg) {
   var form = `
-<div class="formLabel">${facet}</div>
-<div class="${facet}Form"><input id="${facet}Form"></input></div>
-<div class="formMessage">${msg}</div>`;
+    <div class="formLabel">${facet}</div>
+    <div class="${facet}Form"><input id="${facet}Form"></input></div>
+    <div class="formMessage">${msg}</div>`;
   e.innerHTML += form;
 }
 
@@ -537,13 +537,14 @@ function createGroupInputForm (e) {
       options += `<option ${selected} value="${g.id}">${g.name}</option>\n`;
     });
     var selector = `
-<select onchange="setSelectedGroup()" id="groupsList">
-${options}
-</select>`;
-  return selector;
+      <select onchange="setSelectedGroup()" id="groupsList">
+      ${options}
+      </select>`;
+    return selector;
   }
   
   var token = getToken();
+
   var opts = {
     method: 'get',
     url: 'https://hypothes.is/api/profile',
@@ -557,22 +558,22 @@ ${options}
         msg = 'add token and refresh to see all groups here';
       }
       var form = `
-<div class="formLabel">Hypothesis Group</div>
-<div class="inputForm">${createGroupSelector(response.groups)}</div> 
-<div class="formMessage">${msg}</div>`; 
-       e.innerHTML += form;
+        <div class="formLabel">Hypothesis Group</div>
+        <div class="inputForm">${createGroupSelector(response.groups)}</div>
+        <div class="formMessage">${msg}</div>`;
+      e.innerHTML += form;
       })
-      .catch (e => {
+    .catch (e => {
         console.log(e);
-      });
+    });
 }
 
 function createNamedInputForm(args) {
   let {element, name, id, value, onChange, type, msg} = args;
   let form =`
-<div class="formLabel">${name}</div>
-<div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
-<div class="formMessage">${msg}</div>`;
+    <div class="formLabel">${name}</div>
+    <div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
+    <div class="formMessage">${msg}</div>`;
   element.innerHTML += form;
   return element;
 }
@@ -630,34 +631,29 @@ function showAnnotation(anno, level) {
   var groupSlug = 'in Public';
   if (anno.group !== '__world__') {
     groupSlug = `
-in group 
-<span class="groupid"><a title="search group" target="_group" href="./?group=${anno.group}">${anno.group}</a>
-</span>`;
+      in group
+      <span class="groupid"><a title="search group" target="_group" href="./?group=${anno.group}">${anno.group}</a>
+      </span>`;
   }
 
   var output = `
-<div class="annotationCard" style="display:block; margin-left:${marginLeft}px;">
-  <div class="csvRow">${csvRow(level,anno)}</div>
-  <div class="annotationHeader">
-    <span class="user">
-      <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
-    </span>
-    <span class="timestamp"><a title="view/edit/reply"  target="_standalone" href="${standaloneAnnotationUrl}">${dt_str}</a>
-    </span>
-
-  ${groupSlug}
-
-  </div>
-  <div class="annotationBody">
-    ${quote}
-     <div>
-       ${html}
-     </div>
-     <div class="annotationTags">
-        ${tags}
-     </div>
-  </div>  
-</div>`
+    <div class="annotationCard" style="display:block; margin-left:${marginLeft}px;">
+      <div class="csvRow">${csvRow(level,anno)}</div>
+      <div class="annotationHeader">
+        <span class="user">
+        <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
+        </span>
+      <span class="timestamp"><a title="view/edit/reply"  target="_standalone"
+        href="${standaloneAnnotationUrl}">${dt_str}</a>
+      </span>
+      ${groupSlug}
+      </div>
+      <div class="annotationBody">
+        ${quote}
+        <div>${html}</div>
+        <div class="annotationTags">${tags}</div>
+      </div>
+    </div>`
   return output;
 }
 
