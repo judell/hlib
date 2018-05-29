@@ -1,0 +1,2 @@
+call tsc
+call webpack
