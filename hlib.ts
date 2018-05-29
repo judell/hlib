@@ -477,7 +477,7 @@ export function createApiTokenInputForm(element) {
     name: 'Hypothesis API token',
     id: 'token',
     value: getToken(),
-    onChange: 'setToken',
+    onChange: 'hlib.setToken',
     type: 'password',
     msg: 'to write (or read protected) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>',
   }
@@ -490,7 +490,7 @@ export function createUserInputForm(element) {
     name: 'Hypothesis username',
     id: 'user',
     value: getUser(),
-    onChange: 'setUser',
+    onChange: 'hlib.setUser',
     type: '',
     msg: '',
   };
