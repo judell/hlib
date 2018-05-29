@@ -38,19 +38,7 @@ export function httpRequest(opts: httpOpts) {
         xhr.setRequestHeader(key, opts.headers[key]);
       });
     }
-    var params = opts.params;
-    if (params && typeof params === "object") {
-      const keys = Object.keys(params)
-        .map(function (key) {
-          return (
-            encodeURIComponent(key) +
-            "=" +
-            encodeURIComponent(keys[key])
-          );
-        })
-        .join("&");
-    }
-    xhr.send(params);
+    xhr.send(opts.params);
   });
 }
 
