@@ -11,7 +11,7 @@
 <script>
   function setUser() {
     var value = document.getElementById('userForm').value;
-    localStorage.setItem('h_user', value);
+    localStorage.setItem('h_user', value); 
 }
 </script>
 
@@ -20,6 +20,8 @@
 import * as hlib from 'http://localhost:8000/hlib.js'
 
 var scratchUri = 'https://jonudell.net/h/scratch.html'
+var scratchQuote = 'First para'
+var scratchText = 'hlib test'
 
 function delay(seconds) {
   return new Promise( resolve => setTimeout(resolve, seconds * 1000))
@@ -51,6 +53,12 @@ function removeGroupContainer() {
 function checkAndDeleteTestAnnotation(data, token) {
   try {	
     var response = JSON.parse(data.response)
+    if (response.target[0].selector) {
+      var selectors = hlib.parseSelectors(response.target)
+      eq(selectors.TextQuote.exact, scratchQuote)
+      var annotation = hlib.parseAnnotation(response)
+      eq(annotation.quote, scratchQuote)
+    }
     assert(response.id)
     assert(response.updated)
     hlib.deleteAnnotation(response.id, token)
@@ -76,8 +84,6 @@ tests({
    let user = hlib.getUser()
    eq(user, "")
   },
-
-/* this test was a casualty of modularization */
 
 'username input form saves and retrieves value': function() {
    let formElement = document.createElement('div')
@@ -145,7 +151,7 @@ tests({
    var params = {}
    params.uri = scratchUri,
    params.group = '__world__'
-   params.text = 'hlib test'
+   params.text = scratchText
    var payload = hlib.createAnnotationPayload(params)
    hlib.postAnnotation(payload, token)
      .then(data => {
@@ -161,8 +167,8 @@ tests({
    var params = {}
    params.uri = scratchUri,
    params.group = '__world__'
-   params.text = 'hlib test'
-   params.exact = 'First para'
+   params.text = scratchText
+   params.exact = scratchQuote
    var payload = hlib.createAnnotationPayload(params)
    hlib.postAnnotation(payload, token)
      .then(data => {
