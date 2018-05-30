@@ -28,13 +28,13 @@ type annotation = {
 	target: object
 }
 
-type TextPositionSelector = {
+type textPositionSelector = {
 	type: string
 	start: number
 	end: number
 }
 
-type TextQuoteSelector = {
+type textQuoteSelector = {
 	type: string
 	exact: string
 	prefix?: string
@@ -111,7 +111,7 @@ function _search(params: any, callback: any, offset: number, annos: object[], re
 	opts = setApiTokenHeaders(opts)
 
 	httpRequest(opts).then(function(data) {
-		let _data: any = data
+		let _data:any = data
 		let response: any = JSON.parse(_data.response)
 		annos = annos.concat(response.rows)
 		replies = replies.concat(response.replies)
@@ -131,11 +131,8 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
 }
 
 export function findRepliesForId(id: string, replies: any) {
-	var _replies = replies.filter((x) => {
-		return x.references.indexOf(id) != -1
-	})
-	return _replies.map((a) => parseAnnotation(a)).reverse()
-}
+	var _replies = replies.filter(function(x:any) { return x.references.indexOf(id) != -1	})
+	return _replies.map(function(a:any) { return parseAnnotation(a)}).reverse() }
 
 // organize a set of annotations, from https://hypothes.is/api/search, by url
 export function gatherAnnotationsByUrl(rows: object[]) {
@@ -241,7 +238,7 @@ export function parseSelectors(target: any): object {
 	if (firstTarget) {
 		var selectors = firstTarget.selector
 		if (selectors) {
-			var textQuote = selectors.filter((x) => x.type === 'TextQuoteSelector')
+			var textQuote = selectors.filter(function(x:any) { return x.type === 'TextQuoteSelector'} )
 			if (textQuote.length) {
 				parsedSelectors['TextQuote'] = {
 					exact: textQuote[0].exact,
@@ -249,7 +246,7 @@ export function parseSelectors(target: any): object {
 					suffix: textQuote[0].suffix
 				}
 			}
-			var textPosition = selectors.filter((x) => x.type === 'TextPositionSelector')
+			var textPosition = selectors.filter(function(x:any) { return x.type === 'TextPositionSelector' })
 			if (textPosition.length) {
 				parsedSelectors['TextPosition'] = {
 					start: textPosition[0].start,
@@ -340,7 +337,8 @@ export function getFromUrlParamOrLocalStorage(key: string, _default?: string) {
 	var value = gup(key)
 
 	if (value === '') {
-		value = localStorage.getItem(`${key}`)
+		let _value = localStorage.getItem(`${key}`)
+		value = _value ? _value : '' 
 	}
 
 	if ((!value || value === '') && _default) {
@@ -363,8 +361,8 @@ export function createPermissions(username: string, group: string) {
 	return permissions
 }
 
-export function createTextQuoteSelector(exact: string, prefix: string, suffix: string): TextQuoteSelector {
-	let tqs: TextQuoteSelector = {
+export function createTextQuoteSelector(exact: string, prefix: string, suffix: string): textQuoteSelector {
+	let tqs: textQuoteSelector = {
 		type: 'TextQuoteSelector',
 		exact: exact,
 		prefix: '',
@@ -379,8 +377,8 @@ export function createTextQuoteSelector(exact: string, prefix: string, suffix: s
 	return tqs
 }
 
-export function createTextPositionSelector(start: number, end: number): TextPositionSelector {
-	let tps: TextPositionSelector = {
+export function createTextPositionSelector(start: number, end: number): textPositionSelector {
+	let tps: textPositionSelector = {
 		type: 'TextPositionSelector',
 		start: start,
 		end: end
@@ -466,9 +464,10 @@ export function postAnnotation(payload: string, token: string) {
 export function postAnnotationAndRedirect(payload: string, token: string, queryFragment?: string) {
 	return postAnnotation(payload, token)
 		.then((data) => {
-			var response = JSON.parse(data.response)
-			if (data.status != 200) {
-				alert(`hlib status ${data.status}`)
+			let _data:any = data
+			let response:any = JSON.parse(_data.response)
+			if (response.status != 200) {
+				alert(`hlib status ${response.status}`)
 				return
 			}
 			var url = response.uri
@@ -559,10 +558,10 @@ export function getSelectedGroup() {
 }
 
 export function createGroupInputForm(e: HTMLElement) {
-	function createGroupSelector(groups) {
+	function createGroupSelector(groups: any) {
 		var currentGroup = getGroup()
 		var options = ''
-		groups.forEach((g) => {
+		groups.forEach(function(g:any) {
 			var selected = ''
 			if (currentGroup == g.id) {
 				selected = 'selected'
@@ -587,7 +586,8 @@ export function createGroupInputForm(e: HTMLElement) {
 	opts = setApiTokenHeaders(opts, token)
 	httpRequest(opts)
 		.then((data) => {
-			var response = JSON.parse(data.response)
+			let _data:any = data
+			let response:any = JSON.parse(_data.response)
 			var msg = ''
 			if (!token) {
 				msg = 'add token and refresh to see all groups here'
