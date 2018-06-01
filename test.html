@@ -10,7 +10,7 @@
 <!-- this duplicates hlib.setUser because forms created in tests can't see the module -->
 <script>
   function setUser() {
-    var value = document.getElementById('userForm').value;
+    let value = document.getElementById('userForm').value;
     localStorage.setItem('h_user', value); 
 }
 </script>
@@ -19,9 +19,9 @@
 
 import * as hlib from 'http://localhost:8000/hlib.js'
 
-var scratchUri = 'https://jonudell.net/h/scratch.html'
-var scratchQuote = 'First para'
-var scratchText = 'hlib test'
+let scratchUri = 'https://jonudell.net/h/scratch.html'
+let scratchQuote = 'First para'
+let scratchText = 'hlib test'
 
 function delay(seconds) {
   return new Promise( resolve => setTimeout(resolve, seconds * 1000))
@@ -37,14 +37,14 @@ function appendBody(element) {
 }
 
 function createGroupContainer() {
-  var groupContainer = document.createElement('div');
+  let groupContainer = document.createElement('div');
   groupContainer.id = 'groupContainer';
   document.body.append(groupContainer);
   return groupContainer;
 }
 
 function removeGroupContainer() {
-  var groupContainer = hlib.getById('groupContainer')
+  let groupContainer = hlib.getById('groupContainer')
   if (groupContainer) {
     groupContainer.remove()
   }
@@ -52,11 +52,11 @@ function removeGroupContainer() {
 
 function checkAndDeleteTestAnnotation(data, token) {
   try {	
-    var response = JSON.parse(data.response)
+    let response = JSON.parse(data.response)
     if (response.target[0].selector) {
-      var selectors = hlib.parseSelectors(response.target)
+      let selectors = hlib.parseSelectors(response.target)
       eq(selectors.TextQuote.exact, scratchQuote)
-      var annotation = hlib.parseAnnotation(response)
+      let annotation = hlib.parseAnnotation(response)
       eq(annotation.quote, scratchQuote)
     }
     assert(response.id)
@@ -128,7 +128,7 @@ tests({
  },
 
 'creates group picklist with > 1 groups when token': function() {
-   var groupContainer = createGroupContainer()
+   let groupContainer = createGroupContainer()
    hlib.createGroupInputForm(groupContainer)
    waitSeconds(1)
      .then( r => {
@@ -145,10 +145,10 @@ tests({
  },
 
 'creates group picklist with 1 group when no token': function() {
-  var token = hlib.getToken()
+  let token = hlib.getToken()
   hlib.getById('token').setAttribute('value',token)
   delete localStorage['h_token']
-  var groupContainer = createGroupContainer()
+  let groupContainer = createGroupContainer()
   hlib.createGroupInputForm(groupContainer)
   waitSeconds(1)
     .then( r => {
@@ -166,13 +166,13 @@ tests({
  },
 
  'creates a pagenote': function() {
-   var token = hlib.getById('token').value
-   var params = {
+   let token = hlib.getById('token').value
+   let params = {
      uri: scratchUri,
      group: '__world__',
      text: scratchText,
    }
-   var payload = hlib.createAnnotationPayload(params)
+   let payload = hlib.createAnnotationPayload(params)
    hlib.postAnnotation(payload, token)
      .then(data => {
        waitSeconds(1, data)
@@ -183,14 +183,14 @@ tests({
  },
 
  'creates an annotation': function() {
-   var token = hlib.getById('token').value
-   var params = {
+   let token = hlib.getById('token').value
+   let params = {
      uri: scratchUri,
      group: '__world__',
      text: scratchText,
      exact: scratchQuote,
    }
-   var payload = hlib.createAnnotationPayload(params)
+   let payload = hlib.createAnnotationPayload(params)
    hlib.postAnnotation(payload, token)
      .then(data => {
        waitSeconds(1, data)
@@ -205,7 +205,7 @@ tests({
     eq(hlib.parseAnnotation(replies[0]).id, '7sCdHGXdEeiJTifW5lnXMA')
   }
   let token = hlib.getById('token').value
-  var params = {
+  let params = {
     user: 'judell',
     tag: 'hlibtest',
   }
