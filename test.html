@@ -107,7 +107,26 @@ tests({
    delete localStorage['h_user']
    form.remove()
  }, 
- 
+
+'creates facet input form': function() {
+   let formElement = document.createElement('div')
+   let args = {
+     element: formElement,
+     name: 'tag',
+     id: 'tag',
+     value: '',
+     onchange: '',
+     type: '',
+     msg: ''
+   }
+   let form = hlib.createFacetInputForm(formElement, 'tag', 'hypothesis tag')
+   appendBody(form)
+   let inputElement = hlib.getById('tagForm')
+   inputElement.value = 'tag'
+   eq(document.getElementsByClassName('tagForm')[0].innerHTML, '<input id="tagForm">')
+   form.remove()
+ },
+  
 'creates group picklist with > 1 groups when token': function() {
    var groupContainer = createGroupContainer()
    hlib.createGroupInputForm(groupContainer)

@@ -557,6 +557,7 @@ export function createFacetInputForm(e: HTMLElement, facet: string, msg: string)
     <div class="${facet}Form"><input id="${facet}Form"></input></div>
     <div class="formMessage">${msg}</div>`
 	e.innerHTML += form
+	return e // for testing
 }
 
 export function setSelectedGroup() {
