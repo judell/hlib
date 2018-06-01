@@ -126,7 +126,7 @@ tests({
    eq(document.getElementsByClassName('tagForm')[0].innerHTML, '<input id="tagForm">')
    form.remove()
  },
-  
+
 'creates group picklist with > 1 groups when token': function() {
    var groupContainer = createGroupContainer()
    hlib.createGroupInputForm(groupContainer)
@@ -167,10 +167,11 @@ tests({
 
  'creates a pagenote': function() {
    var token = hlib.getById('token').value
-   var params = {}
-   params.uri = scratchUri,
-   params.group = '__world__'
-   params.text = scratchText
+   var params = {
+     uri: scratchUri,
+     group: '__world__',
+     text: scratchText,
+   }
    var payload = hlib.createAnnotationPayload(params)
    hlib.postAnnotation(payload, token)
      .then(data => {
@@ -183,11 +184,12 @@ tests({
 
  'creates an annotation': function() {
    var token = hlib.getById('token').value
-   var params = {}
-   params.uri = scratchUri,
-   params.group = '__world__'
-   params.text = scratchText
-   params.exact = scratchQuote
+   var params = {
+     uri: scratchUri,
+     group: '__world__',
+     text: scratchText,
+     exact: scratchQuote,
+   }
    var payload = hlib.createAnnotationPayload(params)
    hlib.postAnnotation(payload, token)
      .then(data => {
@@ -196,6 +198,18 @@ tests({
          checkAndDeleteTestAnnotation(data, token)
        })
      })
+ },
+
+'finds a test annotation': function() {
+  function callback(replies, annos) {
+    eq(hlib.parseAnnotation(replies[0]).id, '7sCdHGXdEeiJTifW5lnXMA')
+  }
+  let token = hlib.getById('token').value
+  var params = {
+    user: 'judell',
+    tag: 'hlibtest',
+  }
+  hlib.hApiSearch(params, callback)
  }
 
 })
