@@ -7,5 +7,12 @@ module.exports = {
     filename: 'hlib.bundle.js',
     library: 'hlib',
   },
-  //devtool: 'inline-source-map'
+  devtool: 'source-map',
+  module: {
+    rules: [
+      {
+        use: ['source-map-loader'],
+      }
+    ]
+  }
 };
