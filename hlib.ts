@@ -532,6 +532,16 @@ export function createUserInputForm(element: HTMLElement) {
 	createNamedInputForm(userArgs)
 }
 
+export function createNamedInputForm(args: any) {
+	let { element, name, id, value, onChange, type, msg } = args
+	let form = `
+    <div class="formLabel">${name}</div>
+    <div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
+    <div class="formMessage">${msg}</div>`
+	element.innerHTML += form
+	return element
+}
+
 export function createFacetInputForm(e: HTMLElement, facet: string, msg: string) {
 	var form = `
     <div class="formLabel">${facet}</div>
@@ -601,16 +611,6 @@ export function createGroupInputForm(e: HTMLElement) {
 		.catch((e) => {
 			console.log(e)
 		})
-}
-
-export function createNamedInputForm(args: any) {
-	let { element, name, id, value, onChange, type, msg } = args
-	let form = `
-    <div class="formLabel">${name}</div>
-    <div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
-    <div class="formMessage">${msg}</div>`
-	element.innerHTML += form
-	return element
 }
 
 export function formatTags(tags: string[]): string {
