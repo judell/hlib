@@ -449,19 +449,6 @@ export function createNamedInputForm(args) {
     element.innerHTML += form;
     return element; // useful for testing
 }
-/*
-export function createFacetInputForm(e: HTMLElement, facet: string, msg: string) {
-  let args: inputFormArgs = {
-        element: e,
-        name: facet,
-        id: facet,
-        value: '',
-        onchange: '',
-        type: '',
-        msg: msg,
-    }
-    createNamedInputForm(args)
-}*/
 export function createFacetInputForm(e, facet, msg) {
     var form = `
     <div class="formLabel">${facet}</div>
