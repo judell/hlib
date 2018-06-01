@@ -41,6 +41,16 @@ type textQuoteSelector = {
 	suffix?: string
 }
 
+type inputFormArgs = {
+	element: HTMLElement,  // attach to this element
+	name: string,          // name of the field
+	id: string,            // id + 'Form' is used as a class attr and as id of input element
+	value: string,         // initial value of input element
+	onchange: string,      // name of handler
+	type: string,          // usually '' but can be e.g. 'password'
+	msg: string,           // help message for the field
+}
+
 // promisifed xhr
 export function httpRequest(opts: httpOpts) {
 	return new Promise(function(resolve, reject) {
@@ -506,40 +516,39 @@ export function deleteAnnotation(id: string, token: string) {
 }
 
 export function createApiTokenInputForm(element: HTMLElement) {
-	let tokenArgs = {
+	let tokenArgs:inputFormArgs = {
 		element: element,
 		name: 'Hypothesis API token',
 		id: 'token',
 		value: getToken(),
-		onChange: 'hlib.setToken',
+		onchange: 'hlib.setToken',
 		type: 'password',
-		msg:
-			'to write (or read protected) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>'
+		msg: 'to write (or read private) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>'
 	}
 	createNamedInputForm(tokenArgs)
 }
 
 export function createUserInputForm(element: HTMLElement) {
-	let userArgs = {
+	let userArgs:inputFormArgs = {
 		element: element,
 		name: 'Hypothesis username',
 		id: 'user',
 		value: getUser(),
-		onChange: 'hlib.setUser',
+		onchange: 'hlib.setUser',
 		type: '',
 		msg: ''
 	}
 	createNamedInputForm(userArgs)
 }
 
-export function createNamedInputForm(args: any) {
-	let { element, name, id, value, onChange, type, msg } = args
+export function createNamedInputForm(args: inputFormArgs) {
+	let { element, name, id, value, onchange, type, msg } = args
 	let form = `
     <div class="formLabel">${name}</div>
-    <div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
-    <div class="formMessage">${msg}</div>`
-	element.innerHTML += form
-	return element
+    <div class="${id}Form"><input onchange="${onchange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
+		<div class="formMessage">${msg}</div>`
+		element.innerHTML += form
+		return element  // useful for testing
 }
 
 export function createFacetInputForm(e: HTMLElement, facet: string, msg: string) {

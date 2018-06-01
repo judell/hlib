@@ -4,23 +4,22 @@ export function httpRequest(opts) {
         var xhr = new XMLHttpRequest();
         xhr.open(opts.method, opts.url);
         xhr.onload = function () {
+            let r = {
+                response: xhr.response,
+                status: xhr.status,
+                statusText: xhr.statusText,
+                headers: parseResponseHeaders(xhr.getAllResponseHeaders())
+            };
             if (this.status >= 200 && this.status < 300) {
-                resolve({
-                    response: xhr.response,
-                    status: xhr.status,
-                    headers: parseResponseHeaders(xhr.getAllResponseHeaders()),
-                });
+                resolve(r);
             }
             else {
-                console.log("http", opts.url, this.status);
-                reject({
-                    status: this.status,
-                    statusText: xhr.statusText
-                });
+                console.log('http', opts.url, this.status);
+                reject(r);
             }
         };
         xhr.onerror = function (e) {
-            console.log("httpRequest", opts.url, this.status);
+            console.log('httpRequest', opts.url, this.status);
             reject({
                 error: e,
                 status: this.status,
@@ -32,17 +31,7 @@ export function httpRequest(opts) {
                 xhr.setRequestHeader(key, opts.headers[key]);
             });
         }
-        var params = opts.params;
-        if (params && typeof params === "object") {
-            const keys = Object.keys(params)
-                .map(function (key) {
-                return (encodeURIComponent(key) +
-                    "=" +
-                    encodeURIComponent(keys[key]));
-            })
-                .join("&");
-        }
-        xhr.send(params);
+        xhr.send(opts.params);
     });
 }
 function _search(params, callback, offset, annos, replies, progressId) {
@@ -60,6 +49,8 @@ function _search(params, callback, offset, annos, replies, progressId) {
     var opts = {
         method: 'get',
         url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}&offset=${offset}`,
+        headers: {},
+        params: {}
     };
     var facets = ['group', 'user', 'tag', 'url', 'any'];
     facets.forEach(function (facet) {
@@ -69,12 +60,12 @@ function _search(params, callback, offset, annos, replies, progressId) {
         }
     });
     opts = setApiTokenHeaders(opts);
-    httpRequest(opts)
-        .then(function (data) {
-        data = JSON.parse(data.response);
-        annos = annos.concat(data.rows);
-        replies = replies.concat(data.replies);
-        if (data.rows.length === 0 || annos.length >= max) {
+    httpRequest(opts).then(function (data) {
+        let _data = data;
+        let response = JSON.parse(_data.response);
+        annos = annos.concat(response.rows);
+        replies = replies.concat(response.replies);
+        if (response.rows.length === 0 || annos.length >= max) {
             callback(annos, replies);
         }
         else {
@@ -89,10 +80,8 @@ export function hApiSearch(params, callback, progressId) {
     _search(params, callback, offset, annos, replies, progressId);
 }
 export function findRepliesForId(id, replies) {
-    var _replies = replies.filter(function (x) {
-        return (x.references.indexOf(id) != -1);
-    });
-    return _replies.map(a => parseAnnotation(a)).reverse();
+    var _replies = replies.filter(function (x) { return x.references.indexOf(id) != -1; });
+    return _replies.map(function (a) { return parseAnnotation(a); }).reverse();
 }
 // organize a set of annotations, from https://hypothes.is/api/search, by url
 export function gatherAnnotationsByUrl(rows) {
@@ -107,18 +96,20 @@ export function gatherAnnotationsByUrl(rows) {
         var id = annotation.id;
         annos[id] = annotation; // save it by id
         var url = annotation.url; // remember these things
-        url = url.replace(/\/$/, ""); // strip trailing slash
+        url = url.replace(/\/$/, ''); // strip trailing slash
         var updated = annotation.updated;
         var title = annotation.title;
         if (!title)
             title = url;
-        if (url in urls) { // add/update this url's info
+        if (url in urls) {
+            // add/update this url's info
             urls[url] += 1;
             ids[url].push(id);
             if (updated > urlUpdates.url)
                 urlUpdates[url] = updated;
         }
-        else { // init this url's info
+        else {
+            // init this url's info
             urls[url] = 1;
             ids[url] = [id];
             titles[url] = title;
@@ -140,24 +131,24 @@ export function parseAnnotation(row) {
     var group = row.group;
     var title = url;
     var refs = row.references ? row.references : [];
-    var user = row.user.replace("acct:", "").replace("@hypothes.is", "");
-    var quote = "";
+    var user = row.user.replace('acct:', '').replace('@hypothes.is', '');
+    var quote = '';
     if (row.target && row.target.length) {
         var selectors = row.target[0].selector;
         if (selectors) {
             for (var i = 0; i < selectors.length; i++) {
                 let selector = selectors[i];
-                if (selector.type === "TextQuoteSelector") {
+                if (selector.type === 'TextQuoteSelector') {
                     quote = selector.exact;
                 }
             }
         }
     }
-    var text = row.text ? row.text : "";
+    var text = row.text ? row.text : '';
     var tags = row.tags;
     try {
         title = row.document.title;
-        if (typeof title === "object") {
+        if (typeof title === 'object') {
             title = title[0];
         }
         else {
@@ -169,7 +160,7 @@ export function parseAnnotation(row) {
     }
     var isReply = refs.length > 0;
     var isPagenote = row.target && !row.target[0].hasOwnProperty('selector');
-    return {
+    let r = {
         id: id,
         url: url,
         updated: updated,
@@ -182,8 +173,9 @@ export function parseAnnotation(row) {
         quote: quote,
         tags: tags,
         group: group,
-        target: row.target,
+        target: row.target
     };
+    return r;
 }
 export function parseSelectors(target) {
     var parsedSelectors = {};
@@ -191,19 +183,19 @@ export function parseSelectors(target) {
     if (firstTarget) {
         var selectors = firstTarget.selector;
         if (selectors) {
-            var textQuote = selectors.filter(x => x.type === 'TextQuoteSelector');
+            var textQuote = selectors.filter(function (x) { return x.type === 'TextQuoteSelector'; });
             if (textQuote.length) {
                 parsedSelectors['TextQuote'] = {
-                    'exact': textQuote[0].exact,
-                    'prefix': textQuote[0].prefix,
-                    'suffix': textQuote[0].suffix,
+                    exact: textQuote[0].exact,
+                    prefix: textQuote[0].prefix,
+                    suffix: textQuote[0].suffix
                 };
             }
-            var textPosition = selectors.filter(x => x.type === 'TextPositionSelector');
+            var textPosition = selectors.filter(function (x) { return x.type === 'TextPositionSelector'; });
             if (textPosition.length) {
                 parsedSelectors['TextPosition'] = {
-                    'start': textPosition[0].start,
-                    'end': textPosition[0].end,
+                    start: textPosition[0].start,
+                    end: textPosition[0].end
                 };
             }
         }
@@ -218,12 +210,12 @@ export function gup(name, str) {
     else {
         str = '?' + str;
     }
-    name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-    var regexS = "[\\?&]" + name + "=([^&#]*)";
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regexS = '[\\?&]' + name + '=([^&#]*)';
     var regex = new RegExp(regexS);
     var results = regex.exec(str);
     if (results == null) {
-        return "";
+        return '';
     }
     else {
         return results[1];
@@ -246,8 +238,8 @@ export function setApiTokenHeaders(opts, token) {
     }
     if (token) {
         opts.headers = {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json;charset=utf-8',
+            Authorization: 'Bearer ' + token,
+            'Content-Type': 'application/json;charset=utf-8'
         };
     }
     return opts;
@@ -272,13 +264,14 @@ export function setGroup() {
     setLocalStorageFromForm('groupForm', 'h_group');
 }
 export function setLocalStorageFromForm(formId, storageKey) {
-    var value = getById(formId).value;
-    localStorage.setItem(storageKey, value);
+    var element = getById(formId);
+    localStorage.setItem(storageKey, element.value);
 }
 export function getFromUrlParamOrLocalStorage(key, _default) {
     var value = gup(key);
     if (value === '') {
-        value = localStorage.getItem(`${key}`);
+        let _value = localStorage.getItem(`${key}`);
+        value = _value ? _value : '';
     }
     if ((!value || value === '') && _default) {
         value = _default;
@@ -290,31 +283,34 @@ export function getFromUrlParamOrLocalStorage(key, _default) {
 }
 export function createPermissions(username, group) {
     var permissions = {
-        "read": ['group:' + group],
-        "update": ['acct:' + username + '@hypothes.is'],
-        "delete": ['acct:' + username + '@hypothes.is'],
+        read: ['group:' + group],
+        update: ['acct:' + username + '@hypothes.is'],
+        delete: ['acct:' + username + '@hypothes.is']
     };
     return permissions;
 }
 export function createTextQuoteSelector(exact, prefix, suffix) {
-    var selector = {
-        type: "TextQuoteSelector",
+    let tqs = {
+        type: 'TextQuoteSelector',
         exact: exact,
+        prefix: '',
+        suffix: ''
     };
     if (prefix) {
-        selector.prefix = prefix;
+        tqs.prefix = prefix;
     }
     if (suffix) {
-        selector.suffix = suffix;
+        tqs.suffix = suffix;
     }
-    return selector;
+    return tqs;
 }
 export function createTextPositionSelector(start, end) {
-    return {
-        type: "TextPositionSelector",
+    let tps = {
+        type: 'TextPositionSelector',
         start: start,
         end: end
     };
+    return tps;
 }
 /*
 Expects an object with these keys:
@@ -329,32 +325,36 @@ Expects an object with these keys:
 */
 export function createAnnotationPayload(params) {
     //uri, exact, username, group, text, tags, extra){
-    var textQuoteSelector, textPositionSelector;
-    if (params.exact) { // we have minimum info need for a TextQuoteSelector
+    let textQuoteSelector;
+    let textPositionSelector;
+    if (params.exact) {
+        // we have minimum info need for a TextQuoteSelector
         textQuoteSelector = createTextQuoteSelector(params.exact, params.prefix, params.suffix);
     }
     if (params.start && params.end) {
         textPositionSelector = createTextPositionSelector(params.start, params.end);
     }
     var target = {
-        source: params.uri,
+        source: params.uri
     };
-    if (textQuoteSelector) { // we have minimum info for an annotation target
+    if (textQuoteSelector) {
+        // we have minimum info for an annotation target
         var selectors = [textQuoteSelector];
-        if (textPositionSelector) { // we can also use TextPosition
+        if (textPositionSelector) {
+            // we can also use TextPosition
             selectors.push(textPositionSelector);
         }
         target['selector'] = selectors;
     }
     var payload = {
-        "uri": params.uri,
-        "group": params.group,
-        "permissions": createPermissions(params.username, params.group),
-        "text": params.text,
-        "document": {
-            "title": [params.uri],
+        uri: params.uri,
+        group: params.group,
+        permissions: createPermissions(params.username, params.group),
+        text: params.text,
+        document: {
+            title: [params.uri]
         },
-        "tags": params.tags ? params.tags : [],
+        tags: params.tags ? params.tags : []
     };
     if (target) {
         payload.target = [target];
@@ -370,16 +370,18 @@ export function postAnnotation(payload, token) {
         method: 'post',
         params: payload,
         url: url,
+        headers: {}
     };
     opts = setApiTokenHeaders(opts, token);
     return httpRequest(opts);
 }
 export function postAnnotationAndRedirect(payload, token, queryFragment) {
     return postAnnotation(payload, token)
-        .then(data => {
-        var response = JSON.parse(data.response);
-        if (data.status != 200) {
-            alert(`hlib status ${data.status}`);
+        .then((data) => {
+        let _data = data;
+        let response = JSON.parse(_data.response);
+        if (response.status != 200) {
+            alert(`hlib status ${response.status}`);
             return;
         }
         var url = response.uri;
@@ -388,7 +390,7 @@ export function postAnnotationAndRedirect(payload, token, queryFragment) {
         }
         location.href = url;
     })
-        .catch(e => {
+        .catch((e) => {
         console.log(e);
     });
 }
@@ -398,6 +400,7 @@ export function updateAnnotation(id, token, payload) {
         method: 'put',
         params: payload,
         url: url,
+        headers: {}
     };
     opts = setApiTokenHeaders(opts, token);
     return httpRequest(opts);
@@ -407,6 +410,8 @@ export function deleteAnnotation(id, token) {
     var opts = {
         method: 'delete',
         url: url,
+        headers: {},
+        params: {}
     };
     opts = setApiTokenHeaders(opts, token);
     return httpRequest(opts);
@@ -417,9 +422,9 @@ export function createApiTokenInputForm(element) {
         name: 'Hypothesis API token',
         id: 'token',
         value: getToken(),
-        onChange: 'setToken',
+        onchange: 'hlib.setToken',
         type: 'password',
-        msg: 'to write (or read protected) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>',
+        msg: 'to write (or read private) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>'
     };
     createNamedInputForm(tokenArgs);
 }
@@ -429,12 +434,34 @@ export function createUserInputForm(element) {
         name: 'Hypothesis username',
         id: 'user',
         value: getUser(),
-        onChange: 'setUser',
+        onchange: 'hlib.setUser',
         type: '',
-        msg: '',
+        msg: ''
     };
     createNamedInputForm(userArgs);
 }
+export function createNamedInputForm(args) {
+    let { element, name, id, value, onchange, type, msg } = args;
+    let form = `
+    <div class="formLabel">${name}</div>
+    <div class="${id}Form"><input onchange="${onchange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
+		<div class="formMessage">${msg}</div>`;
+    element.innerHTML += form;
+    return element; // useful for testing
+}
+/*
+export function createFacetInputForm(e: HTMLElement, facet: string, msg: string) {
+  let args: inputFormArgs = {
+        element: e,
+        name: facet,
+        id: facet,
+        value: '',
+        onchange: '',
+        type: '',
+        msg: msg,
+    }
+    createNamedInputForm(args)
+}*/
 export function createFacetInputForm(e, facet, msg) {
     var form = `
     <div class="formLabel">${facet}</div>
@@ -447,8 +474,8 @@ export function setSelectedGroup() {
     localStorage.setItem('h_group', selectedGroup);
 }
 export function getSelectedGroup() {
-    var selectedGroup;
-    var groupSelector = document.querySelector('#groupsList');
+    let selectedGroup;
+    let groupSelector = document.querySelector('#groupsList');
     if (getToken() && groupSelector) {
         var selectedGroupIndex = groupSelector.selectedIndex;
         selectedGroup = groupSelector[selectedGroupIndex].value;
@@ -462,7 +489,7 @@ export function createGroupInputForm(e) {
     function createGroupSelector(groups) {
         var currentGroup = getGroup();
         var options = '';
-        groups.forEach(g => {
+        groups.forEach(function (g) {
             var selected = '';
             if (currentGroup == g.id) {
                 selected = 'selected';
@@ -479,11 +506,14 @@ export function createGroupInputForm(e) {
     var opts = {
         method: 'get',
         url: 'https://hypothes.is/api/profile',
+        headers: {},
+        params: {}
     };
     opts = setApiTokenHeaders(opts, token);
     httpRequest(opts)
-        .then(data => {
-        var response = JSON.parse(data.response);
+        .then((data) => {
+        let _data = data;
+        let response = JSON.parse(_data.response);
         var msg = '';
         if (!token) {
             msg = 'add token and refresh to see all groups here';
@@ -494,18 +524,9 @@ export function createGroupInputForm(e) {
         <div class="formMessage">${msg}</div>`;
         e.innerHTML += form;
     })
-        .catch(e => {
+        .catch((e) => {
         console.log(e);
     });
-}
-export function createNamedInputForm(args) {
-    let { element, name, id, value, onChange, type, msg } = args;
-    let form = `
-    <div class="formLabel">${name}</div>
-    <div class="${id}Form"><input onchange="${onChange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
-    <div class="formMessage">${msg}</div>`;
-    element.innerHTML += form;
-    return element;
 }
 export function formatTags(tags) {
     var formattedTags = [];
@@ -516,7 +537,17 @@ export function formatTags(tags) {
     return formattedTags.join(' ');
 }
 export function csvRow(level, anno) {
-    var fields = [level.toString(), anno.updated, anno.url, anno.user, anno.id, anno.group, anno.tags.join(', '), anno.quote, anno.text];
+    var fields = [
+        level.toString(),
+        anno.updated,
+        anno.url,
+        anno.user,
+        anno.id,
+        anno.group,
+        anno.tags.join(', '),
+        anno.quote,
+        anno.text
+    ];
     fields.push(`https://hyp.is/${anno.id}`); // add direct link
     fields = fields.map(function (field) {
         if (field) {
@@ -577,7 +608,7 @@ export function showAnnotation(anno, level) {
 }
 export function download(text, type) {
     var blob = new Blob([text], {
-        type: "application/octet-stream"
+        type: 'application/octet-stream'
     });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -624,7 +655,7 @@ export function collapseAll() {
 }
 export function expandAll() {
     var togglers = document.querySelectorAll('.urlHeading .toggle');
-    togglers.forEach(function (toggler) {
+    togglers.forEach((toggler) => {
         setToggleControlExpand(toggler);
     });
     var cards = document.querySelectorAll('.annotationCard');

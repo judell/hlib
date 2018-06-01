@@ -6,5 +6,6 @@ module.exports = {
     path: path.join(__dirname, '.'),
     filename: 'hlib.bundle.js',
     library: 'hlib',
-  }
+  },
+  //devtool: 'cheap-eval-source-map'
 };
