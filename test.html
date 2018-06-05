@@ -15,9 +15,19 @@
 }
 </script>
 
-<script type="module">
+ <!-- This module syntax is so convenient... -->
+<script type="module">  
 
+// Because with this import method...
 import * as hlib from 'http://localhost:8000/hlib.js'
+// ... I can debug the library, which uses export statements, directly. 
+
+// For deployed apps based on this library, the pattern so far is:
+//  - bundle as hlib.bundle.js
+//  - run webpack
+//  - use devtool to produce a source map
+//  - use source-map-loader to load the source map
+// It will be nice when all that nonsense goes away.
 
 let scratchUri = 'https://jonudell.net/h/scratch.html'
 let scratchQuote = 'First para'
