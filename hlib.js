@@ -416,6 +416,7 @@ export function deleteAnnotation(id, token) {
     opts = setApiTokenHeaders(opts, token);
     return httpRequest(opts);
 }
+// input form for api token, remembered in local storage
 export function createApiTokenInputForm(element) {
     let tokenArgs = {
         element: element,
@@ -428,6 +429,7 @@ export function createApiTokenInputForm(element) {
     };
     createNamedInputForm(tokenArgs);
 }
+// input form for username, remembered in local storage
 export function createUserInputForm(element) {
     let userArgs = {
         element: element,
@@ -440,6 +442,9 @@ export function createUserInputForm(element) {
     };
     createNamedInputForm(userArgs);
 }
+// create an input field with a handler to save,
+// optionally a default value,
+// optionally a type (e.g. password)
 export function createNamedInputForm(args) {
     let { element, name, id, value, onchange, type, msg } = args;
     let form = `
@@ -447,8 +452,9 @@ export function createNamedInputForm(args) {
     <div class="${id}Form"><input onchange="${onchange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
 		<div class="formMessage">${msg}</div>`;
     element.innerHTML += form;
-    return element; // useful for testing
+    return element; // return value used for testing
 }
+// create a simple input field
 export function createFacetInputForm(e, facet, msg) {
     var form = `
     <div class="formLabel">${facet}</div>
