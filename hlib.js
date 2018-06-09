@@ -80,8 +80,14 @@ export function hApiSearch(params, callback, progressId) {
     _search(params, callback, offset, annos, replies, progressId);
 }
 export function findRepliesForId(id, replies) {
-    var _replies = replies.filter(function (x) { return x.references.indexOf(id) != -1; });
-    return _replies.map(function (a) { return parseAnnotation(a); }).reverse();
+    var _replies = replies.filter(function (x) {
+        return x.references.indexOf(id) != -1;
+    });
+    return _replies
+        .map(function (a) {
+        return parseAnnotation(a);
+    })
+        .reverse();
 }
 // organize a set of annotations, from https://hypothes.is/api/search, by url
 export function gatherAnnotationsByUrl(rows) {
@@ -183,7 +189,9 @@ export function parseSelectors(target) {
     if (firstTarget) {
         var selectors = firstTarget.selector;
         if (selectors) {
-            var textQuote = selectors.filter(function (x) { return x.type === 'TextQuoteSelector'; });
+            var textQuote = selectors.filter(function (x) {
+                return x.type === 'TextQuoteSelector';
+            });
             if (textQuote.length) {
                 parsedSelectors['TextQuote'] = {
                     exact: textQuote[0].exact,
@@ -191,7 +199,9 @@ export function parseSelectors(target) {
                     suffix: textQuote[0].suffix
                 };
             }
-            var textPosition = selectors.filter(function (x) { return x.type === 'TextPositionSelector'; });
+            var textPosition = selectors.filter(function (x) {
+                return x.type === 'TextPositionSelector';
+            });
             if (textPosition.length) {
                 parsedSelectors['TextPosition'] = {
                     start: textPosition[0].start,
@@ -379,11 +389,12 @@ export function postAnnotationAndRedirect(payload, token, queryFragment) {
     return postAnnotation(payload, token)
         .then((data) => {
         let _data = data;
-        let response = JSON.parse(_data.response);
-        if (response.status != 200) {
-            alert(`hlib status ${response.status}`);
+        let status = _data.status;
+        if (status != 200) {
+            alert(`hlib status ${status}`);
             return;
         }
+        let response = JSON.parse(_data.response);
         var url = response.uri;
         if (queryFragment) {
             url += '#' + queryFragment;
@@ -450,7 +461,7 @@ export function createNamedInputForm(args) {
     let form = `
     <div class="formLabel">${name}</div>
     <div class="${id}Form"><input onchange="${onchange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
-		<div class="formMessage">${msg}</div>`;
+    <div class="formMessage">${msg}</div>`;
     element.innerHTML += form;
     return element; // return value used for testing
 }

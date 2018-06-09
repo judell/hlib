@@ -11,7 +11,7 @@ module.exports = {
   module: {
     rules: [
       {
-        use: ['source-map-loader'],
+       use: ['source-map-loader'],
       }
     ]
   }
