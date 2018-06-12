@@ -584,20 +584,19 @@ export function setSelectedGroup() {
   localStorage.setItem('h_group', selectedGroup)
 }
 
-export function getSelectedGroup() {
-  let selectedGroup
-  let groupSelector = document.querySelector('#groupsList') as HTMLSelectElement
-  if (getToken() && groupSelector) {
-    var selectedGroupIndex = groupSelector.selectedIndex
-    selectedGroup = groupSelector[selectedGroupIndex].value
-  } else {
-    selectedGroup = ''
-  }
+export function getSelectedGroup(selectId?:string) {
+  let _selector = selectId ? selectId : 'groupsList'
+  _selector = '#' + _selector
+  let groupSelector = document.querySelector(_selector) as HTMLSelectElement
+  let selectedGroupIndex = groupSelector.selectedIndex
+  let selectedGroup = groupSelector[selectedGroupIndex].value
   return selectedGroup
 }
 
-export function createGroupInputForm(e: HTMLElement) {
-  function createGroupSelector(groups: any) {
+export function createGroupInputForm(e: HTMLElement, selectId?: string) {
+  let _selectId:string = selectId ? selectId : 'groupsList'
+  
+  function createGroupSelector(groups: any, selectId?: string) {
     var currentGroup = getGroup()
     var options = ''
     groups.forEach(function(g: any) {
@@ -608,7 +607,7 @@ export function createGroupInputForm(e: HTMLElement) {
       options += `<option ${selected} value="${g.id}">${g.name}</option>\n`
     })
     var selector = `
-      <select onchange="hlib.setSelectedGroup()" id="groupsList">
+      <select onchange="hlib.setSelectedGroup()" id="${_selectId}">
       ${options}
       </select>`
     return selector
@@ -633,7 +632,7 @@ export function createGroupInputForm(e: HTMLElement) {
       }
       var form = `
         <div class="formLabel">Hypothesis Group</div>
-        <div class="inputForm">${createGroupSelector(response.groups)}</div>
+        <div class="inputForm">${createGroupSelector(response.groups, _selectId)}</div>
         <div class="formMessage">${msg}</div>`
       e.innerHTML += form
     })
