@@ -1,18 +1,18 @@
-type httpOpts = {
+export type httpOpts = {
   method: string
   url: string
   headers: any
   params: any
 }
 
-type httpResponse = {
+export type httpResponse = {
   response: any
   status: number
   statusText: string
   headers: any
 }
 
-type annotation = {
+export type annotation = {
   id: string
   url: string
   updated: string
@@ -28,20 +28,20 @@ type annotation = {
   target: object
 }
 
-type textPositionSelector = {
+export type textPositionSelector = {
   type: string
   start: number
   end: number
 }
 
-type textQuoteSelector = {
+export type textQuoteSelector = {
   type: string
   exact: string
   prefix?: string
   suffix?: string
 }
 
-type inputFormArgs = {
+export type inputFormArgs = {
   element: HTMLElement // attach to this element
   name: string // name of the field
   id: string // id + 'Form' is used as a class attr and as id of input element
