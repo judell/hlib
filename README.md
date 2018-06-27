@@ -7,6 +7,8 @@ https://github.com/judell/facet
 
 https://github.com/judell/zotero
 
+https://github.com/judell/HypothesisFootnotes
+
 https://github.com/judell/StudentReview
 
 https://github.com/judell/FactCheck
