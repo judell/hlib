@@ -641,10 +641,11 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
     })
 }
 
-export function formatTags(tags: string[]): string {
+export function formatTags(tags: string[], urlPrefix?: string): string {
   var formattedTags: string[] = []
   tags.forEach(function(tag) {
-    var formattedTag = `<a target="_tag" href="./?tag=${tag}"><span class="annotationTag">${tag}</span></a>`
+    let url = urlPrefix ? urlPrefix + tag : `./?tag=${tag}`
+    var formattedTag = `<a target="_tag" href="${url}"><span class="annotationTag">${tag}</span></a>`
     formattedTags.push(formattedTag)
   })
   return formattedTags.join(' ')
@@ -677,7 +678,7 @@ export function csvRow(level: number, anno: any): string {
   return fields.join(',')
 }
 
-export function showAnnotation(anno: annotation, level: number) {
+export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string) {
   var dt = new Date(anno.updated)
   var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
 
@@ -687,7 +688,7 @@ export function showAnnotation(anno: annotation, level: number) {
 
   var tags = ''
   if (anno.tags.length) {
-    tags = formatTags(anno.tags)
+    tags = formatTags(anno.tags, tagUrlPrefix)
   }
 
   var user = anno.user.replace('acct:', '').replace('@hypothes.is', '')
