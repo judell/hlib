@@ -137,15 +137,36 @@ tests({
    form.remove()
  },
 
-'creates group picklist with > 1 groups when token': function() {
+'creates default group picklist with > 1 groups when token': function() {
    let groupContainer = createGroupContainer()
+   let defaultSelectId = 'groupsList'
    hlib.createGroupInputForm(groupContainer)
    waitSeconds(1)
      .then( r => {
-       let groupList = hlib.getById('groupsList')
+       let groupList = hlib.getById(defaultSelectId)
        assert(groupList)
        let options = groupList.querySelectorAll('option')
        assert(groupList.length > 1)
+       eq(hlib.getSelectedGroup(defaultSelectId), '__world__') 
+     })
+     .catch (e => {
+       console.error(e)
+       failHard()
+     })
+     .finally(removeGroupContainer)
+ },
+
+ 'creates custom group picklist with > 1 groups when token': function() {
+   let selectId = 'withTokenGroupsList'
+   let groupContainer = createGroupContainer()
+   hlib.createGroupInputForm(groupContainer, selectId)
+   waitSeconds(1)
+     .then( r => {
+       let groupList = hlib.getById(selectId)
+       assert(groupList)
+       let options = groupList.querySelectorAll('option')
+       assert(groupList.length > 1)
+       eq(hlib.getSelectedGroup(selectId), '__world__') 
      })
      .catch (e => {
        console.error(e)
@@ -167,6 +188,7 @@ tests({
       assert(groupList)
       let options = groupList.querySelectorAll('option')
       assert(groupList.length == 1, `expected 1, got ${groupList.length}`)
+      eq(hlib.getSelectedGroup(), '__world__')
      })
      .catch (e => {
        console.log(e)
