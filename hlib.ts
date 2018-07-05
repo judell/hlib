@@ -109,7 +109,7 @@ function _search(params: any, callback: any, offset: number, annos: object[], re
     params: {}
   }
 
-  var facets = [ 'group', 'user', 'tag', 'url', 'any' ]
+  var facets = [ 'group', 'user', 'tag', 'url', 'any', 'id' ]
 
   facets.forEach(function(facet) {
     if (params[facet]) {
@@ -140,6 +140,8 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
   _search(params, callback, offset, annos, replies, progressId)
 }
 
+// the replies param is a set of rows returned from /api/search?_separate_replies=true
+// this function reduces the set to just replies to the given id
 export function findRepliesForId(id: string, replies: any) {
   var _replies = replies.filter(function(x: any) {
     return x.references.indexOf(id) != -1
