@@ -52,7 +52,6 @@ a {
 }
 
 .annotationCard {
-  border-bottom: thin solid lightgray;
   margin-top: 10px;
   margin-bottom: 0px;
 }
@@ -64,7 +63,6 @@ a {
 
 .annotationTag {
   font-size: x-small;
-  margin: 2px;
   text-decoration: none;
   border: 1px solid #BBB3B3;
   border-radius: 2px;
