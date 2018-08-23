@@ -51,7 +51,7 @@ export type inputFormArgs = {
   msg: string // help message for the field
 }
 
-// promisifed xhr
+/** Promisified XMLHttpRequest */ 
 export function httpRequest(opts: httpOpts) {
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest()
@@ -87,6 +87,7 @@ export function httpRequest(opts: httpOpts) {
   })
 }
 
+/** Helper for `hApiSearch`. */
 function _search(params: any, callback: any, offset: number, annos: object[], replies: object[], progressId?: string) {
   var max = 2000
   if (params.max) {
@@ -133,6 +134,7 @@ function _search(params: any, callback: any, offset: number, annos: object[], re
   })
 }
 
+/** Wrapper for `/api/search` */
 export function hApiSearch(params: any, callback: object, progressId?: string) {
   var offset = 0
   var annos: object[] = []
@@ -140,8 +142,9 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
   _search(params, callback, offset, annos, replies, progressId)
 }
 
-// the replies param is a set of rows returned from /api/search?_separate_replies=true
-// this function reduces the set to just replies to the given id
+/** The replies param is a set of rows returned from `/api/search?_separate_replies=true`,
+ * this function reduces the set to just replies to the given id
+ */
 export function findRepliesForId(id: string, replies: any) {
   var _replies = replies.filter(function(x: any) {
     return x.references.indexOf(id) != -1
@@ -153,7 +156,7 @@ export function findRepliesForId(id: string, replies: any) {
     .reverse()
 }
 
-// organize a set of annotations, from https://hypothes.is/api/search, by url
+/** Organize a set of annotations, from https://hypothes.is/api/search, by url */
 export function gatherAnnotationsByUrl(rows: object[]) {
   var urls: any = {}
   var ids: any = {}
@@ -193,6 +196,7 @@ export function gatherAnnotationsByUrl(rows: object[]) {
   }
 }
 
+/** Parse a row returned from `/api/search` */
 export function parseAnnotation(row: any): annotation {
   var id = row.id
   var url = row.uri
@@ -251,6 +255,7 @@ export function parseAnnotation(row: any): annotation {
   return r
 }
 
+/** Parse the `target` of a row returned from `/api/search` */
 export function parseSelectors(target: any): object {
   var parsedSelectors: any = {}
   var firstTarget = target[0]
@@ -281,7 +286,7 @@ export function parseSelectors(target: any): object {
   return parsedSelectors
 }
 
-// get url parameters
+/** Get url parameters */
 export function gup(name: string, str?: string): string {
   if (!str) {
     str = window.location.href
@@ -313,6 +318,9 @@ export function getDomainFromUrl(url: string): string {
   return a.hostname
 }
 
+/** Add a token authorization header to the options that govern an `httpRequest`. 
+ * If the token isn't passed as a param, try getting it from local storage.
+*/
 export function setApiTokenHeaders(opts: httpOpts, token?: string): httpOpts {
   if (!token) {
     token = getToken()
@@ -326,36 +334,44 @@ export function setApiTokenHeaders(opts: httpOpts, token?: string): httpOpts {
   return opts
 }
 
+/** Acquire a Hypothesis API token */
 export function getToken() {
   return getFromUrlParamOrLocalStorage('h_token')
 }
 
+/** Acquire a Hypothesis username */
 export function getUser() {
   return getFromUrlParamOrLocalStorage('h_user')
 }
 
+/** Acquire a Hypothesis group id */
 export function getGroup() {
   var group = getFromUrlParamOrLocalStorage('h_group')
   return group != '' ? group : '__world__'
 }
 
+/** Save a Hypothesis API token. */
 export function setToken() {
   setLocalStorageFromForm('tokenForm', 'h_token')
 }
 
+/** Save a Hypothesis username. */
 export function setUser() {
   setLocalStorageFromForm('userForm', 'h_user')
 }
 
+/** Save a Hypothesis group id */
 export function setGroup() {
   setLocalStorageFromForm('groupForm', 'h_group')
 }
 
+/** Save value of a form field. */
 export function setLocalStorageFromForm(formId: string, storageKey: string) {
   var element = getById(formId) as HTMLInputElement
   localStorage.setItem(storageKey, element.value)
 }
 
+/** Get a value passed as an url paramater, or from local storage. */
 export function getFromUrlParamOrLocalStorage(key: string, _default?: string) {
   var value = gup(key)
 
@@ -375,6 +391,7 @@ export function getFromUrlParamOrLocalStorage(key: string, _default?: string) {
   return value
 }
 
+/** Helper for `createAnnotationPayload`.  */
 export function createPermissions(username: string, group: string) {
   var permissions = {
     read: [ 'group:' + group ],
@@ -384,6 +401,7 @@ export function createPermissions(username: string, group: string) {
   return permissions
 }
 
+/** Helper for `createAnnotationPayload` */
 export function createTextQuoteSelector(exact: string, prefix: string, suffix: string): textQuoteSelector {
   let tqs: textQuoteSelector = {
     type: 'TextQuoteSelector',
@@ -400,6 +418,7 @@ export function createTextQuoteSelector(exact: string, prefix: string, suffix: s
   return tqs
 }
 
+/** Helper for `createAnnotationPayload` */
 export function createTextPositionSelector(start: number, end: number): textPositionSelector {
   let tps: textPositionSelector = {
     type: 'TextPositionSelector',
@@ -409,17 +428,20 @@ export function createTextPositionSelector(start: number, end: number): textPosi
   return tps
 }
 
-/* 
-Expects an object with these keys:
-  uri: Target to which annotation will post
-  exact, prefix, suffix: Info for TextQuoteSelector, only exact is required
-  start, stop: Info for TextPositionSelector, optional
-  username: Hypothesis username
-  group: Hypothesis group (use '__world__' for Public)
-  text: Body of annotation (could be markdown or html, whatever the Hypothesis editor supports)
-  tags: Hypothesis tags
-  extra: Extra data, invisible to user but available through H API
-*/
+/** Form the JSON payload that creates an annotation.
+ * 
+ * Expects an object with these keys:
+ * ```
+ * uri: Target to which annotation will post
+ * exact, prefix, suffix: Info for TextQuoteSelector, only exact is required
+ * start, stop: Info for TextPositionSelector, optional
+ * username: Hypothesis username
+ * group: Hypothesis group (use `__world__` for Public)
+ * text: Body of annotation (could be markdown or html)
+ * tags: Hypothesis tags
+ * extra: Extra data, invisible to user but available through H API
+ * ```
+ */
 export function createAnnotationPayload(params: any): string {
   //uri, exact, username, group, text, tags, extra){
   let textQuoteSelector
@@ -470,6 +492,7 @@ export function createAnnotationPayload(params: any): string {
   return JSON.stringify(payload)
 }
 
+/** Create an annotation */
 export function postAnnotation(payload: string, token: string) {
   var url = 'https://hypothes.is/api/annotations'
   var opts: httpOpts = {
@@ -484,6 +507,9 @@ export function postAnnotation(payload: string, token: string) {
   return httpRequest(opts)
 }
 
+/** Create an annotation and redirect to the annotated page,
+ * optionally with a client-side query.
+ */
 export function postAnnotationAndRedirect(payload: string, token: string, queryFragment?: string) {
   return postAnnotation(payload, token)
     .then(data => {
@@ -529,7 +555,7 @@ export function deleteAnnotation(id: string, token: string) {
   return httpRequest(opts)
 }
 
-// input form for api token, remembered in local storage
+/** Input form for an API token, remembered in local storage. */
 export function createApiTokenInputForm(element: HTMLElement) {
   let tokenArgs: inputFormArgs = {
     element: element,
@@ -544,7 +570,7 @@ export function createApiTokenInputForm(element: HTMLElement) {
   createNamedInputForm(tokenArgs)
 }
 
-// input form for username, remembered in local storage
+/** Input form for a username, remembered in local storage. */
 export function createUserInputForm(element: HTMLElement) {
   let userArgs: inputFormArgs = {
     element: element,
@@ -558,9 +584,9 @@ export function createUserInputForm(element: HTMLElement) {
   createNamedInputForm(userArgs)
 }
 
-// create an input field with a handler to save,
-// optionally a default value,
-// optionally a type (e.g. password)
+/** Create an input field with a handler to save the  changed value,
+ * optionally with a default value, optionally with a type (e.g. password).
+ */
 export function createNamedInputForm(args: inputFormArgs) {
   let { element, name, id, value, onchange, type, msg } = args
   let form = `
@@ -571,7 +597,7 @@ export function createNamedInputForm(args: inputFormArgs) {
   return element // return value used for testing
 }
 
-// create a simple input field
+/** Create a simple input field. */
 export function createFacetInputForm(e: HTMLElement, facet: string, msg: string) {
   var form = `
     <div class="formLabel">${facet}</div>
@@ -595,6 +621,7 @@ export function getSelectedGroup(selectId?:string) {
   return selectedGroup
 }
 
+/** Create a Hypothesis group picker. */
 export function createGroupInputForm(e: HTMLElement, selectId?: string) {
   let _selectId:string = selectId ? selectId : 'groupsList'
   
@@ -643,6 +670,10 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
     })
 }
 
+/** Render a list of tags. By default, the links work as in https://github.com/judell/facet.
+ * Use the optional `urlPrefix` with `https://hypothes.is/search?q=tag:` to override
+ * with links to the Hypothesis viewer.
+ */
 export function formatTags(tags: string[], urlPrefix?: string): string {
   var formattedTags: string[] = []
   tags.forEach(function(tag) {
@@ -653,6 +684,7 @@ export function formatTags(tags: string[], urlPrefix?: string): string {
   return formattedTags.join(' ')
 }
 
+/** Format an annotation as a row of a CSV export. */
 export function csvRow(level: number, anno: any): string {
   var fields = [
     level.toString(),
@@ -680,6 +712,9 @@ export function csvRow(level: number, anno: any): string {
   return fields.join(',')
 }
 
+var Showdown:any = {} // Placeholder to silence TypeScript 'cannot find name' complaint
+
+/** Render an annotation card. */
 export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string) {
   var dt = new Date(anno.updated)
   var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
@@ -734,6 +769,7 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
   return output
 }
 
+/** Save exported annotations to a file. */
 export function download(text: string, type: string) {
   var blob = new Blob([ text ], {
     type: 'application/octet-stream'
@@ -776,6 +812,7 @@ export function parseResponseHeaders(headerStr: string): object {
 
 // functions used by the facet tool
 
+/** Collapse all annotation cards. */
 export function collapseAll() {
   var togglers: NodeListOf<HTMLElement> = document.querySelectorAll('.urlHeading .toggle')
   togglers.forEach(function(toggler) {
@@ -785,6 +822,7 @@ export function collapseAll() {
   hideCards(cards)
 }
 
+/** Expand all annotation cards. */
 export function expandAll() {
   var togglers: NodeListOf<HTMLElement> = document.querySelectorAll('.urlHeading .toggle')
   togglers.forEach((toggler) => {
@@ -794,28 +832,33 @@ export function expandAll() {
   showCards(cards)
 }
 
+/** Set expand/collapse toggle to collapsed. */
 export function setToggleControlCollapse(toggler: HTMLElement) {
   toggler.innerHTML = '\u{25b6}'
   toggler.title = 'expand'
 }
 
+/** Set expand/collapse toggle to expanded. */
 export function setToggleControlExpand(toggler: HTMLElement) {
   toggler.innerHTML = '\u{25bc}'
   toggler.title = 'collapse'
 }
 
+/** Show a setof annotation cards. */
 export function showCards(cards: NodeListOf<HTMLElement>) {
   for (var i = 0; i < cards.length; i++) {
     cards[i].style.display = 'block'
   }
 }
 
+/** Hide a set of annotation cards. */
 export function hideCards(cards: NodeListOf<HTMLElement>) {
   for (var i = 0; i < cards.length; i++) {
     cards[i].style.display = 'none'
   }
 }
 
+/** Switch the expand/collapse state of an annotation card. */
 export function toggle(id: string) {
   var heading = getById('heading_' + id)
   var toggler = heading.querySelector('.toggle') as HTMLElement
