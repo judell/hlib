@@ -61,7 +61,7 @@ function removeGroupContainer() {
 }
 
 function checkAndDeleteTestAnnotation(data, token) {
-  try {	
+  return new Promise(resolve => {
     let response = JSON.parse(data.response)
     if (response.target[0].selector) {
       let selectors = hlib.parseSelectors(response.target)
@@ -74,28 +74,33 @@ function checkAndDeleteTestAnnotation(data, token) {
     hlib.deleteAnnotation(response.id, token)
      .then(data => {
         console.log('deleted test annotation', data)
+        resolve()
      })
-  } catch(e) {
-	console.error(e)
-	failHard()
-  }
+  })
 }
 
 tests({ 
 
-'gets token': function() {
-   let token = hlib.getToken()
+'gets token': function () {
+  return new Promise(resolve => {
+     let token = hlib.getToken()
    let slice = token.slice(0,9)
    eq(slice, '6879-358c')
+   resolve()
+  })
  },
 
 'gets "" when no user': function() {
-   delete localStorage['h_user']
+  return new Promise(resolve => {
+    delete localStorage['h_user']
    let user = hlib.getUser()
    eq(user, "")
+   resolve()
+  })
   },
 
 'username input form saves and retrieves value': function() {
+  return new Promise(resolve => {
    let formElement = document.createElement('div')
    let args = {
      element: formElement,
@@ -116,9 +121,12 @@ tests({
    eq(hlib.getUser(), 'judell')
    delete localStorage['h_user']
    form.remove()
+   resolve()
+  })
  }, 
 
 'creates facet input form': function() {
+  return new Promise(resolve => {
    let formElement = document.createElement('div')
    let args = {
      element: formElement,
@@ -135,9 +143,12 @@ tests({
    inputElement.value = 'tag'
    eq(document.getElementsByClassName('tagForm')[0].innerHTML, '<input id="tagForm">')
    form.remove()
+   resolve()
+  })
  },
 
 'creates default group picklist with > 1 groups when token': function() {
+  return new Promise(resolve => {
    let groupContainer = createGroupContainer()
    let defaultSelectId = 'groupsList'
    hlib.createGroupInputForm(groupContainer)
@@ -147,105 +158,117 @@ tests({
        assert(groupList)
        let options = groupList.querySelectorAll('option')
        assert(groupList.length > 1)
-       eq(hlib.getSelectedGroup(defaultSelectId), '__world__') 
+       eq(hlib.getSelectedGroup(defaultSelectId), '__world__')
+       removeGroupContainer()
+       resolve()
      })
-     .catch (e => {
-       console.error(e)
-       failHard()
-     })
-     .finally(removeGroupContainer)
+    })
  },
 
- 'creates custom group picklist with > 1 groups when token': function() {
-   let selectId = 'withTokenGroupsList'
-   let groupContainer = createGroupContainer()
-   hlib.createGroupInputForm(groupContainer, selectId)
-   waitSeconds(1)
-     .then( r => {
-       let groupList = hlib.getById(selectId)
-       assert(groupList)
-       let options = groupList.querySelectorAll('option')
-       assert(groupList.length > 1)
-       eq(hlib.getSelectedGroup(selectId), '__world__') 
-     })
-     .catch (e => {
-       console.error(e)
-       failHard()
-     })
-     .finally(removeGroupContainer)
+'creates custom group picklist with > 1 groups when token': function() {
+   return new Promise(resolve => {
+    let selectId = 'withTokenGroupsList'
+    let groupContainer = createGroupContainer()
+    hlib.createGroupInputForm(groupContainer, selectId)
+    waitSeconds(1)
+      .then( r => {
+        let groupList = hlib.getById(selectId)
+        assert(groupList)
+        let options = groupList.querySelectorAll('option')
+        assert(groupList.length > 1)
+        eq(hlib.getSelectedGroup(selectId), '__world__') 
+        removeGroupContainer()
+        resolve()
+      })
+    })
  },
 
 'creates group picklist with 1 group when no token': function() {
-  let token = hlib.getToken()
-  hlib.getById('token').setAttribute('value',token)
-  delete localStorage['h_token']
-  let groupContainer = createGroupContainer()
-  hlib.createGroupInputForm(groupContainer)
-  waitSeconds(1)
-    .then( r => {
-      localStorage['h_token'] = hlib.getById('token').value  // not in effect for subsequent tests
-      let groupList = hlib.getById('groupsList')
-      assert(groupList)
-      let options = groupList.querySelectorAll('option')
-      assert(groupList.length == 1, `expected 1, got ${groupList.length}`)
-      eq(hlib.getSelectedGroup(), '__world__')
-     })
-     .catch (e => {
-       console.log(e)
-       failHard()
-     })
-     .finally(removeGroupContainer)
+  return new Promise(resolve => {
+    let token = hlib.getToken()
+    hlib.getById('token').setAttribute('value',token)
+    delete localStorage['h_token']
+    let groupContainer = createGroupContainer()
+    hlib.createGroupInputForm(groupContainer)
+    waitSeconds(1)
+      .then( r => {
+        localStorage['h_token'] = hlib.getById('token').value  // not in effect for subsequent tests
+        let groupList = hlib.getById('groupsList')
+        assert(groupList)
+        let options = groupList.querySelectorAll('option')
+        assert(groupList.length == 1, `expected 1, got ${groupList.length}`)
+        eq(hlib.getSelectedGroup(), '__world__')
+        removeGroupContainer()
+        resolve()
+      })
+    })
  },
 
- 'creates a pagenote': function() {
-   let token = hlib.getById('token').value
-   let params = {
-     uri: scratchUri,
-     group: '__world__',
-     text: scratchText,
-   }
-   let payload = hlib.createAnnotationPayload(params)
-   hlib.postAnnotation(payload, token)
-     .then(data => {
-       waitSeconds(1, data)
-         .then(data => {
-           checkAndDeleteTestAnnotation(data, token)
+'creates a pagenote': function() {
+   return new Promise(resolve => {
+    let token = hlib.getById('token').value
+    let params = {
+      uri: scratchUri,
+      group: '__world__',
+      text: scratchText,
+    }
+    let payload = hlib.createAnnotationPayload(params)
+    hlib.postAnnotation(payload, token)
+      .then(data => {
+        waitSeconds(1, data)
+          .then(data => {
+            checkAndDeleteTestAnnotation(data, token)
+              .then( _ => {
+                resolve()
+              })
           })
-       })
+      })
+    })
  },
 
- 'creates an annotation': function() {
-   let token = hlib.getById('token').value
-   let params = {
-     uri: scratchUri,
-     group: '__world__',
-     text: scratchText,
-     exact: scratchQuote,
-   }
-   let payload = hlib.createAnnotationPayload(params)
-   hlib.postAnnotation(payload, token)
-     .then(data => {
-       waitSeconds(1, data)
-       .then(data => {
-         checkAndDeleteTestAnnotation(data, token)
-       })
-     })
+'creates an annotation': function() {
+   return new Promise(resolve => {
+    let token = hlib.getById('token').value
+    let params = {
+      uri: scratchUri,
+      group: '__world__',
+      text: scratchText,
+      exact: scratchQuote,
+    }
+    let payload = hlib.createAnnotationPayload(params)
+    hlib.postAnnotation(payload, token)
+      .then(data => {
+        waitSeconds(1, data)
+          .then(data => {
+            checkAndDeleteTestAnnotation(data, token)
+              .then( _ => {
+                resolve()
+              })
+          })
+      })
+    })
  },
 
 'finds a test annotation': function() {
-  function callback(replies, annos) {
-    eq(hlib.parseAnnotation(replies[0]).id, '7sCdHGXdEeiJTifW5lnXMA')
-  }
-  let token = hlib.getById('token').value
-  let params = {
-    user: 'judell',
-    tag: 'hlibtest',
-  }
-  hlib.hApiSearch(params, callback)
- },
+  return new Promise(resolve => {
+    function callback(replies, annos) {
+      eq(hlib.parseAnnotation(replies[0]).id, '7sCdHGXdEeiJTifW5lnXMA')
+      resolve()
+    }
+    let token = hlib.getById('token').value
+    let params = {
+      user: 'judell',
+      tag: 'hlibtest',
+    }
+    hlib.hApiSearch(params, callback)
+   })
+ }
 
 })
+
 </script>
+
+<div id="log"></div>
 
 </body>
 </html>
