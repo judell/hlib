@@ -19,7 +19,7 @@
 <script type="module">  
 
 // Because with this import method...
-import * as hlib from 'http://localhost:8000/hlib.js'
+import * as hlib from './hlib.js'
 // ... I can debug the library, which uses export statements, directly. 
 
 // For deployed apps based on this library, the pattern so far is:
@@ -251,8 +251,8 @@ tests({
 
 'finds a test annotation': function() {
   return new Promise(resolve => {
-    function callback(replies, annos) {
-      eq(hlib.parseAnnotation(replies[0]).id, '7sCdHGXdEeiJTifW5lnXMA')
+    function callback(annos, replies) {
+      eq(hlib.parseAnnotation(annos[0]).id, '7sCdHGXdEeiJTifW5lnXMA')
       resolve()
     }
     let token = hlib.getById('token').value
@@ -262,7 +262,22 @@ tests({
     }
     hlib.hApiSearch(params, callback)
    })
+ },
+
+'retrieves 600 annotations': function() {
+  return new Promise(resolve => {
+    function callback(annos, replies) {
+      eq(annos.length, 600)
+      resolve()
+    }
+    let token = hlib.getById('token').value
+    let params = {
+      max: 600,
+    }
+    hlib.hApiSearch(params, callback)
+   })
  }
+
 
 })
 

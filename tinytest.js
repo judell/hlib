@@ -48,7 +48,10 @@ const TinyTest = {
     .then ( () => {
     log(testName = 'finds a test annotation')
     tests[testName]()
-    }) }) }) }) }) }) }) }) }) 
+    .then ( () => {
+    log(testName = 'retrieves 600 annotations')
+    tests[testName]()
+    }) }) }) }) }) }) }) }) }) })
 
   setTimeout(function() { // Give document a chance to complete
     if (window.document && document.body) {
