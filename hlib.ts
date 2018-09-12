@@ -88,13 +88,13 @@ export function httpRequest(opts: httpOpts) {
 }
 
 /** Helper for `hApiSearch`. */
-function _search(params: any, callback: any, offset: number, annos: object[], replies: object[], progressId?: string) {
-  var max = 2000
+function _search(params: any, after: string, callback: any, annos: object[], replies: object[], progressId?: string) {
+  let max = 2000
   if (params.max) {
     max = params.max
   }
 
-  var limit = 200
+  let limit = 200
   if (max <= limit) {
     limit = max
   }
@@ -103,14 +103,16 @@ function _search(params: any, callback: any, offset: number, annos: object[], re
     getById(progressId).innerHTML += '.'
   }
 
-  var opts: httpOpts = {
+  let afterClause = after ? `&search_after=${after}` : ''
+
+  let opts: httpOpts = {
     method: 'get',
-    url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}&offset=${offset}`,
+    url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
     headers: {},
     params: {}
   }
 
-  var facets = [ 'group', 'user', 'tag', 'url', 'any', 'id' ]
+  let facets = [ 'group', 'user', 'tag', 'url', 'any']
 
   facets.forEach(function(facet) {
     if (params[facet]) {
@@ -129,31 +131,42 @@ function _search(params: any, callback: any, offset: number, annos: object[], re
     if (response.rows.length === 0 || annos.length >= max) {
       callback(annos, replies)
     } else {
-      _search(params, callback, offset + limit, annos, replies, progressId)
+      let sentinel = response.rows.slice(-1)[0].updated
+      _search(params, sentinel, callback, annos, replies, progressId)
     }
   })
 }
 
 /** Wrapper for `/api/search` */
 export function hApiSearch(params: any, callback: object, progressId?: string) {
-  var offset = 0
-  var annos: object[] = []
-  var replies: object[] = []
-  _search(params, callback, offset, annos, replies, progressId)
+  let annos: object[] = []
+  let replies: object[] = []
+  let after:string = ''
+  _search(params, after, callback, annos, replies, progressId)
 }
 
 /** The replies param is a set of rows returned from `/api/search?_separate_replies=true`,
  * this function reduces the set to just replies to the given id
  */
-export function findRepliesForId(id: string, replies: any) {
-  var _replies = replies.filter(function(x: any) {
-    return x.references.indexOf(id) != -1
+export function findRepliesForId(id: string, replies: any[]) {
+  var _replies = replies.filter( _reply => {
+    return _reply.references.indexOf(id) != -1 
   })
   return _replies
-    .map(function(a: any) {
-      return parseAnnotation(a)
+}  
+
+export function showThread(row:any, level:number, replies:any[], displayed:string[], displayElement:HTMLElement) {
+  if (displayed.indexOf(row.id) != -1) {
+    return
+  } else {
+    displayed.push(row.id)
+    let _replies = findRepliesForId(row.id, replies)
+    let anno = parseAnnotation(row)
+    displayElement.innerHTML += showAnnotation(anno, level)
+    _replies.forEach(_reply => {
+      showThread(_reply, level+1, _replies, displayed, displayElement)
     })
-    .reverse()
+  }
 }
 
 /** Organize a set of annotations, from https://hypothes.is/api/search, by url */
@@ -712,7 +725,7 @@ export function csvRow(level: number, anno: any): string {
   return fields.join(',')
 }
 
-var Showdown:any = {} // Placeholder to silence TypeScript 'cannot find name' complaint
+//var Showdown:any = {} // Placeholder to silence TypeScript 'cannot find name' complaint
 
 /** Render an annotation card. */
 export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string) {
