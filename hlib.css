@@ -56,6 +56,11 @@ a {
   margin-bottom: 0px;
 }
 
+.annotationCardDivider {
+  width: 25%;
+  margin-left: 0;
+}
+
 .annotationTags {
   margin-top: 12px;
   margin-bottom: 12px;

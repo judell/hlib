@@ -778,7 +778,9 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
         <div>${html}</div>
         <div class="annotationTags">${tags}</div>
       </div>
+      <hr class="annotationCardDivider">
     </div>`
+    
   return output
 }
 
