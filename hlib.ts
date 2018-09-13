@@ -670,7 +670,7 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
       let response: any = JSON.parse(_data.response)
       var msg = ''
       if (!token) {
-        msg = 'add token and refresh to see all groups here'
+        msg = 'add token and <a href="javascript:location.href=location.href">refresh</a> to see all groups here'
       }
       var form = `
         <div class="formLabel">Hypothesis Group</div>
