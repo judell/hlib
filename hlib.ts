@@ -578,7 +578,7 @@ export function createApiTokenInputForm(element: HTMLElement) {
     onchange: 'hlib.setToken',
     type: 'password',
     msg:
-      'to write (or read private) annotations, copy/paste your <a href="https://hypothes.is/profile/developer">token</a>'
+      'to write (or read private) annotations, copy/paste your <a target="_token" href="https://hypothes.is/profile/developer">token</a>'
   }
   createNamedInputForm(tokenArgs)
 }
