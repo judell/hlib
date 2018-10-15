@@ -112,7 +112,7 @@ function _search(params: any, after: string, callback: any, annos: object[], rep
     params: {}
   }
 
-  let facets = [ 'group', 'user', 'tag', 'url', 'any']
+  let facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
 
   facets.forEach(function(facet) {
     if (params[facet]) {
