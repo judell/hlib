@@ -51,7 +51,10 @@ const TinyTest = {
     .then ( () => {
     log(testName = 'retrieves 600 annotations')
     tests[testName]()
-    }) }) }) }) }) }) }) }) }) })
+    .then( () => {
+    log(testName = 'uses wildcard uris')
+    tests[testName]()
+    }) }) }) }) }) }) }) }) }) }) })
 
   setTimeout(function() { // Give document a chance to complete
     if (window.document && document.body) {
@@ -63,7 +66,7 @@ const TinyTest = {
 
   assert: function(value) {
     if (!value) {
-      let msg = `${testName}: 'no value'`
+      let msg = `${testName}: ${value}`
       console.error(msg)
       logError(msg)
     }

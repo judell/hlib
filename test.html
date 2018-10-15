@@ -276,8 +276,23 @@ tests({
     }
     hlib.hApiSearch(params, callback)
    })
- }
+ },
 
+'uses wildcard uris': function() {
+  return new Promise(resolve => {
+    function callback(annos, replies) {
+      let m = annos.map(a => { return a.uri })
+      assert(m.indexOf('https://web.hypothes.is/blog/') != -1)
+      assert(m.indexOf('https://web.hypothes.is/developers/') != -1)
+      resolve()
+    }
+    let token = hlib.getById('token').value
+    let params = {
+      wildcard_uri: 'https://web.hypothes.is/*'
+    }
+    hlib.hApiSearch(params, callback)
+   })
+ },
 
 })
 
