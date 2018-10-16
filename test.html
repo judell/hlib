@@ -288,7 +288,8 @@ tests({
     }
     let token = hlib.getById('token').value
     let params = {
-      wildcard_uri: 'https://web.hypothes.is/*'
+      wildcard_uri: 'https://web.hypothes.is/*',
+      max: 1000
     }
     hlib.hApiSearch(params, callback)
    })
