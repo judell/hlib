@@ -31,3 +31,5 @@ https://github.com/judell/HelloWorldAnnotated
 
 https://github.com/judell/AnnotationPoweredSurvey
 
+https://github.com/judell/TagRename
+
