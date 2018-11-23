@@ -87,62 +87,123 @@ export function httpRequest(opts: httpOpts) {
   })
 }
 
-/** Helper for `hApiSearch`. */
-function _search(params: any, after: string, callback: any, annos: object[], replies: object[], progressId?: string) {
-  let max = 2000
-  if (params.max) {
-    max = params.max
-  }
-
-  let limit = 200
-  if (max <= limit) {
-    limit = max
-  }
-
-  if (progressId) {
-    getById(progressId).innerHTML += '.'
-  }
-
-  let afterClause = after ? `&search_after=${after}` : ''
-
-  let opts: httpOpts = {
-    method: 'get',
-    url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
-    headers: {},
-    params: {}
-  }
-
-  let facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
-
-  facets.forEach(function(facet) {
-    if (params[facet]) {
-      var encodedValue = encodeURIComponent(params[facet])
-      opts.url += `&${facet}=${encodedValue}`
-    }
-  })
-
-  opts = setApiTokenHeaders(opts)
-
-  httpRequest(opts).then(function(data) {
-    let _data: any = data
-    let response: any = JSON.parse(_data.response)
-    annos = annos.concat(response.rows)
-    replies = replies.concat(response.replies)
-    if (response.rows.length === 0 || annos.length >= max) {
-      callback(annos, replies)
-    } else {
-      let sentinel = response.rows.slice(-1)[0].updated
-      _search(params, sentinel, callback, annos, replies, progressId)
-    }
-  })
-}
-
-/** Wrapper for `/api/search` */
+/** Wrapper for `/api/search` (deprecated in favor of `search(params, progressId)`)*/
 export function hApiSearch(params: any, callback: object, progressId?: string) {
+  function _search(params: any, after: string, callback: any, annos: object[], replies: object[], progressId?: string) {
+    let max = 2000
+    if (params.max) {
+      max = params.max
+    }
+
+    let limit = 200
+    if (max <= limit) {
+      limit = max
+    }
+
+    if (progressId) {
+      getById(progressId).innerHTML += '.'
+    }
+
+    let afterClause = after ? `&search_after=${after}` : ''
+
+    let opts: httpOpts = {
+      method: 'get',
+      url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
+      headers: {},
+      params: {}
+    }
+
+    let facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
+
+    facets.forEach(function(facet) {
+      if (params[facet]) {
+        var encodedValue = encodeURIComponent(params[facet])
+        opts.url += `&${facet}=${encodedValue}`
+      }
+    })
+
+    opts = setApiTokenHeaders(opts)
+
+    httpRequest(opts).then(function(data) {
+      let _data: any = data
+      let response: any = JSON.parse(_data.response)
+      annos = annos.concat(response.rows)
+      replies = replies.concat(response.replies)
+      if (response.rows.length === 0 || annos.length >= max) {
+        callback(annos, replies)
+      } else {
+        let sentinel = response.rows.slice(-1)[0].updated
+        _search(params, sentinel, callback, annos, replies, progressId)
+      }
+    })
+  }
+
   let annos: object[] = []
   let replies: object[] = []
   let after:string = ''
   _search(params, after, callback, annos, replies, progressId)
+}
+
+/** Wrapper for `/api/search` */
+export function search(params: any, progressId?: string) {
+
+  function _search(params: any, after: string, annos: object[], replies: object[], progressId?: string) {
+    return new Promise (resolve => {
+      let max = 2000
+      if (params.max) {
+        max = params.max
+      }
+
+      let limit = 200
+      if (max <= limit) {
+        limit = max
+      }
+
+      if (progressId) {
+        getById(progressId).innerHTML += '.'
+      }
+
+      let afterClause = after ? `&search_after=${after}` : ''
+
+      let opts: httpOpts = {
+        method: 'get',
+        url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
+        headers: {},
+        params: {}
+      }
+
+      let facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
+
+      facets.forEach(function(facet) {
+        if (params[facet]) {
+          var encodedValue = encodeURIComponent(params[facet])
+          opts.url += `&${facet}=${encodedValue}`
+        }
+      })
+
+      opts = setApiTokenHeaders(opts)
+
+      httpRequest(opts).then(function(data) {
+        let _data: any = data
+        let response: any = JSON.parse(_data.response)
+        annos = annos.concat(response.rows)
+        replies = replies.concat(response.replies)
+        if (response.rows.length === 0 || annos.length >= max) {
+          resolve([annos, replies])
+        } else {
+          let sentinel = response.rows.slice(-1)[0].updated
+          resolve(_search(params, sentinel, annos, replies, progressId))
+        }
+      })
+    })
+  }
+
+  return new Promise (resolve => {
+    let annos: object[] = []
+    let replies: object[] = []
+    let after:string = ''
+    resolve(_search(params, after, annos, replies, progressId))
+  })
 }
 
 /** The replies param is a set of rows returned from `/api/search?_separate_replies=true`,
