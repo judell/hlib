@@ -645,7 +645,7 @@ export function createApiTokenInputForm(element: HTMLElement) {
 }
 
 /** Input form for a username, remembered in local storage. */
-export function createUserInputForm(element: HTMLElement) {
+export function createUserInputForm(element: HTMLElement, msg?: string) {
   let userArgs: inputFormArgs = {
     element: element,
     name: 'Hypothesis username',
@@ -653,13 +653,14 @@ export function createUserInputForm(element: HTMLElement) {
     value: getUser(),
     onchange: 'hlib.setUser',
     type: '',
-    msg: ''
+    msg: msg ? msg : ''
   }
   createNamedInputForm(userArgs)
 }
 
-/** Create an input field with a handler to save the  changed value,
- * optionally with a default value, optionally with a type (e.g. password).
+/** Create an input field with a handler to save the changed value,
+ *  optionally with a default value, optionally with a type (e.g. password).
+ *  Should be rnamed to createPersistentInputForm.
  */
 export function createNamedInputForm(args: inputFormArgs) {
   let { element, name, id, value, onchange, type, msg } = args
@@ -740,7 +741,7 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
       e.innerHTML += form
     })
     .catch((e) => {
-      console.log(e)
+      console.error(e)
     })
 }
 
@@ -858,7 +859,6 @@ export function download(text: string, type: string) {
   document.body.appendChild(a)
   a.click()
 }
-
 // https://gist.github.com/monsur/706839
 /**
  * XmlHttpRequest's getAllResponseHeaders() method returns a string of response
