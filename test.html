@@ -252,7 +252,8 @@ tests({
 'finds a test annotation': function() {
   return new Promise(resolve => {
     function callback(annos, replies) {
-      eq(hlib.parseAnnotation(annos[0]).id, '7sCdHGXdEeiJTifW5lnXMA')
+      assert(annos.length)
+      eq(hlib.parseAnnotation(annos[0]).id, 'M48i_AAkEemMqAtMSK82kg')
       resolve()
     }
     let token = hlib.getById('token').value
