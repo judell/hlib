@@ -32,6 +32,7 @@ import * as hlib from './hlib.js'
 let scratchUri = 'https://jonudell.net/h/scratch.html'
 let scratchQuote = 'First para'
 let scratchText = 'hlib test'
+let testAnnotation = 'M48i_AAkEemMqAtMSK82kg'
 
 function delay(seconds) {
   return new Promise( resolve => setTimeout(resolve, seconds * 1000))
@@ -79,11 +80,11 @@ function checkAndDeleteTestAnnotation(data, token) {
   })
 }
 
-tests({ 
+tests({
 
 'gets token': function () {
   return new Promise(resolve => {
-     let token = hlib.getToken()
+   let token = hlib.getToken()
    let slice = token.slice(0,9)
    eq(slice, '6879-358c')
    resolve()
@@ -93,10 +94,10 @@ tests({
 'gets "" when no user': function() {
   return new Promise(resolve => {
     delete localStorage['h_user']
-   let user = hlib.getUser()
-   eq(user, "")
-   resolve()
-  })
+    let user = hlib.getUser()
+    eq(user, "")
+    resolve()
+   })
   },
 
 'username input form saves and retrieves value': function() {
@@ -251,17 +252,29 @@ tests({
 
 'finds a test annotation': function() {
   return new Promise(resolve => {
-    function callback(annos, replies) {
-      assert(annos.length)
-      eq(hlib.parseAnnotation(annos[0]).id, 'M48i_AAkEemMqAtMSK82kg')
-      resolve()
-    }
     let token = hlib.getById('token').value
     let params = {
       user: 'judell',
       tag: 'hlibtest',
     }
-    hlib.hApiSearch(params, callback)
+    hlib.search(params)
+      .then (data => {
+        let [annos, replies] = data
+        assert(annos.length)
+        eq(hlib.parseAnnotation(annos[0]).id, testAnnotation)
+        resolve()
+      })
+   })
+ },
+
+ 'fails to retrieve from wrong service': function() {
+   return new Promise(resolve => {
+     hlib.updateSettings({service: 'https://WrongService'})
+     let params = {}
+     hlib.search(params) // the api request should fail 
+      .catch (data => { 
+        resolve()
+      })
    })
  },
 

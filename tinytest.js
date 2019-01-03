@@ -49,12 +49,15 @@ const TinyTest = {
     log(testName = 'finds a test annotation')
     tests[testName]()
     .then ( () => {
+    log(testName = 'fails to retrieve from wrong service')
+    tests[testName]()
+    .then ( () => {
     log(testName = 'retrieves 600 annotations')
     tests[testName]()
     .then( () => {
     log(testName = 'uses wildcard uris')
     tests[testName]()
-    }) }) }) }) }) }) }) }) }) }) })
+    }) }) }) }) }) }) }) }) }) }) }) })
 
   setTimeout(function() { // Give document a chance to complete
     if (window.document && document.body) {
