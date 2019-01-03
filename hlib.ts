@@ -101,7 +101,11 @@ export function httpRequest(opts: httpOpts) {
         xhr.setRequestHeader(key, opts.headers[key])
       })
     }
-    xhr.send(opts.params)
+    try {
+      xhr.send(opts.params)
+    } catch (e) {
+      reject(e)
+    }
   })
 }
 
