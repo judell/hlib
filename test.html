@@ -269,10 +269,11 @@ tests({
 
  'fails to retrieve from wrong service': function() {
    return new Promise(resolve => {
-     hlib.updateSettings({service: 'https://WrongService'})
+    hlib.updateSettings({service: 'https://WrongService'})
      let params = {}
      hlib.search(params) // the api request should fail 
-      .catch (data => { 
+      .catch (data => {
+        hlib.updateSettings({service: 'https://hypothes.is'})
         resolve()
       })
    })
