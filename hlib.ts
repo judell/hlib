@@ -51,7 +51,25 @@ export type inputFormArgs = {
   msg: string // help message for the field
 }
 
-/** Promisified XMLHttpRequest */ 
+type settings = {
+  service: string
+}
+
+var settings: settings = {
+  service: 'https://hypothes.is'
+}
+
+export function getSettings() {
+  return settings
+}
+
+export function updateSettings(newSettings: settings) {
+  settings = Object.assign(newSettings)
+}
+
+/** Promisified XMLHttpRequest 
+ *  (This predated fetch() and can probably now be wrapped by fetch and deprecated)
+ * */ 
 export function httpRequest(opts: httpOpts) {
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest()
@@ -108,7 +126,7 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
 
     let opts: httpOpts = {
       method: 'get',
-      url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
+      url: `${settings.service}/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
       headers: {},
       params: {}
     }
@@ -148,7 +166,7 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
 export function search(params: any, progressId?: string) {
 
   function _search(params: any, after: string, annos: object[], replies: object[], progressId?: string) {
-    return new Promise (resolve => {
+    return new Promise ( (resolve, reject) => {
       let max = 2000
       if (params.max) {
         max = params.max
@@ -167,7 +185,7 @@ export function search(params: any, progressId?: string) {
 
       let opts: httpOpts = {
         method: 'get',
-        url: `https://hypothes.is/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
+        url: `${settings.service}/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
         headers: {},
         params: {}
       }
@@ -183,18 +201,22 @@ export function search(params: any, progressId?: string) {
 
       opts = setApiTokenHeaders(opts)
 
-      httpRequest(opts).then(function(data) {
-        let _data: any = data
-        let response: any = JSON.parse(_data.response)
-        annos = annos.concat(response.rows)
-        replies = replies.concat(response.replies)
-        if (response.rows.length === 0 || annos.length >= max) {
-          resolve([annos, replies])
-        } else {
-          let sentinel = response.rows.slice(-1)[0].updated
-          resolve(_search(params, sentinel, annos, replies, progressId))
-        }
-      })
+      httpRequest(opts)
+        .then(function(data) {
+          let _data: any = data
+          let response: any = JSON.parse(_data.response)
+          annos = annos.concat(response.rows)
+          replies = replies.concat(response.replies)
+          if (response.rows.length === 0 || annos.length >= max) {
+            resolve([annos, replies])
+          } else {
+            let sentinel = response.rows.slice(-1)[0].updated
+            resolve(_search(params, sentinel, annos, replies, progressId))
+          }
+        })
+        .catch( reason => {
+          reject(reason)
+        })
     })
   }
 
@@ -230,7 +252,7 @@ export function showThread(row:any, level:number, replies:any[], displayed:strin
   }
 }
 
-/** Organize a set of annotations, from https://hypothes.is/api/search, by url */
+/** Organize a set of annotations, from ${settings.service}/api/search, by url */
 export function gatherAnnotationsByUrl(rows: object[]) {
   var urls: any = {}
   var ids: any = {}
@@ -568,7 +590,7 @@ export function createAnnotationPayload(params: any): string {
 
 /** Create an annotation */
 export function postAnnotation(payload: string, token: string) {
-  var url = 'https://hypothes.is/api/annotations'
+  var url = `${settings.service}/api/annotations`
   var opts: httpOpts = {
     method: 'post',
     params: payload,
@@ -606,7 +628,7 @@ export function postAnnotationAndRedirect(payload: string, token: string, queryF
 }
 
 export function updateAnnotation(id: string, token: string, payload: string) {
-  var url = `https://hypothes.is/api/annotations/${id}`
+  var url = `${settings.service}/api/annotations/${id}`
   var opts: httpOpts = {
     method: 'put',
     params: payload,
@@ -618,7 +640,7 @@ export function updateAnnotation(id: string, token: string, payload: string) {
 }
 
 export function deleteAnnotation(id: string, token: string) {
-  var url = `https://hypothes.is/api/annotations/${id}`
+  var url = `${settings.service}/api/annotations/${id}`
   var opts: httpOpts = {
     method: 'delete',
     url: url,
@@ -639,7 +661,7 @@ export function createApiTokenInputForm(element: HTMLElement) {
     onchange: 'hlib.setToken',
     type: 'password',
     msg:
-      'to write (or read private) annotations, copy/paste your <a target="_token" href="https://hypothes.is/profile/developer">token</a>'
+      `to write (or read private) annotations, copy/paste your <a target="_token" href="${settings.service}/profile/developer">token</a>`
   }
   createNamedInputForm(tokenArgs)
 }
@@ -721,7 +743,7 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
 
   var opts: httpOpts = {
     method: 'get',
-    url: 'https://hypothes.is/api/profile',
+    url: `${settings.service}/api/profile`,
     headers: {},
     params: {}
   }
@@ -745,8 +767,8 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
     })
 }
 
-/** Render a list of tags. By default, the links work as in https://github.com/judell/facet.
- * Use the optional `urlPrefix` with `https://hypothes.is/search?q=tag:` to override
+/** Render a list of tags. By default, the links work as in ${settings.service}judell/facet.
+ * Use the optional `urlPrefix` with `${settings.service}/search?q=tag:` to override
  * with links to the Hypothesis viewer.
  */
 export function formatTags(tags: string[], urlPrefix?: string): string {
@@ -811,7 +833,7 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     quote = `<div class="annotationQuote">${anno.quote}</div>`
   }
 
-  var standaloneAnnotationUrl = `https://hypothes.is/a/${anno.id}`
+  var standaloneAnnotationUrl = `${settings.service}/a/${anno.id}`
 
   var marginLeft = level * 20
 
