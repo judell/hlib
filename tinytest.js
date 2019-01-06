@@ -57,7 +57,9 @@ const TinyTest = {
     .then( () => {
     log(testName = 'uses wildcard uris')
     tests[testName]()
-    }) }) }) }) }) }) }) }) }) }) }) })
+    .then( () => {
+    log('done')
+    }) }) }) }) }) }) }) }) }) }) }) }) })
 
   setTimeout(function() { // Give document a chance to complete
     if (window.document && document.body) {
