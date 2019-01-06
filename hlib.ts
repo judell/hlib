@@ -68,44 +68,30 @@ export function updateSettings(newSettings: settings) {
 }
 
 /** Promisified XMLHttpRequest 
- *  (This predated fetch() and can probably now be wrapped by fetch and deprecated)
+ *  This predated fetch() and now wraps it. 
  * */ 
 export function httpRequest(opts: httpOpts) {
-  return new Promise(function(resolve, reject) {
-    var xhr = new XMLHttpRequest()
-    xhr.open(opts.method, opts.url)
-    xhr.onload = function() {
-      let r: httpResponse = {
-        response: xhr.response,
-        status: xhr.status,
-        statusText: xhr.statusText,
-        headers: parseResponseHeaders(xhr.getAllResponseHeaders())
-      }
-      if (this.status >= 200 && this.status < 300) {
-        resolve(r)
-      } else {
-        console.log('http', opts.url, this.status)
-        reject(r)
-      }
+  return new Promise( (resolve, reject) => {
+    let input = new Request(opts.url)
+    let init:any = {
+      method: opts.method,
+      headers: opts.headers
     }
-    xhr.onerror = function(e) {
-      console.log('httpRequest', opts.url, this.status)
-      reject({
-        error: e,
-        status: this.status,
-        statusText: xhr.statusText
+    let method = opts.method.toLowerCase()
+    if (method !== 'get' && method !== 'head') {
+      init.body = opts.params
+    }
+    fetch(input, init)
+      .then( fetchResponse => {
+        return fetchResponse.text() 
       })
-    }
-    if (opts.headers) {
-      Object.keys(opts.headers).forEach(function(key) {
-        xhr.setRequestHeader(key, opts.headers[key])
+      .then( text => {
+        resolve ( { response: text} )
       })
-    }
-    try {
-      xhr.send(opts.params)
-    } catch (e) {
-      reject(e)
-    }
+      .catch(reason => {
+        console.error('rejected', opts, reason)
+        reject(reason)
+      }) 
   })
 }
 
@@ -146,9 +132,8 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
 
     opts = setApiTokenHeaders(opts)
 
-    httpRequest(opts).then(function(data) {
-      let _data: any = data
-      let response: any = JSON.parse(_data.response)
+    httpRequest(opts).then(function(data: any) {
+      let response: any = JSON.parse(data.response)
       annos = annos.concat(response.rows)
       replies = replies.concat(response.replies)
       if (response.rows.length === 0 || annos.length >= max) {
@@ -753,9 +738,8 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
   }
   opts = setApiTokenHeaders(opts, token)
   httpRequest(opts)
-    .then((data) => {
-      let _data: any = data
-      let response: any = JSON.parse(_data.response)
+    .then((data:any) => {
+      let response: any = JSON.parse(data.response)
       var msg = ''
       if (!token) {
         msg = 'add token and <a href="javascript:location.href=location.href">refresh</a> to see all groups here'
