@@ -702,8 +702,8 @@ export function getSelectedGroup(selectId?:string) {
   let _selector = selectId ? selectId : 'groupsList'
   _selector = '#' + _selector
   let groupSelector = document.querySelector(_selector) as HTMLSelectElement
-  let selectedGroupIndex = groupSelector.selectedIndex
-  let selectedGroup = groupSelector[selectedGroupIndex].value
+  let options:HTMLOptionsCollection = groupSelector.options
+  let selectedGroup = options[options.selectedIndex].value
   return selectedGroup
 }
 
