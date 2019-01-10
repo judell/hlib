@@ -38,8 +38,6 @@ https://github.com/judell/TagRename
 
 1. python server.py
 
-2. http://localhost
+2. Open browser console, run `localStorage.setItem('h_token', 'HYPOTHESIS_API_TOKEN')
 
-3. Open browser console, run `localStorage.setItem('h_token', 'HYPOTHESIS_API_TOKEN')
-
-4. http://localhost:8000/test.html
+3. http://localhost:8000/test.html
