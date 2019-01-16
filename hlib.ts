@@ -181,8 +181,6 @@ export function search(params: any, progressId?: string): Promise<any> {
         params: {}
       }
 
-      console.log(opts)
-
       let facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
 
       facets.forEach(function(facet) {
@@ -203,7 +201,6 @@ export function search(params: any, progressId?: string): Promise<any> {
           }
           if (response.rows.length === 0 || annos.length >= max) {
             let result:any = [annos, replies]
-            console.log('hlib http response', result)
             resolve(result)
           } else {
             let sentinel = response.rows.slice(-1)[0].updated
@@ -619,7 +616,7 @@ export function postAnnotationAndRedirect(payload: string, token: string, queryF
       location.href = url
     })
     .catch((e) => {
-      console.log(e)
+      console.error(e)
     })
 }
 
