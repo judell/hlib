@@ -70,7 +70,7 @@ export function updateSettings(newSettings: settings) {
 /** Promisified XMLHttpRequest 
  *  This predated fetch() and now wraps it. 
  * */ 
-export function httpRequest(opts: httpOpts) {
+export function httpRequest(opts: httpOpts):Promise<any> {
   return new Promise( (resolve, reject) => {
     let input = new Request(opts.url)
     let init:any = {
@@ -152,7 +152,7 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
 }
 
 /** Wrapper for `/api/search` */
-export function search(params: any, progressId?: string) {
+export function search(params: any, progressId?: string): Promise<any> {
 
   function _search(params: any, after: string, annos: object[], replies: object[], progressId?: string) {
     return new Promise ( (resolve, reject) => {
@@ -170,14 +170,18 @@ export function search(params: any, progressId?: string) {
         getById(progressId).innerHTML += '.'
       }
 
+      let separateReplies = params._separate_replies==='true' ? '&_separate_replies=true' : ''
       let afterClause = after ? `&search_after=${after}` : ''
+
 
       let opts: httpOpts = {
         method: 'get',
-        url: `${settings.service}/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
+        url: `${settings.service}/api/search?limit=${limit}${separateReplies}${afterClause}`,
         headers: {},
         params: {}
       }
+
+      console.log(opts)
 
       let facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
 
@@ -192,12 +196,15 @@ export function search(params: any, progressId?: string) {
 
       httpRequest(opts)
         .then(function(data) {
-          let _data: any = data
-          let response: any = JSON.parse(_data.response)
+          let response = JSON.parse(data.response)
           annos = annos.concat(response.rows)
-          replies = replies.concat(response.replies)
+          if (response.replies) {
+            replies = replies.concat(response.replies)
+          }
           if (response.rows.length === 0 || annos.length >= max) {
-            resolve([annos, replies])
+            let result:any = [annos, replies]
+            console.log('hlib http response', result)
+            resolve(result)
           } else {
             let sentinel = response.rows.slice(-1)[0].updated
             resolve(_search(params, sentinel, annos, replies, progressId))
@@ -684,10 +691,11 @@ export function createNamedInputForm(args: inputFormArgs) {
 }
 
 /** Create a simple input field. */
-export function createFacetInputForm(e: HTMLElement, facet: string, msg: string) {
+export function createFacetInputForm(e: HTMLElement, facet: string, msg: string, value?: string) {
+  if (!value) { value = '' }
   var form = `
     <div class="formLabel">${facet}</div>
-    <div class="${facet}Form"><input id="${facet}Form"></input></div>
+    <div class="${facet}Form"><input value="${value}" id="${facet}Form"></input></div>
     <div class="formMessage">${msg}</div>`
   e.innerHTML += form
   return e // for testing
