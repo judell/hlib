@@ -142,7 +142,7 @@ tests({
    appendBody(form)
    let inputElement = hlib.getById('tagForm')
    inputElement.value = 'tag'
-   eq(document.getElementsByClassName('tagForm')[0].innerHTML, '<input id="tagForm">')
+   eq(document.getElementsByClassName('tagForm')[0].innerHTML, '<input value="" id="tagForm">')
    form.remove()
    resolve()
   })
@@ -295,8 +295,6 @@ tests({
 
 'uses wildcard uris': function() {
   return new Promise(resolve => {
-    function callback(annos, replies) {
-    }
     let token = hlib.getById('token').value
     let params = {
       wildcard_uri: 'https://web.hypothes.is/*',
@@ -304,7 +302,7 @@ tests({
     }
     hlib.search(params)
     .then ( data => {
-      let annos = data[1]
+      let annos = data[0]
       let uris = annos.map(a => { return a.uri })
       let blogUris = uris.map(u => u.startsWith('https://web.hypothes.is/blog')).filter(x => {return x})
       assert(blogUris.length > 1)
