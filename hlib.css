@@ -89,8 +89,9 @@ img {
   margin: 8px
 }
 
-.timestamp,
-.groupid {
-  font-style: italic;
-  font-size: smaller
+.externalLink:after {
+ content: url('https://jonudell.info/hlib/externalLink.png');
+ margin: 0 0 0 5px;
 }
+
+

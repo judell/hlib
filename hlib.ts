@@ -845,8 +845,10 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
         <span class="user">
         <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
         </span>
-      <span class="timestamp"><a title="view/edit/reply"  target="_standalone"
-        href="${standaloneAnnotationUrl}">${dt_str}</a>
+      <span>
+        ${dt_str}
+        <a class="externalLink" title="visit thread to view/edit/reply" target="_standalone"
+        href="${standaloneAnnotationUrl}"></a>
       </span>
       ${groupSlug}
       </div>
