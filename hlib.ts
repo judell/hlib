@@ -806,6 +806,20 @@ export function csvRow(level: number, anno: any): string {
 
 /** Render an annotation card. */
 export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string) {
+
+  function getGroupName(anno:any):any {
+    let groupName = anno.group
+    let groups:any = {}
+    let groupsJson = localStorage.getItem('h_groups')
+    if ( groupsJson) {
+      groups = JSON.parse(groupsJson)
+      let groupRecords = groups.filter(g => {return g.id === anno.group})
+      if (groupRecords.length) {
+        groupName = groupRecords[0].name
+      }
+    }
+    return groupName
+  }
   var dt = new Date(anno.updated)
   var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
 
@@ -830,11 +844,13 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
 
   var marginLeft = level * 20
 
+  let groupName = getGroupName(anno)
+
   var groupSlug = 'in Public'
   if (anno.group !== '__world__') {
     groupSlug = `
       in group
-      <span class="groupid"><a title="search group" target="_group" href="./?group=${anno.group}">${anno.group}</a>
+      <span class="groupid"><a title="search group" target="_group" href="./?group=${anno.group}">${groupName}</a>
       </span>`
   }
 
