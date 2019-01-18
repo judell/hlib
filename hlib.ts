@@ -718,6 +718,7 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
     let _selectId:string = selectId ? selectId : 'groupsList'
     
     function createGroupSelector(groups: any, selectId?: string) {
+      localStorage.setItem('h_groups', JSON.stringify(groups))
       var currentGroup = getGroup()
       var options = ''
       groups.forEach(function(g: any) {
