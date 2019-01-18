@@ -714,49 +714,55 @@ export function getSelectedGroup(selectId?:string) {
 
 /** Create a Hypothesis group picker. */
 export function createGroupInputForm(e: HTMLElement, selectId?: string) {
-  let _selectId:string = selectId ? selectId : 'groupsList'
-  
-  function createGroupSelector(groups: any, selectId?: string) {
-    var currentGroup = getGroup()
-    var options = ''
-    groups.forEach(function(g: any) {
-      var selected = ''
-      if (currentGroup == g.id) {
-        selected = 'selected'
-      }
-      options += `<option ${selected} value="${g.id}">${g.name}</option>\n`
-    })
-    var selector = `
-      <select onchange="hlib.setSelectedGroup()" id="${_selectId}">
-      ${options}
-      </select>`
-    return selector
-  }
+  return new Promise( (resolve,reject) => {
+    let _selectId:string = selectId ? selectId : 'groupsList'
+    
+    function createGroupSelector(groups: any, selectId?: string) {
+      var currentGroup = getGroup()
+      var options = ''
+      groups.forEach(function(g: any) {
+        var selected = ''
+        if (currentGroup == g.id) {
+          selected = 'selected'
+        }
+        options += `<option ${selected} value="${g.id}">${g.name}</option>\n`
+      })
+      var selector = `
+        <select onchange="hlib.setSelectedGroup()" id="${_selectId}">
+        ${options}
+        </select>`
+      return selector
+    }
 
-  var token = getToken()
+    var token = getToken()
 
-  var opts: httpOpts = {
-    method: 'get',
-    url: `${settings.service}/api/profile`,
-    headers: {},
-    params: {}
-  }
-  opts = setApiTokenHeaders(opts, token)
-  httpRequest(opts)
-    .then((data:any) => {
-      let response: any = JSON.parse(data.response)
-      var msg = ''
-      if (!token) {
-        msg = 'add token and <a href="javascript:location.href=location.href">refresh</a> to see all groups here'
-      }
-      var form = `
-        <div class="formLabel">Hypothesis Group</div>
-        <div class="inputForm">${createGroupSelector(response.groups, _selectId)}</div>
-        <div class="formMessage">${msg}</div>`
-      e.innerHTML += form
-    })
-    .catch((e) => {
-      console.error(e)
+    var opts: httpOpts = {
+      method: 'get',
+      url: `${settings.service}/api/profile`,
+      headers: {},
+      params: {}
+    }
+    opts = setApiTokenHeaders(opts, token)
+    httpRequest(opts)
+      .then((data:any) => {
+        let response: any = JSON.parse(data.response)
+        var msg = ''
+        if (!token) {
+          msg = 'add token and <a href="javascript:location.href=location.href">refresh</a> to see all groups here'
+        }
+        var form = `
+          <div class="formLabel">Hypothesis Group</div>
+          <div class="inputForm">${createGroupSelector(response.groups, _selectId)}</div>
+          <div class="formMessage">${msg}</div>`
+        e.innerHTML += form
+        return data
+      })
+      .then (data => {
+        resolve(data)
+      })
+      .catch((e) => {
+        reject(e)
+      })
     })
 }
 

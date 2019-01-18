@@ -191,7 +191,6 @@ tests({
     delete localStorage['h_token']
     let groupContainer = createGroupContainer()
     hlib.createGroupInputForm(groupContainer)
-    waitSeconds(1)
       .then( r => {
         localStorage['h_token'] = hlib.getById('token').value  // not in effect for subsequent tests
         let groupList = hlib.getById('groupsList')
