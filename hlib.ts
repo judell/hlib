@@ -862,7 +862,7 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
   }
 
   var output = `
-    <div class="annotationCard" style="display:block; margin-left:${marginLeft}px;">
+    <div class="annotationCard" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
       <div class="csvRow">${csvRow(level, anno)}</div>
       <div class="annotationHeader">
         <span class="user">
