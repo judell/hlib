@@ -831,7 +831,12 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
   var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
 
   var html = anno.text == null ? '' : anno.text
-  var converter = new Showdown.converter()
+  let converter
+  if (typeof(Showdown) === 'object') {
+    converter = new Showdown.converter()
+  } else {
+    converter = new showdown.Converter()
+  }
   html = converter.makeHtml(html)
 
   var tags = ''
