@@ -1,8 +1,6 @@
 // inspired by https://github.com/joewalnes/jstinytest
 // promisified for this project
 
-const green = '#99ff99';
-
 const red =  '#ff9999';
 
 let testName
@@ -17,55 +15,17 @@ function logError(msg) {
 
 const TinyTest = {
 
-  run: function(tests) {
+  run: async function(tests) {
 
-    log(testName = 'gets token')
-    tests[testName]()
-    .then( () => {
-    log(testName = 'gets "" when no user')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'username input form saves and retrieves value')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'creates facet input form')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'creates default group picklist with > 1 groups when token')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'creates custom group picklist with > 1 groups when token')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'creates group picklist with 1 group when no token')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'creates a pagenote')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'creates an annotation')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'finds a test annotation')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'fails to retrieve from wrong service')
-    tests[testName]()
-    .then ( () => {
-    log(testName = 'retrieves 600 annotations')
-    tests[testName]()
-    .then( () => {
-    log(testName = 'uses wildcard uris')
-    tests[testName]()
-    .then( () => {
-    log('done')
-    }) }) }) }) }) }) }) }) }) }) }) }) })
+    const testNames = Object.keys(tests)
 
-  setTimeout(function() { // Give document a chance to complete
-    if (window.document && document.body) {
-      document.body.style.backgroundColor = green
+    for (i = 0; i < testNames.length; i++) {
+      const testName = testNames[i]
+      await tests[testName]()
+      log(testName)
     }
-  }, 0)
+
+    log('done')
 
  },
 
