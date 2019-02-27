@@ -52,28 +52,24 @@ a {
 }
 
 .annotationCard {
-  margin-top: 10px;
-  margin-bottom: 0px;
+  margin-left: 20px;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-color: lightgray;
+  padding-left: 8px;
+  margin-top: 16px;
+  margin-bottom: 14px;
 }
 
 .annotationCardDivider {
-  width: 25%;
-  margin-left: 0;
-}
-
-.annotationTags {
-  margin-top: 12px;
-  margin-bottom: 12px;
+  display: none;
 }
 
 .annotationTag {
-  font-size: x-small;
+  font-size: small;
   text-decoration: none;
-  border: 1px solid #BBB3B3;
-  border-radius: 2px;
   padding: 3px;
   color: #4B4040;
-  background: #f9f9f9;
 }
 
 .annotationQuote {
@@ -81,7 +77,6 @@ a {
   color: #777;
   font-style: italic;
   padding: 0 .615em;
-  border-left: 3px solid #d3d3d3;
 }
 
 img {
