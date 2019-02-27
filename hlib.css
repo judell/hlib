@@ -57,8 +57,8 @@ a {
 
 .annotationCard {
   margin-left: 20px;
-  border-left-style: solid;
-  border-left-width: thin;
+  border-top-style: solid;
+  border-top-width: thin;
   border-color: lightgray;
   padding-left: 8px;
   margin-top: 16px;

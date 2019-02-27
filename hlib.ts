@@ -442,6 +442,7 @@ export function getGroup() {
 /** Save a Hypothesis API token. */
 export function setToken() {
   setLocalStorageFromForm('tokenForm', 'h_token')
+  location.href = location.href
 }
 
 /** Save a Hypothesis username. */
@@ -961,7 +962,7 @@ export function setToggleControlCollapse(toggler: HTMLElement) {
 
 /** Set expand/collapse toggle to expanded. */
 export function setToggleControlExpand(toggler: HTMLElement) {
-  toggler.innerHTML = '\u{25bc}'
+
   toggler.title = 'collapse'
 }
 
