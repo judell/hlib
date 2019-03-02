@@ -38,7 +38,6 @@ button {
 }
 
 .formLabel {
-  font-weight: bold;
   font-size: smaller;
 }
 
@@ -93,4 +92,26 @@ img {
  margin: 0 0 0 5px;
 }
 
+.params {
+  margin-top: 1em;
+  white-space: pre;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.params .key {
+  color: #995113;
+}
+
+.params .value {
+  color:#030815
+}
+
+.checkboxContainer {
+  display: flex;
+}
 

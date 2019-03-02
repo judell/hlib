@@ -46,25 +46,147 @@ export type inputFormArgs = {
   name: string // name of the field
   id: string // id + 'Form' is used as a class attr and as id of input element
   value: string // initial value of input element
-  onchange: string // name of handler
-  type: string // usually '' but can be e.g. 'password'
-  msg: string // help message for the field
+  onchange: EventHandlerNonNull// handler
+  type?: string // usually '' but can be e.g. 'password'
+  msg?: string // help message for the field
 }
 
-type settings = {
+export type hlibSettings = {
+  // facets
+  user: string
+  url: string
+  wildcard_uri: string
+  group: string
+  tag: string
+  any:string
+  // settings
   service: string
+  max: string
+  searchReplies: string
+  exactTagSearch: string
+  expanded: string
+  subjectUserTokens?: Map<string,string>
 }
 
-var settings: settings = {
-  service: 'https://hypothes.is'
-}
+export const defaultService = 'https://hypothes.is'
+export const defaultMax = '100'
+const defaultSubjectUserTokens = new Map([["User1", "***"], ["User2", "***"]])
+
+const settings = settingsFromLocalStorage()
 
 export function getSettings() {
   return settings
 }
 
-export function updateSettings(newSettings: settings) {
-  settings = Object.assign(newSettings)
+export function updateSetting(name:string, value:string) {
+  settings[name] = value
+}
+
+export function updateSettings(settings:hlibSettings) {
+  settings = settings
+}
+
+export function settingsFromLocalStorage() : hlibSettings {
+  let value:any = localStorage.getItem('h_settings')
+  let settings = ! value 
+    ? {
+        // facets
+        user: '',
+        url: '',
+        wildcard_uri: '',
+        group: '',
+        tag: '',
+        any: '',
+        // settings
+        service: defaultService,
+        max: defaultMax,
+        searchReplies: 'false',
+        exactTagSearch: 'false',
+        expanded: 'false',
+        subjectUserTokens: defaultSubjectUserTokens
+      } as hlibSettings
+    : JSON.parse(value) as hlibSettings
+  updateSettings(settings)
+  return settings
+  }
+
+export function settingsFromUrl(url: URL) {
+  const params = url.searchParams
+  const _subjectUserTokens:any = params.get('subjectUserTokens')
+  const subjectUserTokens:Map<string,string> = 
+    typeof _subjectUserTokens === 'string'
+      ? new Map(JSON.parse(_subjectUserTokens))
+      : defaultSubjectUserTokens
+  const settings = {
+    service: typeof params.get('service') === 'string'
+            ? params.get('service')
+            : defaultService,
+    max: typeof params.get('max') === 'string'
+            ? params.get('max')
+            : defaultMax,
+    searchReplies: typeof params.get('searchReplies') === 'string'
+            ? params.get('searchReplies') === 'true'
+            : 'false',
+    exactTagSearch: typeof params.get('exactTagSearch') === 'string'
+            ? params.get('exactTagSearch') === 'true'
+            : 'false',
+    expanded: typeof(params.get('expanded') === 'string') 
+            ? params.get('expanded') === 'true'
+            : 'false',
+    subjectUserTokens: subjectUserTokens
+  } as hlibSettings
+  updateSettings(settings)
+  return settings
+}
+
+export function settingsToLocalStorage(settings: hlibSettings) {
+  function validate(settings) {
+    if (settings.max === '') {
+      settings.max = defaultMax
+    }
+    return settings
+  }
+  localStorage.setItem('h_settings', JSON.stringify(validate(settings)))
+}
+
+export function settingsToUrl(settings: hlibSettings) { 
+  let url = new URL(location.href)
+  function setOrDelete(settingName:string, settingValue:string, isBoolean?: boolean) {
+    // prep 
+    if (isBoolean && settingValue === 'false') {
+      settingValue = ''
+    }   
+    // rule
+    if (settingValue) {
+      url.searchParams.set(settingName, settingValue.toString())
+    } else {
+      url.searchParams.delete(settingName)
+    }
+    // exceptions
+    if (settingName === 'max' && settingValue === defaultMax) {
+      url.searchParams.delete(settingName)
+    }
+    if (settingName === 'group' && settingValue === 'all') {
+      url.searchParams.delete(settingName)
+    }
+  }
+  // facets
+  setOrDelete('user', settings.user)
+  setOrDelete('group', settings.group)
+  setOrDelete('url', settings.url)
+  setOrDelete('wildcard_uri', settings.wildcard_uri)
+  setOrDelete('tag', settings.tag)
+  setOrDelete('any', settings.any)
+  // settings
+  setOrDelete('max', settings.max)
+  setOrDelete('searchReplies', settings.searchReplies, true)
+  setOrDelete('exactTagSearch', settings.exactTagSearch, true)
+  setOrDelete('expanded', settings.expanded, true)
+  // special
+  url.searchParams.delete('service')
+  url.searchParams.delete('subjectUserTokens')
+    
+  history.pushState(null, '', url.href)
 }
 
 /** Promisified XMLHttpRequest 
@@ -72,12 +194,12 @@ export function updateSettings(newSettings: settings) {
  * */ 
 export function httpRequest(opts: httpOpts):Promise<any> {
   return new Promise( (resolve, reject) => {
-    let input = new Request(opts.url)
-    let init:any = {
+    const input = new Request(opts.url)
+    const init:any = {
       method: opts.method,
       headers: opts.headers
     }
-    let method = opts.method.toLowerCase()
+    const method = opts.method.toLowerCase()
     if (method !== 'get' && method !== 'head') {
       init.body = opts.params
     }
@@ -116,7 +238,7 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
 
     let opts: httpOpts = {
       method: 'get',
-      url: `${settings.service}/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
+      url: `${getSettings().service}/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
       headers: {},
       params: {}
     }
@@ -125,7 +247,7 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
 
     facets.forEach(function(facet) {
       if (params[facet]) {
-        var encodedValue = encodeURIComponent(params[facet])
+        const encodedValue = encodeURIComponent(params[facet])
         opts.url += `&${facet}=${encodedValue}`
       }
     })
@@ -133,21 +255,21 @@ export function hApiSearch(params: any, callback: object, progressId?: string) {
     opts = setApiTokenHeaders(opts)
 
     httpRequest(opts).then(function(data: any) {
-      let response: any = JSON.parse(data.response)
+      const response: any = JSON.parse(data.response)
       annos = annos.concat(response.rows)
       replies = replies.concat(response.replies)
       if (response.rows.length === 0 || annos.length >= max) {
         callback(annos, replies)
       } else {
-        let sentinel = response.rows.slice(-1)[0].updated
+        const sentinel = response.rows.slice(-1)[0].updated
         _search(params, sentinel, callback, annos, replies, progressId)
       }
     })
   }
 
-  let annos: object[] = []
-  let replies: object[] = []
-  let after:string = ''
+  const annos: object[] = []
+  const replies: object[] = []
+  const after:string = ''
   _search(params, after, callback, annos, replies, progressId)
 }
 
@@ -170,22 +292,22 @@ export function search(params: any, progressId?: string): Promise<any> {
         getById(progressId).innerHTML += '.'
       }
 
-      let separateReplies = params._separate_replies==='true' ? '&_separate_replies=true' : ''
-      let afterClause = after ? `&search_after=${after}` : ''
+      const separateReplies = params._separate_replies==='true' ? '&_separate_replies=true' : ''
+      const afterClause = after ? `&search_after=${after}` : ''
 
 
       let opts: httpOpts = {
         method: 'get',
-        url: `${settings.service}/api/search?limit=${limit}${separateReplies}${afterClause}`,
+        url: `${getSettings().service}/api/search?limit=${limit}${separateReplies}${afterClause}`,
         headers: {},
         params: {}
       }
 
-      let facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
+      const facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
 
       facets.forEach(function(facet) {
         if (params[facet]) {
-          var encodedValue = encodeURIComponent(params[facet])
+          const encodedValue = encodeURIComponent(params[facet])
           opts.url += `&${facet}=${encodedValue}`
         }
       })
@@ -194,16 +316,16 @@ export function search(params: any, progressId?: string): Promise<any> {
 
       httpRequest(opts)
         .then(function(data) {
-          let response = JSON.parse(data.response)
+          const response = JSON.parse(data.response)
           annos = annos.concat(response.rows)
           if (response.replies) {
             replies = replies.concat(response.replies)
           }
           if (response.rows.length === 0 || annos.length >= max) {
-            let result:any = [annos, replies]
+            const result:any = [annos, replies]
             resolve(result)
           } else {
-            let sentinel = response.rows.slice(-1)[0].updated
+            const sentinel = response.rows.slice(-1)[0].updated
             resolve(_search(params, sentinel, annos, replies, progressId))
           }
         })
@@ -214,9 +336,9 @@ export function search(params: any, progressId?: string): Promise<any> {
   }
 
   return new Promise (resolve => {
-    let annos: object[] = []
-    let replies: object[] = []
-    let after:string = ''
+    const annos: object[] = []
+    const replies: object[] = []
+    const after:string = ''
     resolve(_search(params, after, annos, replies, progressId))
   })
 }
@@ -225,7 +347,7 @@ export function search(params: any, progressId?: string): Promise<any> {
  * this function reduces the set to just replies to the given id
  */
 export function findRepliesForId(id: string, replies: any[]) {
-  var _replies = replies.filter( _reply => {
+  const _replies = replies.filter( _reply => {
     return _reply.references.indexOf(id) != -1 
   })
   return _replies
@@ -236,8 +358,8 @@ export function showThread(row:any, level:number, replies:any[], displayed:strin
     return
   } else {
     displayed.push(row.id)
-    let _replies = findRepliesForId(row.id, replies)
-    let anno = parseAnnotation(row)
+    const _replies = findRepliesForId(row.id, replies)
+    const anno = parseAnnotation(row)
     displayElement.innerHTML += showAnnotation(anno, level)
     _replies.forEach(_reply => {
       showThread(_reply, level+1, _replies, displayed, displayElement)
@@ -247,20 +369,20 @@ export function showThread(row:any, level:number, replies:any[], displayed:strin
 
 /** Organize a set of annotations, from ${settings.service}/api/search, by url */
 export function gatherAnnotationsByUrl(rows: object[]) {
-  var urls: any = {}
-  var ids: any = {}
-  var titles: any = {}
-  var urlUpdates: any = {}
-  var annos: any = {}
-  for (var i = 0; i < rows.length; i++) {
-    var row = rows[i]
-    var annotation = parseAnnotation(row) // parse the annotation
-    var id = annotation.id
+  const urls: any = {}
+  const ids: any = {}
+  const titles: any = {}
+  const urlUpdates: any = {}
+  const annos: any = {}
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const annotation = parseAnnotation(row) // parse the annotation
+    const id = annotation.id
     annos[id] = annotation // save it by id
-    var url = annotation.url // remember these things
+    let url = annotation.url // remember these things
     url = url.replace(/\/$/, '') // strip trailing slash
-    var updated = annotation.updated
-    var title = annotation.title
+    const updated = annotation.updated
+    let title = annotation.title
     if (!title) title = url
     if (url in urls) {
       // add/update this url's info
@@ -287,18 +409,18 @@ export function gatherAnnotationsByUrl(rows: object[]) {
 
 /** Parse a row returned from `/api/search` */
 export function parseAnnotation(row: any): annotation {
-  var id = row.id
-  var url = row.uri
-  var updated = row.updated.slice(0, 19)
-  var group = row.group
-  var title = url
-  var refs = row.references ? row.references : []
-  var user = row.user.replace('acct:', '').replace('@hypothes.is', '')
-  var quote = ''
+  const id = row.id
+  const url = row.uri
+  const updated = row.updated.slice(0, 19)
+  const group = row.group
+  let title = url
+  const refs = row.references ? row.references : []
+  const user = row.user.replace('acct:', '').replace('@hypothes.is', '')
+  let quote = ''
   if (row.target && row.target.length) {
-    var selectors = row.target[0].selector
+    const selectors = row.target[0].selector
     if (selectors) {
-      for (var i = 0; i < selectors.length; i++) {
+      for (let i = 0; i < selectors.length; i++) {
         let selector = selectors[i]
         if (selector.type === 'TextQuoteSelector') {
           quote = selector.exact
@@ -306,9 +428,9 @@ export function parseAnnotation(row: any): annotation {
       }
     }
   }
-  var text = row.text ? row.text : ''
+  const text = row.text ? row.text : ''
 
-  var tags = row.tags
+  const tags = row.tags
 
   try {
     title = row.document.title
@@ -321,11 +443,11 @@ export function parseAnnotation(row: any): annotation {
     title = url
   }
 
-  var isReply = refs.length > 0
+  const isReply = refs.length > 0
 
-  var isPagenote = row.target && !row.target[0].hasOwnProperty('selector')
+  const isPagenote = row.target && !row.target[0].hasOwnProperty('selector')
 
-  let r: annotation = {
+ const r: annotation = {
     id: id,
     url: url,
     updated: updated,
@@ -346,12 +468,12 @@ export function parseAnnotation(row: any): annotation {
 
 /** Parse the `target` of a row returned from `/api/search` */
 export function parseSelectors(target: any): object {
-  var parsedSelectors: any = {}
-  var firstTarget = target[0]
+  const parsedSelectors: any = {}
+  const firstTarget = target[0]
   if (firstTarget) {
-    var selectors = firstTarget.selector
+    const selectors = firstTarget.selector
     if (selectors) {
-      var textQuote = selectors.filter(function(x: any) {
+      const textQuote = selectors.filter(function(x: any) {
         return x.type === 'TextQuoteSelector'
       })
       if (textQuote.length) {
@@ -361,7 +483,7 @@ export function parseSelectors(target: any): object {
           suffix: textQuote[0].suffix
         }
       }
-      var textPosition = selectors.filter(function(x: any) {
+      const textPosition = selectors.filter(function(x: any) {
         return x.type === 'TextPositionSelector'
       })
       if (textPosition.length) {
@@ -383,9 +505,9 @@ export function gup(name: string, str?: string): string {
     str = '?' + str
   }
   name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]')
-  var regexS = '[\\?&]' + name + '=([^&#]*)'
-  var regex = new RegExp(regexS)
-  var results = regex.exec(str)
+  const regexS = '[\\?&]' + name + '=([^&#]*)'
+  const regex = new RegExp(regexS)
+  const results = regex.exec(str)
   if (results == null) {
     return ''
   } else {
@@ -402,7 +524,7 @@ export function appendBody(element: HTMLElement) {
 }
 
 export function getDomainFromUrl(url: string): string {
-  var a = document.createElement('a')
+  let a = document.createElement('a')
   a.href = url
   return a.hostname
 }
@@ -425,18 +547,7 @@ export function setApiTokenHeaders(opts: httpOpts, token?: string): httpOpts {
 
 /** Acquire a Hypothesis API token */
 export function getToken() {
-  return getFromUrlParamOrLocalStorage('h_token')
-}
-
-/** Acquire a Hypothesis username */
-export function getUser() {
-  return getFromUrlParamOrLocalStorage('h_user')
-}
-
-/** Acquire a Hypothesis group id */
-export function getGroup() {
-  var group = getFromUrlParamOrLocalStorage('h_group')
-  return group != '' ? group : '__world__'
+  return getTokenFromLocalStorage()
 }
 
 /** Save a Hypothesis API token. */
@@ -445,45 +556,42 @@ export function setToken() {
   location.href = location.href
 }
 
-/** Save a Hypothesis username. */
-export function setUser() {
-  setLocalStorageFromForm('userForm', 'h_user')
+/** Acquire a Hypothesis group id */
+export function getGroup() {
+  const group = getSettings().group
+  return group != '' ? group : '__world__'
 }
 
-/** Save a Hypothesis group id */
-export function setGroup() {
-  setLocalStorageFromForm('groupForm', 'h_group')
+export function syncContainer(name: string) {
+  return function() {
+    syncUrlAndLocalStorageFromForm(`${name}Container`) 
+  }
+}
+
+function syncUrlAndLocalStorageFromForm(formId: string) {
+  const form = getById(formId)
+  const keyElement = form.querySelector('.formLabel') as HTMLElement
+  const key = keyElement.innerText 
+  const inputElement = form.querySelector('input') as HTMLInputElement
+  let value:string
+  if (inputElement.type === 'checkbox') {
+    value = inputElement.checked ? 'true' : 'false'
+  } else 
+    value = inputElement.value
+  updateSetting(key, value)
+  settingsToUrl(getSettings())
+  settingsToLocalStorage(getSettings())
 }
 
 /** Save value of a form field. */
 export function setLocalStorageFromForm(formId: string, storageKey: string) {
-  var element = getById(formId) as HTMLInputElement
+  const element = getById(formId) as HTMLInputElement
   localStorage.setItem(storageKey, element.value)
-}
-
-/** Get a value passed as an url paramater, or from local storage. */
-export function getFromUrlParamOrLocalStorage(key: string, _default?: string) {
-  var value = gup(key)
-
-  if (value === '') {
-    let _value = localStorage.getItem(`${key}`)
-    value = _value ? _value : ''
-  }
-
-  if ((!value || value === '') && _default) {
-    value = _default
-  }
-
-  if (!value) {
-    value = ''
-  }
-
-  return value
 }
 
 /** Helper for `createAnnotationPayload`.  */
 export function createPermissions(username: string, group: string) {
-  var permissions = {
+  const permissions = {
     read: [ 'group:' + group ],
     update: [ 'acct:' + username + '@hypothes.is' ],
     delete: [ 'acct:' + username + '@hypothes.is' ]
@@ -493,7 +601,7 @@ export function createPermissions(username: string, group: string) {
 
 /** Helper for `createAnnotationPayload` */
 export function createTextQuoteSelector(exact: string, prefix: string, suffix: string): textQuoteSelector {
-  let tqs: textQuoteSelector = {
+  const tqs: textQuoteSelector = {
     type: 'TextQuoteSelector',
     exact: exact,
     prefix: '',
@@ -510,7 +618,7 @@ export function createTextQuoteSelector(exact: string, prefix: string, suffix: s
 
 /** Helper for `createAnnotationPayload` */
 export function createTextPositionSelector(start: number, end: number): textPositionSelector {
-  let tps: textPositionSelector = {
+  const tps: textPositionSelector = {
     type: 'TextPositionSelector',
     start: start,
     end: end
@@ -546,13 +654,13 @@ export function createAnnotationPayload(params: any): string {
     textPositionSelector = createTextPositionSelector(params.start, params.end)
   }
 
-  var target: any = {
+  const target: any = {
     source: params.uri
   }
 
   if (textQuoteSelector) {
     // we have minimum info for an annotation target
-    var selectors: object[] = [ textQuoteSelector ]
+    const selectors: object[] = [ textQuoteSelector ]
     if (textPositionSelector) {
       // we can also use TextPosition
       selectors.push(textPositionSelector)
@@ -560,7 +668,7 @@ export function createAnnotationPayload(params: any): string {
     target['selector'] = selectors
   }
 
-  var payload: any = {
+  const payload: any = {
     uri: params.uri,
     group: params.group,
     permissions: createPermissions(params.username, params.group),
@@ -584,8 +692,8 @@ export function createAnnotationPayload(params: any): string {
 
 /** Create an annotation */
 export function postAnnotation(payload: string, token: string) {
-  var url = `${settings.service}/api/annotations`
-  var opts: httpOpts = {
+  const url = `${getSettings().service}/api/annotations`
+  let opts: httpOpts = {
     method: 'post',
     params: payload,
     url: url,
@@ -603,14 +711,14 @@ export function postAnnotation(payload: string, token: string) {
 export function postAnnotationAndRedirect(payload: string, token: string, queryFragment?: string) {
   return postAnnotation(payload, token)
     .then(data => {
-      let _data:any = data
-      let status:number = _data.status
+      const _data:any = data
+      const status:number = _data.status
       if (status != 200) {
         alert(`hlib status ${status}`)
         return
       }
-      let response = JSON.parse(_data.response)
-      var url = response.uri
+      const response = JSON.parse(_data.response)
+      let url = response.uri
       if (queryFragment) {
         url += '#' + queryFragment
       }
@@ -622,8 +730,8 @@ export function postAnnotationAndRedirect(payload: string, token: string, queryF
 }
 
 export function updateAnnotation(id: string, token: string, payload: string) {
-  var url = `${settings.service}/api/annotations/${id}`
-  var opts: httpOpts = {
+  const url = `${getSettings().service}/api/annotations/${id}`
+  let opts: httpOpts = {
     method: 'put',
     params: payload,
     url: url,
@@ -634,8 +742,8 @@ export function updateAnnotation(id: string, token: string, payload: string) {
 }
 
 export function deleteAnnotation(id: string, token: string) {
-  var url = `${settings.service}/api/annotations/${id}`
-  var opts: httpOpts = {
+  const url = `${getSettings().service}/api/annotations/${id}`
+  let opts: httpOpts = {
     method: 'delete',
     url: url,
     headers: {},
@@ -647,31 +755,76 @@ export function deleteAnnotation(id: string, token: string) {
 
 /** Input form for an API token, remembered in local storage. */
 export function createApiTokenInputForm(element: HTMLElement) {
-  let tokenArgs: inputFormArgs = {
+  const tokenArgs: inputFormArgs = {
     element: element,
     name: 'Hypothesis API token',
     id: 'token',
     value: getToken(),
-    onchange: 'hlib.setToken',
+    onchange: setToken,
     type: 'password',
     msg:
-      `to write (or read private) annotations, copy/paste your <a target="_token" href="${settings.service}/profile/developer">token</a>`
+      `to write (or read private) annotations, copy/paste your <a target="_token" href="${getSettings().service}/profile/developer">token</a>`
   }
   createNamedInputForm(tokenArgs)
 }
 
-/** Input form for a username, remembered in local storage. */
-export function createUserInputForm(element: HTMLElement, msg?: string) {
-  let userArgs: inputFormArgs = {
+
+export function createInputForm(name: string, handler: EventHandlerNonNull, element: HTMLElement, type?: string, msg?: string) {
+  const params: inputFormArgs = {
     element: element,
-    name: 'Hypothesis username',
-    id: 'user',
-    value: getUser(),
-    onchange: 'hlib.setUser',
-    type: '',
+    name: name,
+    id: `${name}`,
+    value: getSettings()[name],
+    onchange: handler,
+    type: type ? type : '',
     msg: msg ? msg : ''
   }
-  createNamedInputForm(userArgs)
+  createNamedInputForm(params)
+}
+
+export function createUserInputForm(element: HTMLElement) {
+  const name = 'user'
+  createInputForm(name, syncContainer(name), element, '', 'Not needed for authentication, use only as a search term')
+}
+
+export function createUrlInputForm(element: HTMLElement) {
+  const name = 'url'
+  createInputForm(name, syncContainer(name), element, '', 'URL of annotated document')
+}
+
+export function createWildcardUriInputForm(element: HTMLElement) {
+  const name = 'wildcard_uri'
+  createInputForm(name, syncContainer(name), element, '', 'Example: https://www.nytimes.com/*')
+}
+
+export function createTagInputForm(element: HTMLElement) {
+  const name = 'tag'
+  createInputForm(name, syncContainer(name), element)
+}
+
+export function createAnyInputForm(element: HTMLElement) {
+  const name = 'any'
+  createInputForm(name, syncContainer(name), element)
+}
+
+export function createMaxInputForm(element: HTMLElement) {
+  const name = 'max'  
+  createInputForm(name, syncContainer(name), element)
+}
+
+export function createSearchRepliesCheckbox(element: HTMLElement) {
+  const name = 'searchReplies'  
+  createInputForm(name, syncContainer(name), element, 'checkbox')
+}
+
+export function createExactTagSearchCheckbox(element: HTMLElement) {
+  const name = 'exactTagSearch'  
+  createInputForm(name, syncContainer(name), element, 'checkbox')
+}
+
+export function createExpandedCheckbox(element: HTMLElement) {
+  const name = 'expanded'  
+  createInputForm(name, syncContainer(name), element, 'checkbox')
 }
 
 /** Create an input field with a handler to save the changed value,
@@ -679,19 +832,39 @@ export function createUserInputForm(element: HTMLElement, msg?: string) {
  *  Should be rnamed to createPersistentInputForm.
  */
 export function createNamedInputForm(args: inputFormArgs) {
-  let { element, name, id, value, onchange, type, msg } = args
-  let form = `
-    <div class="formLabel">${name}</div>
-    <div class="${id}Form"><input onchange="${onchange}()" value="${value}" type="${type}" id="${id}Form"></input></div>
-    <div class="formMessage">${msg}</div>`
+  const { element, name, id, value, onchange, type, msg } = args
+  const _type = type ? `type="${type}"` : ''
+  let _value = ''
+  let _checked
+  if (type !== 'checkbox') { 
+    _value = `value="${value}"`
+  } else {
+    _checked = value === 'true' ? `checked="true"` : ''
+  }
+  let form
+  if (type !== 'checkbox') {
+    form = `
+      <div class="formLabel">${name}</div>
+      <div class="${id}Form"><input ${_type} ${_value} id="${id}Form"></input></div>
+      <div class="formMessage">${msg}</div>`
+  } else {
+    form = `
+      <div class="checkboxContainer">
+        <div class="formLabel">${name}</div>
+        <div class="${id}Form"><input type="${type}" ${_checked} id="${id}searchRepliesForm"></div>
+      </div>
+      <div class="formMessage"></div>`
+  }
   element.innerHTML += form
+  const inputElement = element.querySelector('input') as HTMLInputElement
+  inputElement.onchange = onchange
   return element // return value used for testing
 }
 
 /** Create a simple input field. */
 export function createFacetInputForm(e: HTMLElement, facet: string, msg: string, value?: string) {
   if (!value) { value = '' }
-  var form = `
+  const form = `
     <div class="formLabel">${facet}</div>
     <div class="${facet}Form"><input value="${value}" id="${facet}Form"></input></div>
     <div class="formMessage">${msg}</div>`
@@ -700,63 +873,68 @@ export function createFacetInputForm(e: HTMLElement, facet: string, msg: string,
 }
 
 export function setSelectedGroup() {
-  var selectedGroup = getSelectedGroup()
-  localStorage.setItem('h_group', selectedGroup)
+  const selectedGroup = getSelectedGroup()
+  updateSetting('group', selectedGroup)
+  const settings = getSettings()
+  settingsToLocalStorage(settings)
+  settingsToUrl(settings)
 }
 
 export function getSelectedGroup(selectId?:string) {
   let _selector = selectId ? selectId : 'groupsList'
   _selector = '#' + _selector
-  let groupSelector = document.querySelector(_selector) as HTMLSelectElement
-  let options:HTMLOptionsCollection = groupSelector.options
-  let selectedGroup = options[options.selectedIndex].value
+  const groupSelector = document.querySelector(_selector) as HTMLSelectElement
+  const options:HTMLOptionsCollection = groupSelector.options
+  const selectedGroup = options[options.selectedIndex].value
   return selectedGroup
 }
 
 /** Create a Hypothesis group picker. */
 export function createGroupInputForm(e: HTMLElement, selectId?: string) {
   return new Promise( (resolve,reject) => {
-    let _selectId:string = selectId ? selectId : 'groupsList'
+    const _selectId:string = selectId ? selectId : 'groupsList'
     
     function createGroupSelector(groups: any, selectId?: string) {
       localStorage.setItem('h_groups', JSON.stringify(groups))
-      var currentGroup = getGroup()
-      var options = ''
+      const currentGroup = getGroup()
+      let options = ''
       groups.forEach(function(g: any) {
-        var selected = ''
+        let selected = ''
         if (currentGroup == g.id) {
           selected = 'selected'
         }
         options += `<option ${selected} value="${g.id}">${g.name}</option>\n`
       })
-      var selector = `
-        <select onchange="hlib.setSelectedGroup()" id="${_selectId}">
+      const selector = `
+        <select id="${_selectId}">
         ${options}
         </select>`
       return selector
     }
 
-    var token = getToken()
+    const token = getToken()
 
-    var opts: httpOpts = {
+    let opts: httpOpts = {
       method: 'get',
-      url: `${settings.service}/api/profile`,
+      url: `${getSettings().service}/api/profile`,
       headers: {},
       params: {}
     }
     opts = setApiTokenHeaders(opts, token)
     httpRequest(opts)
       .then((data:any) => {
-        let response: any = JSON.parse(data.response)
-        var msg = ''
+        const response: any = JSON.parse(data.response)
+        let msg = ''
         if (!token) {
           msg = 'add token and <a href="javascript:location.href=location.href">refresh</a> to see all groups here'
         }
-        var form = `
+        const form = `
           <div class="formLabel">Hypothesis Group</div>
           <div class="inputForm">${createGroupSelector(response.groups, _selectId)}</div>
           <div class="formMessage">${msg}</div>`
         e.innerHTML += form
+        const groupPicker = getById('groupsList') as HTMLSelectElement
+        groupPicker.onchange = setSelectedGroup
         return data
       })
       .then (data => {
@@ -773,10 +951,10 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
  * with links to the Hypothesis viewer.
  */
 export function formatTags(tags: string[], urlPrefix?: string): string {
-  var formattedTags: string[] = []
+  const formattedTags: string[] = []
   tags.forEach(function(tag) {
-    let url = urlPrefix ? urlPrefix + tag : `./?tag=${tag}`
-    var formattedTag = `<a target="_tag" href="${url}"><span class="annotationTag">${tag}</span></a>`
+    const url = urlPrefix ? urlPrefix + tag : `./?tag=${tag}`
+    const formattedTag = `<a target="_tag" href="${url}"><span class="annotationTag">${tag}</span></a>`
     formattedTags.push(formattedTag)
   })
   return formattedTags.join(' ')
@@ -784,7 +962,7 @@ export function formatTags(tags: string[], urlPrefix?: string): string {
 
 /** Format an annotation as a row of a CSV export. */
 export function csvRow(level: number, anno: any): string {
-  var fields = [
+  let fields = [
     level.toString(),
     anno.updated,
     anno.url,
@@ -810,28 +988,26 @@ export function csvRow(level: number, anno: any): string {
   return fields.join(',')
 }
 
-//var Showdown:any = {} // Placeholder to silence TypeScript 'cannot find name' complaint
-
 /** Render an annotation card. */
 export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string) {
 
   function getGroupName(anno:any):any {
     let groupName = anno.group
     let groups:any = {}
-    let groupsJson = localStorage.getItem('h_groups')
+    const groupsJson = localStorage.getItem('h_groups')
     if ( groupsJson) {
       groups = JSON.parse(groupsJson)
-      let groupRecords = groups.filter(g => {return g.id === anno.group})
+      const groupRecords = groups.filter(g => {return g.id === anno.group})
       if (groupRecords.length) {
         groupName = groupRecords[0].name
       }
     }
     return groupName
   }
-  var dt = new Date(anno.updated)
-  var dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
+  const dt = new Date(anno.updated)
+  const dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
 
-  var html = anno.text == null ? '' : anno.text
+  let html = anno.text == null ? '' : anno.text
   let converter
   if (typeof(Showdown) === 'object') {
     converter = new Showdown.converter()
@@ -840,26 +1016,26 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
   }
   html = converter.makeHtml(html)
 
-  var tags = ''
+  let tags = ''
   if (anno.tags.length) {
     tags = formatTags(anno.tags, tagUrlPrefix)
   }
 
-  var user = anno.user.replace('acct:', '').replace('@hypothes.is', '')
+  const user = anno.user.replace('acct:', '').replace('@hypothes.is', '')
 
-  var quote = anno.quote
+  let quote = anno.quote
 
   if (anno.quote) {
     quote = `<div class="annotationQuote">${anno.quote}</div>`
   }
 
-  var standaloneAnnotationUrl = `${settings.service}/a/${anno.id}`
+  const standaloneAnnotationUrl = `${settings.service}/a/${anno.id}`
 
-  var marginLeft = level * 20
+  const marginLeft = level * 20
 
-  let groupName = getGroupName(anno)
+  const groupName = getGroupName(anno)
 
-  var groupSlug = 'in Public'
+  let groupSlug = 'in Public'
   if (anno.group !== '__world__') {
     groupSlug = `
       in group
@@ -867,7 +1043,7 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
       </span>`
   }
 
-  var output = `
+  const output = `
     <div class="annotationCard" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
       <div class="csvRow">${csvRow(level, anno)}</div>
       <div class="annotationHeader">
@@ -894,11 +1070,11 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
 
 /** Save exported annotations to a file. */
 export function download(text: string, type: string) {
-  var blob = new Blob([ text ], {
+  const blob = new Blob([ text ], {
     type: 'application/octet-stream'
   })
-  var url = URL.createObjectURL(blob)
-  var a = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  let a = document.createElement('a')
   a.href = url
   a.target = '_blank'
   a.download = 'hypothesis.' + type
@@ -913,19 +1089,19 @@ export function download(text: string, type: string) {
  * This method parses that string into a user-friendly key/value pair object.
  */
 export function parseResponseHeaders(headerStr: string): object {
-  var headers: any = {}
+  const headers: any = {}
   if (!headerStr) {
     return headers
   }
-  var headerPairs = headerStr.split('\u000d\u000a')
-  for (var i = 0; i < headerPairs.length; i++) {
-    var headerPair = headerPairs[i]
+  const headerPairs = headerStr.split('\u000d\u000a')
+  for (let i = 0; i < headerPairs.length; i++) {
+    const headerPair = headerPairs[i]
     // Can't use split() here because it does the wrong thing
     // if the header value has the string ": " in it.
-    var index = headerPair.indexOf('\u003a\u0020')
+    const index = headerPair.indexOf('\u003a\u0020')
     if (index > 0) {
-      var key = headerPair.substring(0, index)
-      var val = headerPair.substring(index + 2)
+      const key = headerPair.substring(0, index)
+      const val = headerPair.substring(index + 2)
       headers[key] = val
     }
   }
@@ -936,22 +1112,28 @@ export function parseResponseHeaders(headerStr: string): object {
 
 /** Collapse all annotation cards. */
 export function collapseAll() {
-  var togglers: NodeListOf<HTMLElement> = document.querySelectorAll('.urlHeading .toggle')
+  const togglers: NodeListOf<HTMLElement> = document.querySelectorAll('.urlHeading .toggle')
   togglers.forEach(function(toggler) {
     setToggleControlCollapse(toggler)
   })
-  var cards: NodeListOf<HTMLElement> = document.querySelectorAll('.annotationCard')
+  const cards: NodeListOf<HTMLElement> = document.querySelectorAll('.annotationCard')
   hideCards(cards)
+  const button = getById('expander')
+  button.innerText = 'expand'
+  button.onclick = expandAll
 }
 
 /** Expand all annotation cards. */
 export function expandAll() {
-  var togglers: NodeListOf<HTMLElement> = document.querySelectorAll('.urlHeading .toggle')
+  const togglers: NodeListOf<HTMLElement> = document.querySelectorAll('.urlHeading .toggle')
   togglers.forEach((toggler) => {
     setToggleControlExpand(toggler)
   })
-  var cards: NodeListOf<HTMLElement> = document.querySelectorAll('.annotationCard')
+  const cards: NodeListOf<HTMLElement> = document.querySelectorAll('.annotationCard')
   showCards(cards)
+  const button = getById('expander')
+  button.innerText = 'collapse'
+  button.onclick = collapseAll
 }
 
 /** Set expand/collapse toggle to collapsed. */
@@ -962,33 +1144,33 @@ export function setToggleControlCollapse(toggler: HTMLElement) {
 
 /** Set expand/collapse toggle to expanded. */
 export function setToggleControlExpand(toggler: HTMLElement) {
-
+  toggler.innerHTML = '\u{25bc}'
   toggler.title = 'collapse'
 }
 
 /** Show a setof annotation cards. */
 export function showCards(cards: NodeListOf<HTMLElement>) {
-  for (var i = 0; i < cards.length; i++) {
+  for (let i = 0; i < cards.length; i++) {
     cards[i].style.display = 'block'
   }
 }
 
 /** Hide a set of annotation cards. */
 export function hideCards(cards: NodeListOf<HTMLElement>) {
-  for (var i = 0; i < cards.length; i++) {
+  for (let i = 0; i < cards.length; i++) {
     cards[i].style.display = 'none'
   }
 }
 
 /** Switch the expand/collapse state of an annotation card. */
 export function toggle(id: string) {
-  var heading = getById('heading_' + id)
-  var toggler = heading.querySelector('.toggle') as HTMLElement
+  const heading = getById('heading_' + id)
+  const toggler = heading.querySelector('.toggle') as HTMLElement
 
-  var cardsId = `cards_${id}`
-  var selector = `#${cardsId} .annotationCard`
-  var perUrlCards: NodeListOf<HTMLElement> = document.querySelectorAll(selector)
-  var cardsDisplay = perUrlCards[0].style.display
+  const cardsId = `cards_${id}`
+  const selector = `#${cardsId} .annotationCard`
+  const perUrlCards: NodeListOf<HTMLElement> = document.querySelectorAll(selector)
+  const cardsDisplay = perUrlCards[0].style.display
 
   if (cardsDisplay === 'block') {
     setToggleControlCollapse(toggler)
@@ -997,4 +1179,34 @@ export function toggle(id: string) {
     setToggleControlExpand(toggler)
     showCards(perUrlCards)
   }
+}
+
+export function getTokenFromLocalStorage() {
+  const value = localStorage.getItem('h_token')
+  return value ? value : ''
+}
+
+/** Display the params a bit less plainly
+ */
+
+export function syntaxColorParams(params:hlibSettings, excluded:string[]) : string {
+  const keys = Object.keys(params) as string[]
+  function wrappedKey(key) {
+    return `<span class="params key">${key}</span>`
+  }
+  function wrappedValue(value) {
+    return `<span class="params value">${value}</span>`
+  }
+  let buffer = ''
+  const pairs = []
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    if (excluded.indexOf(key) != -1) {
+      continue
+    }
+    const value = params[key]
+    pairs.push(`"${wrappedKey(key)}" : "${wrappedValue(value)}"`)
+  }
+  const html = `<pre class="params">${pairs.join(', ')}</pre>`  
+  return html
 }

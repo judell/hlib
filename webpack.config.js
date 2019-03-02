@@ -2,6 +2,9 @@ var path = require('path')
 
 module.exports = {
   entry: './hlib.js',
+  optimization: {
+    minimize: false,
+  },
   output: {
     path: path.join(__dirname, '.'),
     filename: 'hlib.bundle.js',

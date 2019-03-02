@@ -10,14 +10,18 @@
 
 <body>
 
-<div style="display:none"><input id="token"/></div>
+<div class="formField" id="tokenContainer"></div>
 
-<!-- this duplicates hlib.setUser because forms created in tests can't see the module -->
+<div class="formField" id="maxContainer"></div>
+
+<div class="formField" id="searchRepliesContainer"></div>
+
+<div class="formField" id="wildcard_uriContainer"></div>
+
+<div class="formField" id="groupContainer"></div>
+
 <script>
-  function setUser() {
-    let value = document.getElementById('userForm').value;
-    localStorage.setItem('h_user', value); 
-}
+localStorage.removeItem('h_settings')
 </script>
 
  <!-- This module syntax is so convenient... -->
@@ -34,55 +38,41 @@ import * as hlib from './hlib.js'
 //  - use source-map-loader to load the source map
 // It will be nice when all that nonsense goes away.
 
-let scratchUri = 'https://jonudell.net/h/scratch.html'
-let scratchQuote = 'First para'
-let scratchText = 'hlib test'
-let testAnnotation = 'M48i_AAkEemMqAtMSK82kg'
-
-function delay(seconds) {
-  return new Promise( resolve => setTimeout(resolve, seconds * 1000))
-}
-
-async function waitSeconds(seconds, data) {
-  await delay(seconds)
-  return data
-  }
+const scratchUri = 'https://jonudell.net/h/scratch.html'
+const scratchQuote = 'First para'
+const scratchText = 'hlib test'
+const testAnnotation = 'M48i_AAkEemMqAtMSK82kg'
 
 function appendBody(element) {
   document.body.appendChild(element)
 }
 
-function createGroupContainer() {
-  let groupContainer = document.createElement('div');
-  groupContainer.id = 'groupContainer';
-  document.body.append(groupContainer);
-  return groupContainer;
-}
-
-function removeGroupContainer() {
-  let groupContainer = hlib.getById('groupContainer')
-  if (groupContainer) {
-    groupContainer.remove()
-  }
-}
-
 function checkAndDeleteTestAnnotation(data, token) {
   return new Promise(resolve => {
-    let response = JSON.parse(data.response)
-    if (response.target[0].selector) {
-      let selectors = hlib.parseSelectors(response.target)
-      eq(selectors.TextQuote.exact, scratchQuote)
-      let annotation = hlib.parseAnnotation(response)
-      eq(annotation.quote, scratchQuote)
+    async function checkAndDelete() {
+      const response = JSON.parse(data.response)
+      if (response.target[0].selector) {
+        const selectors = hlib.parseSelectors(response.target)
+        eq(selectors.TextQuote.exact, scratchQuote)
+        const annotation = hlib.parseAnnotation(response)
+        eq(annotation.quote, scratchQuote)
+      }
+      assert(response.id)
+      assert(response.updated)
+      data = await hlib.deleteAnnotation(response.id, token)
+      console.log('deleted test annotation', data)
     }
-    assert(response.id)
-    assert(response.updated)
-    hlib.deleteAnnotation(response.id, token)
-     .then(data => {
-        console.log('deleted test annotation', data)
-        resolve()
-     })
+    resolve(checkAndDelete())
   })
+}
+
+function initializeSettings() {
+  localStorage.removeItem('h_settings')
+  hlib.settingsToLocalStorage(hlib.getSettings())    
+}
+
+function clearUrlLine() {
+  history.pushState(null, '', location.href.replace(/\?.+/,''))
 }
 
 tests({
@@ -96,191 +86,193 @@ tests({
   })
  },
 
+'initial settings as expected': function() {
+  return new Promise(resolve => {
+    localStorage.removeItem('h_settings')
+    initializeSettings()
+    clearUrlLine()
+    const settings = hlib.getSettings()
+    eq(settings.max, hlib.defaultMax)
+    eq(settings.searchReplies, 'false')
+    eq(settings.service, 'https://hypothes.is')
+    resolve()
+  })
+},
+
+'input form change updates url and localStorage': function() {
+  return new Promise(resolve => {
+    const container = hlib.getById('maxContainer')
+    hlib.createMaxInputForm(container)
+    const inputElement = container.querySelector('input')
+    const newMax = 777
+    inputElement.value = newMax
+    inputElement.onchange()
+    assert(location.href.indexOf(`max=${newMax}` != -1))
+    assert(hlib.getSettings().max == newMax)
+    hlib.updateSetting('max', hlib.defaultMax)
+    container.outerHTML = `<div class="formField" id="maxContainer"></div>`
+    resolve()
+  })
+ }, 
+
+'checkbox change updates url and localStorage': function() {
+  return new Promise(resolve => {
+    const container = hlib.getById('searchRepliesContainer')
+    hlib.createSearchRepliesCheckbox(hlib.getById('searchRepliesContainer'));
+    const inputElement = container.querySelector('input')
+    inputElement.checked = true
+    inputElement.onchange()
+    assert(location.href.indexOf('searchReplies=true') != -1)
+    assert(hlib.getSettings().searchReplies === 'true')
+    container.outerHTML = `<div class="formField" id="searchRepliesContainer"></div>`
+    hlib.updateSetting('searchReplies','')
+    resolve()
+  })
+ },
+
+ 'remembered facets and settings appear on url line': function() {
+  return new Promise(resolve => {
+    initializeSettings()
+    hlib.updateSetting('wildcard_uri', 'https://www.nytimes.com/*')
+    hlib.updateSetting('searchReplies', 'true')
+    hlib.settingsToUrl(hlib.getSettings())
+    assert(location.href.indexOf('searchReplies=true') != -1)
+    assert(hlib.getSettings().searchReplies === 'true')
+    assert(location.href.indexOf('wildcard_uri=https%3A%2F%2Fwww.nytimes.com%2F*') != -1)
+    assert(hlib.getSettings().wildcard_uri === 'https://www.nytimes.com/*')
+    initializeSettings()
+    clearUrlLine()
+    resolve()
+  })
+ },
+
+ 'remembered facets and settings appear on forms': function() {
+  return new Promise(resolve => {
+    initializeSettings() 
+    const wildcard_uriContainer = hlib.getById('wildcard_uriContainer')
+    const wildcard_uriSetting = 'https://www.nytimes.com/*'
+    const searchRepliesContainer = hlib.getById('searchRepliesContainer')
+    const searchRepliesSetting = 'true'
+    hlib.updateSetting('wildcard_uri', wildcard_uriSetting)
+    hlib.updateSetting('searchReplies', searchRepliesSetting)
+    hlib.createWildcardUriInputForm(wildcard_uriContainer)
+    assert(wildcard_uriContainer.querySelector('input').value === wildcard_uriSetting)
+    hlib.createSearchRepliesCheckbox(searchRepliesContainer)
+    assert(searchRepliesContainer.querySelector('input').checked)
+    wildcard_uriContainer.outerHTML = `<div class="formField" id="wildcard_uriContainer"></div>`
+    searchRepliesContainer.outerHTML = `<div class="formField" id="searchRepliesContainer"></div>`
+    resolve()
+  })
+ }, 
+
 'gets "" when no user': function() {
   return new Promise(resolve => {
-    delete localStorage['h_user']
-    let user = hlib.getUser()
-    eq(user, "")
+    initializeSettings()
+    eq(hlib.getSettings().user, "")
     resolve()
    })
   },
 
-'username input form saves and retrieves value': function() {
-  return new Promise(resolve => {
-   let formElement = document.createElement('div')
-   let args = {
-     element: formElement,
-     name: 'Hypothesis username',
-     id: 'user',
-     value: '',
-     onchange: 'setUser',
-     type: '',
-     msg: ''
-   }
-   let form = hlib.createNamedInputForm(args)
-   appendBody(form)
-   let inputElement = hlib.getById('userForm')
-   inputElement.value = 'judell'
-   let evt = document.createEvent("HTMLEvents")
-   evt.initEvent("change", false, true)
-   inputElement.dispatchEvent(evt)
-   eq(hlib.getUser(), 'judell')
-   delete localStorage['h_user']
-   form.remove()
-   resolve()
-  })
- }, 
-
-'creates facet input form': function() {
-  return new Promise(resolve => {
-   let formElement = document.createElement('div')
-   let args = {
-     element: formElement,
-     name: 'tag',
-     id: 'tag',
-     value: '',
-     onchange: '',
-     type: '',
-     msg: ''
-   }
-   let form = hlib.createFacetInputForm(formElement, 'tag', 'hypothesis tag')
-   appendBody(form)
-   let inputElement = hlib.getById('tagForm')
-   inputElement.value = 'tag'
-   eq(document.getElementsByClassName('tagForm')[0].innerHTML, '<input value="" id="tagForm">')
-   form.remove()
-   resolve()
-  })
- },
-
 'creates default group picklist with > 1 groups when token': function() {
   return new Promise(resolve => {
-   let groupContainer = createGroupContainer()
-   let defaultSelectId = 'groupsList'
-   hlib.createGroupInputForm(groupContainer)
-   waitSeconds(1)
-     .then( r => {
-       let groupList = hlib.getById(defaultSelectId)
-       assert(groupList)
-       let options = groupList.querySelectorAll('option')
-       assert(groupList.length > 1)
-       eq(hlib.getSelectedGroup(defaultSelectId), '__world__')
-       removeGroupContainer()
-       resolve()
-     })
-    })
- },
-
-'creates custom group picklist with > 1 groups when token': function() {
-   return new Promise(resolve => {
-    let selectId = 'withTokenGroupsList'
-    let groupContainer = createGroupContainer()
-    hlib.createGroupInputForm(groupContainer, selectId)
-    waitSeconds(1)
-      .then( r => {
-        let groupList = hlib.getById(selectId)
-        assert(groupList)
-        let options = groupList.querySelectorAll('option')
-        assert(groupList.length > 1)
-        eq(hlib.getSelectedGroup(selectId), '__world__') 
-        removeGroupContainer()
-        resolve()
-      })
-    })
+    async function runTest() {
+      let defaultSelectId = 'groupsList'
+      await  hlib.createGroupInputForm(groupContainer)
+      const groupList = hlib.getById(defaultSelectId)
+      assert(groupList)
+      const options = groupList.querySelectorAll('option')
+      assert(groupList.length > 1)
+      eq(hlib.getSelectedGroup(defaultSelectId), '__world__')
+      hlib.getById('groupContainer').outerHTML = `<div class="formField" id="groupContainer"></div>`
+    }
+    resolve(runTest())
+  })
  },
 
 'creates group picklist with 1 group when no token': function() {
   return new Promise(resolve => {
-    let token = hlib.getToken()
-    hlib.getById('token').setAttribute('value',token)
-    delete localStorage['h_token']
-    let groupContainer = createGroupContainer()
-    hlib.createGroupInputForm(groupContainer)
-      .then( r => {
-        localStorage['h_token'] = hlib.getById('token').value  // not in effect for subsequent tests
-        let groupList = hlib.getById('groupsList')
-        assert(groupList)
-        let options = groupList.querySelectorAll('option')
-        assert(groupList.length == 1, `expected 1, got ${groupList.length}`)
-        eq(hlib.getSelectedGroup(), '__world__')
-        removeGroupContainer()
-        resolve()
-      })
-    })
- },
+    async function runTest() {
+      let token = hlib.getToken()
+      delete localStorage['h_token']
+      const groupContainer = hlib.getById('groupContainer')
+      await hlib.createGroupInputForm(groupContainer)
+      localStorage['h_token'] = token
+      const groupList = hlib.getById('groupsList')
+      assert(groupList)
+      const options = groupList.querySelectorAll('option')
+      assert(groupList.length == 1, `expected 1, got ${groupList.length}`)
+      eq(hlib.getSelectedGroup(), '__world__')
+      hlib.getById('groupContainer').outerHTML = `<div class="formField" id="groupContainer"></div>`
+    }
+    resolve(runTest())
+  })
+},
 
 'creates a pagenote': function() {
    return new Promise(resolve => {
-    let token = hlib.getById('token').value
-    let params = {
-      uri: scratchUri,
-      group: '__world__',
-      text: scratchText,
-    }
-    let payload = hlib.createAnnotationPayload(params)
-    hlib.postAnnotation(payload, token)
-      .then(data => {
-        waitSeconds(1, data)
-          .then(data => {
-            checkAndDeleteTestAnnotation(data, token)
-              .then( _ => {
-                resolve()
-              })
-          })
-      })
+      async function runTest() {
+        const token = hlib.getToken()
+        const params = {
+          uri: scratchUri,
+          group: '__world__',
+          text: scratchText,
+        }
+        const payload = hlib.createAnnotationPayload(params)
+        const data = await hlib.postAnnotation(payload, token)
+        await checkAndDeleteTestAnnotation(data, token)
+      }
+    resolve (runTest())
     })
  },
 
-'creates an annotation': function() {
-   return new Promise(resolve => {
-    let token = hlib.getById('token').value
-    let params = {
-      uri: scratchUri,
-      group: '__world__',
-      text: scratchText,
-      exact: scratchQuote,
-    }
-    let payload = hlib.createAnnotationPayload(params)
-    hlib.postAnnotation(payload, token)
-      .then(data => {
-        waitSeconds(1, data)
-          .then(data => {
-            checkAndDeleteTestAnnotation(data, token)
-              .then( _ => {
-                resolve()
-              })
-          })
-      })
+  'creates an annotation': function () {
+    return new Promise(resolve => {
+      async function runTest() {
+        const token = hlib.getToken()
+        const params = {
+          uri: scratchUri,
+          group: '__world__',
+          text: scratchText,
+          exact: scratchQuote,
+        }
+        const payload = hlib.createAnnotationPayload(params)
+        const data = await hlib.postAnnotation(payload, token)
+        await checkAndDeleteTestAnnotation(data, token)
+      }
+      resolve(runTest())
     })
- },
+  },
 
 'finds a test annotation': function() {
   return new Promise(resolve => {
-    let token = hlib.getById('token').value
-    let params = {
-      user: 'judell',
-      tag: 'hlibtest',
+    async function runTest() {
+      const token = hlib.getToken()
+      const params = {
+        user: 'judell',
+        tag: 'hlibtest',
+      }
+      const data = await hlib.search(params)
+      const [annos, replies] = data
+      assert(annos.length)
+      eq(hlib.parseAnnotation(annos[0]).id, testAnnotation)
     }
-    hlib.search(params)
-      .then (data => {
-        let [annos, replies] = data
-        assert(annos.length)
-        eq(hlib.parseAnnotation(annos[0]).id, testAnnotation)
-        resolve()
-      })
-   })
+    resolve(runTest())
+  })
  },
 
  'fails to retrieve from wrong service': function() {
    return new Promise(resolve => {
-    hlib.updateSettings({service: 'https://WrongService'})
-     let params = {}
-     hlib.search(params) // the api request should fail 
-      .catch (data => {
-        hlib.updateSettings({service: 'https://hypothes.is'})
-        resolve()
-      })
-   })
+     async function runTest() {
+       hlib.updateSetting('service', 'https://WrongService')
+       const params = {}
+       try {
+         const data = await hlib.search(params) // the api request should fail 
+       } catch(e) {
+          hlib.updateSetting('service', 'https://hypothes.is')
+       }
+      }
+      resolve(runTest())
+    })
  },
 
 'retrieves 600 annotations': function() {
@@ -289,7 +281,6 @@ tests({
       eq(annos.length, 600)
       resolve()
     }
-    let token = hlib.getById('token').value
     let params = {
       max: 600,
     }
@@ -299,23 +290,23 @@ tests({
 
 'uses wildcard uris': function() {
   return new Promise(resolve => {
-    let token = hlib.getById('token').value
-    let params = {
-      wildcard_uri: 'https://web.hypothes.is/*',
-      max: 400
+    async function runTest() {
+      const token = hlib.getToken()
+      const params = {
+        wildcard_uri: 'https://web.hypothes.is/*',
+        max: 400
+      }
+    const data = await hlib.search(params)
+    const annos = data[0]
+    const uris = annos.map(a => { return a.uri })
+    const blogUris = uris.map(u => u.startsWith('https://web.hypothes.is/blog')).filter(x => {return x})
+    assert(blogUris.length > 1)
+    const faqUris = uris.map(u => u.startsWith('https://web.hypothes.is/faq')).filter(x => {return x})
+    assert(faqUris.length > 1)
     }
-    hlib.search(params)
-    .then ( data => {
-      let annos = data[0]
-      let uris = annos.map(a => { return a.uri })
-      let blogUris = uris.map(u => u.startsWith('https://web.hypothes.is/blog')).filter(x => {return x})
-      assert(blogUris.length > 1)
-      let faqUris = uris.map(u => u.startsWith('https://web.hypothes.is/faq')).filter(x => {return x})
-      assert(faqUris.length > 1)
-      resolve()
-    })
-   })
- },
+    resolve(runTest())
+ })
+}
 
 })
 
