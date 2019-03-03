@@ -845,7 +845,7 @@ export function createNamedInputForm(args: inputFormArgs) {
   if (type !== 'checkbox') {
     form = `
       <div class="formLabel">${name}</div>
-      <div class="${id}Form"><input ${_type} ${_value} id="${id}Form"></input></div>
+      <div class="${id}Form"><input ${_type} ${_value} id="${id}Form"></input><a title="clear input" class="clearInput"> x</a></div>
       <div class="formMessage">${msg}</div>`
   } else {
     form = `
@@ -856,8 +856,12 @@ export function createNamedInputForm(args: inputFormArgs) {
       <div class="formMessage"></div>`
   }
   element.innerHTML += form
-  const inputElement = element.querySelector('input') as HTMLInputElement
+  const inputElement = element.querySelector('input') as HTMLElement
   inputElement.onchange = onchange
+  if (type !== 'checkbox') {
+    const clearElement = element.querySelector('.clearInput') as HTMLAnchorElement
+    clearElement.onclick = clearInput
+  }
   return element // return value used for testing
 }
 
@@ -929,7 +933,7 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
           msg = 'add token and <a href="javascript:location.href=location.href">refresh</a> to see all groups here'
         }
         const form = `
-          <div class="formLabel">Hypothesis Group</div>
+          <div class="formLabel">group</div>
           <div class="inputForm">${createGroupSelector(response.groups, _selectId)}</div>
           <div class="formMessage">${msg}</div>`
         e.innerHTML += form
@@ -1108,8 +1112,6 @@ export function parseResponseHeaders(headerStr: string): object {
   return headers
 }
 
-// functions used by the facet tool
-
 /** Collapse all annotation cards. */
 export function collapseAll() {
   const togglers: NodeListOf<HTMLElement> = document.querySelectorAll('.urlHeading .toggle')
@@ -1118,9 +1120,6 @@ export function collapseAll() {
   })
   const cards: NodeListOf<HTMLElement> = document.querySelectorAll('.annotationCard')
   hideCards(cards)
-  const button = getById('expander')
-  button.innerText = 'expand'
-  button.onclick = expandAll
 }
 
 /** Expand all annotation cards. */
@@ -1131,9 +1130,6 @@ export function expandAll() {
   })
   const cards: NodeListOf<HTMLElement> = document.querySelectorAll('.annotationCard')
   showCards(cards)
-  const button = getById('expander')
-  button.innerText = 'collapse'
-  button.onclick = collapseAll
 }
 
 /** Set expand/collapse toggle to collapsed. */
@@ -1209,4 +1205,13 @@ export function syntaxColorParams(params:hlibSettings, excluded:string[]) : stri
   }
   const html = `<pre class="params">${pairs.join(', ')}</pre>`  
   return html
+}
+
+function clearInput(e: MouseEvent) {
+  const formElement = e.target.closest('.formField') as HTMLElement
+  formElement.querySelector('input').value = ''
+  const setting  = formElement.id.replace('Container','')
+  updateSetting(setting, '')
+  settingsToUrl(getSettings())
+  settingsToLocalStorage(getSettings())
 }
