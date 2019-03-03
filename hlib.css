@@ -115,3 +115,8 @@ img {
   display: flex;
 }
 
+.clearInput {
+  font-size: smaller;
+  cursor: pointer;
+}
+
