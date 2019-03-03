@@ -7,7 +7,7 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, '.'),
-    filename: 'hlib.bundle.js',
+    filename: 'hlib2.bundle.js',
     library: 'hlib',
   },
   devtool: 'source-map',
