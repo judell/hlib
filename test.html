@@ -268,24 +268,23 @@ tests({
        try {
          const data = await hlib.search(params) // the api request should fail 
        } catch(e) {
-          hlib.updateSetting('service', 'https://hypothes.is')
+         hlib.updateSetting('service', 'https://hypothes.is')
        }
       }
       resolve(runTest())
     })
  },
 
-'retrieves 600 annotations': function() {
+'retrieves 400 annotations': function() {
+  const expected = 400
   return new Promise(resolve => {
-    function callback(annos, replies) {
-      eq(600, annos.length)
-      resolve()
+    async function runTest() {
+      let params = { max: expected }
+    const data = await hlib.search(params)
+    eq(expected, data[0].length)
     }
-    let params = {
-      max: 600,
-    }
-    hlib.hApiSearch(params, callback)
-   })
+    resolve(runTest())
+  })
  },
 
 'uses wildcard uris': function() {
