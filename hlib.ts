@@ -740,7 +740,7 @@ export function createInputForm(name: string, handler: EventHandlerNonNull, elem
 
 export function createUserInputForm(element: HTMLElement) {
   const name = 'user'
-  createInputForm(name, syncContainer(name), element, '', 'Not needed for authentication, use only as a search term')
+  createInputForm(name, syncContainer(name), element, '', 'Not for authentication, only for search')
 }
 
 export function createUrlInputForm(element: HTMLElement) {
