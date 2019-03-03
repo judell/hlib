@@ -729,6 +729,18 @@ export function postAnnotationAndRedirect(payload: string, token: string, queryF
     })
 }
 
+export function getAnnotation(id: string, token: string) {
+  const url = `${getSettings().service}/api/annotations/${id}`
+  let opts: httpOpts = {
+    method: 'get',
+    params: {},
+    url: url,
+    headers: {}
+  }
+  opts = setApiTokenHeaders(opts, token)
+  return httpRequest(opts)
+}
+
 export function updateAnnotation(id: string, token: string, payload: string) {
   const url = `${getSettings().service}/api/annotations/${id}`
   let opts: httpOpts = {
