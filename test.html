@@ -53,9 +53,9 @@ function checkAndDeleteTestAnnotation(data, token) {
       const response = JSON.parse(data.response)
       if (response.target[0].selector) {
         const selectors = hlib.parseSelectors(response.target)
-        eq(selectors.TextQuote.exact, scratchQuote)
+        eq(scratchQuote, selectors.TextQuote.exact)
         const annotation = hlib.parseAnnotation(response)
-        eq(annotation.quote, scratchQuote)
+        eq(scratchQuote, annotation.quote)
       }
       assert(response.id)
       assert(response.updated)
@@ -81,7 +81,7 @@ tests({
   return new Promise(resolve => {
    let token = hlib.getToken()
    let slice = token.slice(0,9)
-   eq(slice, '6879-358c')
+   eq('6879-358c', slice)
    resolve()
   })
  },
@@ -92,9 +92,9 @@ tests({
     initializeSettings()
     clearUrlLine()
     const settings = hlib.getSettings()
-    eq(settings.max, hlib.defaultMax)
-    eq(settings.searchReplies, 'false')
-    eq(settings.service, 'https://hypothes.is')
+    eq(hlib.defaultMax, settings.max )
+    eq('false', settings.searchReplies)
+    eq('https://hypothes.is', settings.service)
     resolve()
   })
 },
@@ -168,7 +168,7 @@ tests({
 'gets "" when no user': function() {
   return new Promise(resolve => {
     initializeSettings()
-    eq(hlib.getSettings().user, "")
+    eq("", hlib.getSettings().user)
     resolve()
    })
   },
@@ -182,7 +182,7 @@ tests({
       assert(groupList)
       const options = groupList.querySelectorAll('option')
       assert(groupList.length > 1)
-      eq(hlib.getSelectedGroup(defaultSelectId), '__world__')
+      eq('__world__', hlib.getSelectedGroup(defaultSelectId))
       hlib.getById('groupContainer').outerHTML = `<div class="formField" id="groupContainer"></div>`
     }
     resolve(runTest())
@@ -201,7 +201,7 @@ tests({
       assert(groupList)
       const options = groupList.querySelectorAll('option')
       assert(groupList.length == 1, `expected 1, got ${groupList.length}`)
-      eq(hlib.getSelectedGroup(), '__world__')
+      eq('__world__', hlib.getSelectedGroup())
       hlib.getById('groupContainer').outerHTML = `<div class="formField" id="groupContainer"></div>`
     }
     resolve(runTest())
@@ -254,7 +254,7 @@ tests({
       const data = await hlib.search(params)
       const [annos, replies] = data
       assert(annos.length)
-      eq(hlib.parseAnnotation(annos[0]).id, testAnnotation)
+      eq(testAnnotation, hlib.parseAnnotation(annos[0]).id)
     }
     resolve(runTest())
   })
@@ -278,7 +278,7 @@ tests({
 'retrieves 600 annotations': function() {
   return new Promise(resolve => {
     function callback(annos, replies) {
-      eq(annos.length, 600)
+      eq(600, annos.length)
       resolve()
     }
     let params = {
