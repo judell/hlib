@@ -217,62 +217,6 @@ export function httpRequest(opts: httpOpts):Promise<any> {
   })
 }
 
-/** Wrapper for `/api/search` (deprecated in favor of `search(params, progressId)`)*/
-export function hApiSearch(params: any, callback: object, progressId?: string) {
-  function _search(params: any, after: string, callback: any, annos: object[], replies: object[], progressId?: string) {
-    let max = 2000
-    if (params.max) {
-      max = params.max
-    }
-
-    let limit = 200
-    if (max <= limit) {
-      limit = max
-    }
-
-    if (progressId) {
-      getById(progressId).innerHTML += '.'
-    }
-
-    let afterClause = after ? `&search_after=${after}` : ''
-
-    let opts: httpOpts = {
-      method: 'get',
-      url: `${getSettings().service}/api/search?_separate_replies=true&limit=${limit}${afterClause}`,
-      headers: {},
-      params: {}
-    }
-
-    let facets = [ 'group', 'user', 'tag', 'url', 'wildcard_uri', 'any']
-
-    facets.forEach(function(facet) {
-      if (params[facet]) {
-        const encodedValue = encodeURIComponent(params[facet])
-        opts.url += `&${facet}=${encodedValue}`
-      }
-    })
-
-    opts = setApiTokenHeaders(opts)
-
-    httpRequest(opts).then(function(data: any) {
-      const response: any = JSON.parse(data.response)
-      annos = annos.concat(response.rows)
-      replies = replies.concat(response.replies)
-      if (response.rows.length === 0 || annos.length >= max) {
-        callback(annos, replies)
-      } else {
-        const sentinel = response.rows.slice(-1)[0].updated
-        _search(params, sentinel, callback, annos, replies, progressId)
-      }
-    })
-  }
-
-  const annos: object[] = []
-  const replies: object[] = []
-  const after:string = ''
-  _search(params, after, callback, annos, replies, progressId)
-}
-
 /** Wrapper for `/api/search` */
 export function search(params: any, progressId?: string): Promise<any> {
 
