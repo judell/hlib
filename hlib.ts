@@ -1171,3 +1171,14 @@ function clearInput(e: MouseEvent) {
   settingsToUrl(getSettings())
   settingsToLocalStorage(getSettings())
 }
+
+export function getSubjectUserTokensFromLocalStorage() {
+  let subjectUserTokens = {} as Map<string, string>
+  const _subjectUserTokens = localStorage.getItem('h_subjectUserTokens')
+  if (_subjectUserTokens) {
+    subjectUserTokens = JSON.parse(_subjectUserTokens) 
+  } else {
+    subjectUserTokens = JSON.parse(`{"user1" : "token1", "user2" : "token2"}`) as Map<string,string>
+  }
+  return subjectUserTokens
+}
