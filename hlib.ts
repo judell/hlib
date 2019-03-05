@@ -66,11 +66,13 @@ export type hlibSettings = {
   exactTagSearch: string
   expanded: string
   subjectUserTokens?: Map<string,string>
+  controlledTags?: string[]
 }
 
 export const defaultService = 'https://hypothes.is'
 export const defaultMax = '100'
 const defaultSubjectUserTokens = new Map([["User1", "***"], ["User2", "***"]])
+const defaultControlledTags = [] as string[]
 
 const settings = settingsFromLocalStorage()
 
@@ -103,41 +105,13 @@ export function settingsFromLocalStorage() : hlibSettings {
         searchReplies: 'false',
         exactTagSearch: 'false',
         expanded: 'false',
-        subjectUserTokens: defaultSubjectUserTokens
+        subjectUserTokens: defaultSubjectUserTokens,
+        controlledTags: defaultControlledTags
       } as hlibSettings
     : JSON.parse(value) as hlibSettings
   updateSettings(settings)
   return settings
   }
-
-export function settingsFromUrl(url: URL) {
-  const params = url.searchParams
-  const _subjectUserTokens:any = params.get('subjectUserTokens')
-  const subjectUserTokens:Map<string,string> = 
-    typeof _subjectUserTokens === 'string'
-      ? new Map(JSON.parse(_subjectUserTokens))
-      : defaultSubjectUserTokens
-  const settings = {
-    service: typeof params.get('service') === 'string'
-            ? params.get('service')
-            : defaultService,
-    max: typeof params.get('max') === 'string'
-            ? params.get('max')
-            : defaultMax,
-    searchReplies: typeof params.get('searchReplies') === 'string'
-            ? params.get('searchReplies') === 'true'
-            : 'false',
-    exactTagSearch: typeof params.get('exactTagSearch') === 'string'
-            ? params.get('exactTagSearch') === 'true'
-            : 'false',
-    expanded: typeof(params.get('expanded') === 'string') 
-            ? params.get('expanded') === 'true'
-            : 'false',
-    subjectUserTokens: subjectUserTokens
-  } as hlibSettings
-  updateSettings(settings)
-  return settings
-}
 
 export function settingsToLocalStorage(settings: hlibSettings) {
   function validate(settings) {
@@ -1180,4 +1154,13 @@ export function getSubjectUserTokensFromLocalStorage() {
     subjectUserTokens = JSON.parse(`{"user1" : "token1", "user2" : "token2"}`) as Map<string,string>
   }
   return subjectUserTokens
+}
+
+export function getControlledTagsFromLocalStorage() {
+  let controlledTags = []
+  const _controlledTags = localStorage.getItem('h_controlledTags')
+  if (_controlledTags) {
+    controlledTags = JSON.parse(_controlledTags) 
+  } 
+  return controlledTags
 }
