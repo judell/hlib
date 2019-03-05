@@ -1008,14 +1008,13 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
       <div class="csvRow">${csvRow(level, anno)}</div>
       <div class="annotationHeader">
         <span class="user">
-        <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
+          <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
         </span>
-      <span>
-        ${dt_str}
-        <a class="externalLink" title="visit thread to view/edit/reply" target="_standalone"
-        href="${standaloneAnnotationUrl}"></a>
-      </span>
-      ${groupSlug}
+        <span class="dateTime">${dt_str}</span>
+        <span class="groupSlug">${groupSlug}</span>
+        <a class="externalLink" title="visit thread to view/edit/reply" 
+          target="_standalone" href="${standaloneAnnotationUrl}">
+        </a>
       </div>
       <div class="annotationBody">
         ${quote}
