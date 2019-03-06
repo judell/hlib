@@ -66,13 +66,13 @@ export type hlibSettings = {
   exactTagSearch: string
   expanded: string
   subjectUserTokens?: Map<string,string>
-  controlledTags?: string[]
+  controlledTags?: string
 }
 
 export const defaultService = 'https://hypothes.is'
 export const defaultMax = '100'
 const defaultSubjectUserTokens = new Map([["User1", "***"], ["User2", "***"]])
-const defaultControlledTags = [] as string[]
+const defaultControlledTags = 'tag1, tag2, tag3'
 
 const settings = settingsFromLocalStorage()
 
@@ -1137,7 +1137,8 @@ export function syntaxColorParams(params:hlibSettings, excluded:string[]) : stri
 }
 
 function clearInput(e: MouseEvent) {
-  const formElement = e.target.closest('.formField') as HTMLElement
+  const target = e.target as HTMLElement
+  const formElement = target.closest('.formField') as HTMLElement
   formElement.querySelector('input').value = ''
   const setting  = formElement.id.replace('Container','')
   updateSetting(setting, '')
@@ -1157,10 +1158,6 @@ export function getSubjectUserTokensFromLocalStorage() {
 }
 
 export function getControlledTagsFromLocalStorage() {
-  let controlledTags = []
   const _controlledTags = localStorage.getItem('h_controlledTags')
-  if (_controlledTags) {
-    controlledTags = JSON.parse(_controlledTags) 
-  } 
-  return controlledTags
+  return _controlledTags ? _controlledTags : defaultControlledTags
 }
