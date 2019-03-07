@@ -71,7 +71,8 @@ export type hlibSettings = {
 
 export const defaultService = 'https://hypothes.is'
 export const defaultMax = '100'
-export const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
+const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
+const clearInputEvent = new Event('clearInput')
 const defaultSubjectUserTokens = new Map([["User1", "***"], ["User2", "***"]])
 const defaultControlledTags = 'tag1, tag2, tag3'
 const settings = settingsFromLocalStorage()
@@ -501,7 +502,8 @@ function syncUrlAndLocalStorageFromForm(formId: string) {
   updateSetting(key, value)
   settingsToUrl(getSettings())
   settingsToLocalStorage(getSettings())
-  document.dispatchEvent(formUrlStorageSyncEvent)
+  console.log(`dispatching for ${formId}`)
+  form.dispatchEvent(formUrlStorageSyncEvent)
 }
 
 /** Save value of a form field. */
@@ -1147,6 +1149,8 @@ function clearInput(e: MouseEvent) {
   updateSetting(setting, '')
   settingsToUrl(getSettings())
   settingsToLocalStorage(getSettings())
+  console.log(`dispatching for ${target}`)
+  target.closest('.formField').dispatchEvent(clearInputEvent)
 }
 
 export function getSubjectUserTokensFromLocalStorage() {
