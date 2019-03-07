@@ -71,10 +71,12 @@ export type hlibSettings = {
 
 export const defaultService = 'https://hypothes.is'
 export const defaultMax = '100'
+export const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
 const defaultSubjectUserTokens = new Map([["User1", "***"], ["User2", "***"]])
 const defaultControlledTags = 'tag1, tag2, tag3'
-
 const settings = settingsFromLocalStorage()
+
+
 
 export function getSettings() {
   return settings
@@ -499,6 +501,7 @@ function syncUrlAndLocalStorageFromForm(formId: string) {
   updateSetting(key, value)
   settingsToUrl(getSettings())
   settingsToLocalStorage(getSettings())
+  document.dispatchEvent(formUrlStorageSyncEvent)
 }
 
 /** Save value of a form field. */
@@ -775,7 +778,7 @@ export function createNamedInputForm(args: inputFormArgs) {
   if (type !== 'checkbox') {
     form = `
       <div class="formLabel">${name}</div>
-      <div class="${id}Form"><input ${_type} ${_value} id="${id}Form"></input><a title="clear input" class="clearInput"> x</a></div>
+      <div class="${id}Form"><input ondrop="dropHandler(event)" ${_type} ${_value} id="${id}Form"></input><a title="clear input" class="clearInput"> x</a></div>
       <div class="formMessage">${msg}</div>`
   } else {
     form = `
@@ -1161,3 +1164,4 @@ export function getControlledTagsFromLocalStorage() {
   const _controlledTags = localStorage.getItem('h_controlledTags')
   return _controlledTags ? _controlledTags : defaultControlledTags
 }
+
