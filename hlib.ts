@@ -71,13 +71,11 @@ export type hlibSettings = {
 
 export const defaultService = 'https://hypothes.is'
 export const defaultMax = '100'
-const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
+export const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
 const clearInputEvent = new Event('clearInput')
 const defaultSubjectUserTokens = new Map([["User1", "***"], ["User2", "***"]])
 const defaultControlledTags = 'tag1, tag2, tag3'
 const settings = settingsFromLocalStorage()
-
-
 
 export function getSettings() {
   return settings
@@ -811,8 +809,8 @@ export function createFacetInputForm(e: HTMLElement, facet: string, msg: string,
   return e // for testing
 }
 
-export function setSelectedGroup() {
-  const selectedGroup = getSelectedGroup()
+export function setSelectedGroup(selectId:string) {
+  const selectedGroup = getSelectedGroup(selectId)
   updateSetting('group', selectedGroup)
   const settings = getSettings()
   settingsToLocalStorage(settings)
@@ -862,6 +860,9 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
     opts = setApiTokenHeaders(opts, token)
     httpRequest(opts)
       .then((data:any) => {
+        const wrappedSetSelectedGroup = function () {
+          return setSelectedGroup(_selectId)
+        }
         const response: any = JSON.parse(data.response)
         let msg = ''
         if (!token) {
@@ -872,8 +873,8 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
           <div class="inputForm">${createGroupSelector(response.groups, _selectId)}</div>
           <div class="formMessage">${msg}</div>`
         e.innerHTML += form
-        const groupPicker = getById('groupsList') as HTMLSelectElement
-        groupPicker.onchange = setSelectedGroup
+        const groupPicker = getById(_selectId) as HTMLSelectElement
+        groupPicker.onchange = wrappedSetSelectedGroup
         return data
       })
       .then (data => {
