@@ -87,10 +87,6 @@ export function updateSetting(name:string, value:string) {
   settings[name] = value
 }
 
-export function updateSettings(settings:hlibSettings) {
-  settings = settings
-}
-
 export function settingsFromLocalStorage() : hlibSettings {
   let value = localStorage.getItem('h_settings') as string 
   let settings = ! value 
