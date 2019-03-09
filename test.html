@@ -93,7 +93,7 @@ tests({
     clearUrlLine()
     const settings = hlib.getSettings()
     eq(hlib.defaultMax, settings.max )
-    eq('false', settings.searchReplies)
+    eq('false', settings.exactTagSearch)
     eq('https://hypothes.is', settings.service)
     resolve()
   })

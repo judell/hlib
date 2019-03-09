@@ -62,18 +62,17 @@ export type hlibSettings = {
   // settings
   service: string
   max: string
-  searchReplies: string
   exactTagSearch: string
   expanded: string
-  subjectUserTokens?: Map<string,string>
-  controlledTags?: string
 }
 
 export const defaultService = 'https://hypothes.is'
 export const defaultMax = '100'
+export const defaultGroup = 'all'
+export const defaultExactTagSearch = 'false'
+export const defaultExpanded = 'false'
 export const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
 const clearInputEvent = new Event('clearInput')
-const defaultSubjectUserTokens = new Map([["User1", "***"], ["User2", "***"]])
 const defaultControlledTags = 'tag1, tag2, tag3'
 const settings = settingsFromLocalStorage()
 
@@ -82,6 +81,9 @@ export function getSettings() {
 }
 
 export function updateSetting(name:string, value:string) {
+  if (name === 'max' && typeof parseInt(value) !== 'number') {  // need to get more mileage out of type hlibSettings
+    value = defaultMax
+  }  
   settings[name] = value
 }
 
@@ -90,38 +92,28 @@ export function updateSettings(settings:hlibSettings) {
 }
 
 export function settingsFromLocalStorage() : hlibSettings {
-  let value:any = localStorage.getItem('h_settings')
+  let value = localStorage.getItem('h_settings') as string 
   let settings = ! value 
     ? {
         // facets
         user: '',
         url: '',
         wildcard_uri: '',
-        group: '',
+        group: defaultGroup,
         tag: '',
         any: '',
         // settings
         service: defaultService,
         max: defaultMax,
-        searchReplies: 'false',
-        exactTagSearch: 'false',
-        expanded: 'false',
-        subjectUserTokens: defaultSubjectUserTokens,
-        controlledTags: defaultControlledTags
+        exactTagSearch: defaultExactTagSearch,
+        expanded: defaultExpanded
       } as hlibSettings
     : JSON.parse(value) as hlibSettings
-  updateSettings(settings)
-  return settings
+    return settings
   }
 
 export function settingsToLocalStorage(settings: hlibSettings) {
-  function validate(settings) {
-    if (settings.max === '') {
-      settings.max = defaultMax
-    }
-    return settings
-  }
-  localStorage.setItem('h_settings', JSON.stringify(validate(settings)))
+  localStorage.setItem('h_settings', JSON.stringify(settings))
 }
 
 export function settingsToUrl(settings: hlibSettings) { 
