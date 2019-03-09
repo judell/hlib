@@ -236,11 +236,16 @@ export function search(params: any, progressId?: string): Promise<any> {
       httpRequest(opts)
         .then(function(data) {
           const response = JSON.parse(data.response)
-          annos = annos.concat(response.rows)
-          if (response.replies) {
-            replies = replies.concat(response.replies)
-          }
-          if (response.rows.length === 0 || annos.length >= max) {
+          let _annos = response.rows
+          let _replies = _annos.filter(a => { return a.hasOwnProperty('references') })
+          const replyIds = _replies.map(r => { return r.id })
+          _annos = _annos.filter(a => {
+            return replyIds.indexOf(a.id) < 0
+          })
+          annos = annos.concat(_annos)
+          replies = replies.concat(_replies)
+          const total = annos.length + replies.length
+          if (response.rows.length === 0 || total >= max) {
             const result:any = [annos, replies]
             resolve(result)
           } else {
@@ -262,7 +267,7 @@ export function search(params: any, progressId?: string): Promise<any> {
   })
 }
 
-/** The replies param is a set of rows returned from `/api/search?_separate_replies=true`,
+/** The replies param is a set of rows returned from `/api/search`,
  * this function reduces the set to just replies to the given id
  */
 export function findRepliesForId(id: string, replies: any[]) {
@@ -286,44 +291,50 @@ export function showThread(row:any, level:number, replies:any[], displayed:strin
   }
 }
 
+export type gatheredResult = {
+  updated: string
+  title: string
+  annos: any[]
+  replies: any[]
+}
+
+export type gatheredResults = {
+  results: Map<string, gatheredResult>
+}
+
 /** Organize a set of annotations, from ${settings.service}/api/search, by url */
-export function gatherAnnotationsByUrl(rows: object[]) {
-  const urls: any = {}
-  const ids: any = {}
-  const titles: any = {}
-  const urlUpdates: any = {}
-  const annos: any = {}
+export function gatherAnnotationsByUrl(rows: object[]) : gatheredResults {
+
+  const results = {} as gatheredResults
   for (let i = 0; i < rows.length; i++) {
+    let result = {} as gatheredResult
+    result.updated = ''
+    result.title = ''
+    result.annos = []
+    result.replies = []
     const row = rows[i]
-    const annotation = parseAnnotation(row) // parse the annotation
-    const id = annotation.id
-    annos[id] = annotation // save it by id
-    let url = annotation.url // remember these things
+    const anno = parseAnnotation(row) // parse the annotation
+    let url = anno.url // remember these things
     url = url.replace(/\/$/, '') // strip trailing slash
-    const updated = annotation.updated
-    let title = annotation.title
-    if (!title) title = url
-    if (url in urls) {
-      // add/update this url's info
-      urls[url] += 1
-      ids[url].push(id)
-      if (updated > urlUpdates.url) urlUpdates[url] = updated
-    } else {
-      // init this url's info
-      urls[url] = 1
-      ids[url] = [ id ]
-      titles[url] = title
-      urlUpdates[url] = updated
+    if (! results[url]) {
+      results[url] = result
+    }
+    if (anno.isReply) {
+      results[url].replies.push(anno)
+    } else 
+    results[url].annos.push(anno)
+
+    const updated = anno.updated
+    if (updated > results[url].updated) {
+      results[url].updated = updated
+    }
+
+    let title = anno.title
+    if (! results[url].title) {
+      results[url].title = title
     }
   }
-
-  return {
-    ids: ids,
-    urlUpdates: urlUpdates,
-    annos: annos,
-    titles: titles,
-    urls: urls
-  }
+  return results
 }
 
 /** Parse a row returned from `/api/search` */
