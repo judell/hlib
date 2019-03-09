@@ -281,7 +281,7 @@ tests({
     async function runTest() {
       let params = { max: expected }
     const data = await hlib.search(params)
-    eq(expected, data[0].length)
+    eq(expected, data[0].length + data[1].length)
     }
     resolve(runTest())
   })
