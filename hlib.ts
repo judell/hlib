@@ -72,8 +72,8 @@ export const defaultGroup = 'all'
 export const defaultExactTagSearch = 'false'
 export const defaultExpanded = 'false'
 export const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
+export const defaultControlledTags = 'tag1, tag2, tag3'
 const clearInputEvent = new Event('clearInput')
-const defaultControlledTags = 'tag1, tag2, tag3'
 const settings = settingsFromLocalStorage()
 
 export function getSettings() {
@@ -168,10 +168,16 @@ export function httpRequest(opts: httpOpts):Promise<any> {
     }
     fetch(input, init)
       .then( fetchResponse => {
-        return fetchResponse.text() 
+        return fetchResponse.text()
+          .then(text => {
+            return  {
+              status: fetchResponse.status, 
+              response: text
+            }
+          })
       })
-      .then( text => {
-        resolve ( { response: text} )
+      .then( finalResponse => {
+        resolve ( finalResponse )
       })
       .catch(reason => {
         console.error('rejected', opts, reason)
@@ -306,7 +312,7 @@ export function gatherAnnotationsByUrl(rows: object[]) : gatheredResults {
     url = url.replace(/\/$/, '') // strip trailing slash
     if (! results[url]) {
       results[url] = result
-    }
+    } 
     if (anno.isReply) {
       results[url].replies.push(anno)
     } else 
