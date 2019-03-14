@@ -261,16 +261,6 @@ export function search(params: any, progressId?: string): Promise<any> {
   })
 }
 
-/** The replies param is a set of rows returned from `/api/search`,
- * this function reduces the set to just replies to the given id
- */
-export function findRepliesForId(id: string, replies: any[]) {
-  const _replies = replies.filter( _reply => {
-    return _reply.references.indexOf(id) != -1 
-  })
-  return _replies
-}  
-
 export function showThread(row:any, level:number, replies:any[], displayed:string[], displayElement:HTMLElement) {
   if (displayed.indexOf(row.id) != -1) {
     return
@@ -288,8 +278,8 @@ export function showThread(row:any, level:number, replies:any[], displayed:strin
 export type gatheredResult = {
   updated: string
   title: string
-  annos: any[]
-  replies: any[]
+  annos: annotation[]
+  replies: annotation[]
 }
 
 export type gatheredResults = {
@@ -297,7 +287,7 @@ export type gatheredResults = {
 }
 
 /** Organize a set of annotations, from ${settings.service}/api/search, by url */
-export function gatherAnnotationsByUrl(rows: object[]) : gatheredResults {
+export function gatherAnnotationsByUrl(rows: any[]) : gatheredResults {
 
   const results = {} as gatheredResults
   for (let i = 0; i < rows.length; i++) {
@@ -968,15 +958,11 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
 
   const user = anno.user.replace('acct:', '').replace('@hypothes.is', '')
 
-  let quote = anno.quote
-
-  if (anno.quote) {
-    quote = `<div class="annotationQuote">${anno.quote}</div>`
-  }
-
   const standaloneAnnotationUrl = `${settings.service}/a/${anno.id}`
 
   const marginLeft = level * 20
+
+  const borderLeft = level == 0 ? '' : "border-left-style:solid; border-left-width:thin;"
 
   const groupName = getGroupName(anno)
 
@@ -988,8 +974,10 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
       </span>`
   }
 
+  const type = anno.isReply ? 'reply' : 'annotation'
+
   const output = `
-    <div class="annotationCard" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
+    <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; ${borderLeft} margin-left:${marginLeft}px;">
       <div class="csvRow">${csvRow(level, anno)}</div>
       <div class="annotationHeader">
         <span class="user">
@@ -1001,8 +989,8 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
           target="_standalone" href="${standaloneAnnotationUrl}">
         </a>
       </div>
+      <div class="annotationQuote">${anno.quote}</div>
       <div class="annotationBody">
-        ${quote}
         <div class="annotationText">${html}</div>
         <div class="annotationTags">${tags}</div>
       </div>
