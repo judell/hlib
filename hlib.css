@@ -64,6 +64,10 @@ a {
   margin-bottom: 14px;
 }
 
+.annotationCard {
+  margin-bottom: 20px;
+}
+
 .annotationCardDivider {
   display: none;
 }
@@ -79,7 +83,10 @@ a {
   margin-top: 12px;
   color: #777;
   font-style: italic;
-  padding: 0 .615em;
+}
+
+.annotationQuote:empty {
+  margin-top: 0;
 }
 
 img {
