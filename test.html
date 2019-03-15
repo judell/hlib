@@ -12,9 +12,9 @@
 
 <div class="formField" id="tokenContainer"></div>
 
-<div class="formField" id="maxContainer"></div>
+<div class="formField" id="anyContainer"></div>
 
-<div class="formField" id="searchRepliesContainer"></div>
+<div class="formField" id="exactTagSearchContainer"></div>
 
 <div class="formField" id="wildcard_uriContainer"></div>
 
@@ -101,31 +101,30 @@ tests({
 
 'input form change updates url and localStorage': function() {
   return new Promise(resolve => {
-    const container = hlib.getById('maxContainer')
-    hlib.createMaxInputForm(container)
+    const container = hlib.getById('anyContainer')
+    hlib.createAnyInputForm(container)
     const inputElement = container.querySelector('input')
-    const newMax = 777
-    inputElement.value = newMax
+    const newAny = 'any'
+    inputElement.value = newAny
     inputElement.onchange()
-    assert(location.href.indexOf(`max=${newMax}` != -1))
-    assert(hlib.getSettings().max == newMax)
-    hlib.updateSetting('max', hlib.defaultMax)
-    container.outerHTML = `<div class="formField" id="maxContainer"></div>`
+    assert(location.href.indexOf(`any=${newAny}` != -1))
+    assert(hlib.getSettings().any == newAny)
+    container.remove()
     resolve()
   })
  }, 
 
 'checkbox change updates url and localStorage': function() {
   return new Promise(resolve => {
-    const container = hlib.getById('searchRepliesContainer')
-    hlib.createSearchRepliesCheckbox(hlib.getById('searchRepliesContainer'));
+    const container = hlib.getById('exactTagSearchContainer')
+    hlib.createExactTagSearchCheckbox(hlib.getById('exactTagSearchContainer'));
     const inputElement = container.querySelector('input')
     inputElement.checked = true
     inputElement.onchange()
-    assert(location.href.indexOf('searchReplies=true') != -1)
-    assert(hlib.getSettings().searchReplies === 'true')
-    container.outerHTML = `<div class="formField" id="searchRepliesContainer"></div>`
-    hlib.updateSetting('searchReplies','')
+    assert(location.href.indexOf('exactTagSearch=true') != -1)
+    assert(hlib.getSettings().exactTagSearch === 'true')
+    container.outerHTML = `<div class="formField" id="exactTagSearchContainer"></div>`
+    hlib.updateSetting('exactTagSearch','')
     resolve()
   })
  },
@@ -134,10 +133,10 @@ tests({
   return new Promise(resolve => {
     initializeSettings()
     hlib.updateSetting('wildcard_uri', 'https://www.nytimes.com/*')
-    hlib.updateSetting('searchReplies', 'true')
+    hlib.updateSetting('exactTagSearch', 'true')
     hlib.settingsToUrl(hlib.getSettings())
-    assert(location.href.indexOf('searchReplies=true') != -1)
-    assert(hlib.getSettings().searchReplies === 'true')
+    assert(location.href.indexOf('exactTagSearch=true') != -1)
+    assert(hlib.getSettings().exactTagSearch === 'true')
     assert(location.href.indexOf('wildcard_uri=https%3A%2F%2Fwww.nytimes.com%2F*') != -1)
     assert(hlib.getSettings().wildcard_uri === 'https://www.nytimes.com/*')
     initializeSettings()
@@ -151,16 +150,16 @@ tests({
     initializeSettings() 
     const wildcard_uriContainer = hlib.getById('wildcard_uriContainer')
     const wildcard_uriSetting = 'https://www.nytimes.com/*'
-    const searchRepliesContainer = hlib.getById('searchRepliesContainer')
-    const searchRepliesSetting = 'true'
+    const exactTagSearchContainer = hlib.getById('exactTagSearchContainer')
+    const exactTagSearchSetting = 'true'
     hlib.updateSetting('wildcard_uri', wildcard_uriSetting)
-    hlib.updateSetting('searchReplies', searchRepliesSetting)
+    hlib.updateSetting('exactTagSearch', exactTagSearchSetting)
     hlib.createWildcardUriInputForm(wildcard_uriContainer)
     assert(wildcard_uriContainer.querySelector('input').value === wildcard_uriSetting)
-    hlib.createSearchRepliesCheckbox(searchRepliesContainer)
-    assert(searchRepliesContainer.querySelector('input').checked)
+    hlib.createExactTagSearchCheckbox(exactTagSearchContainer)
+    assert(exactTagSearchContainer.querySelector('input').checked)
     wildcard_uriContainer.outerHTML = `<div class="formField" id="wildcard_uriContainer"></div>`
-    searchRepliesContainer.outerHTML = `<div class="formField" id="searchRepliesContainer"></div>`
+    exactTagSearchContainer.outerHTML = `<div class="formField" id="exactTagSearchContainer"></div>`
     resolve()
   })
  }, 

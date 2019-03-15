@@ -791,7 +791,7 @@ export function createNamedInputForm(args: inputFormArgs) {
 }
 
 /** Create a simple input field. */
-export function createFacetInputForm(e: HTMLElement, facet: string, msg: string, value?: string) {
+export function createFacetInputForm(e: HTMLElement, facet: string, msg?: string, value?: string) {
   if (!value) { value = '' }
   const form = `
     <div class="formLabel">${facet}</div>
