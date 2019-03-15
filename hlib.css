@@ -127,3 +127,11 @@ img {
   cursor: pointer;
 }
 
+.groupSlug {
+  font-size: smaller;
+}
+
+.dateTime {
+  font-size: smaller;
+}
+
