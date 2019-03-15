@@ -8,8 +8,6 @@ export type httpOpts = {
 export type httpResponse = {
   response: any
   status: number
-  statusText: string
-  headers: any
 }
 
 export type annotation = {
@@ -51,26 +49,34 @@ export type inputFormArgs = {
   msg?: string // help message for the field
 }
 
-export type hlibSettings = {
+export type settings = {
   // facets
   user: string
+  group: string
   url: string
   wildcard_uri: string
-  group: string
   tag: string
   any:string
   // settings
   service: string
-  max: string
   exactTagSearch: string
   expanded: string
 }
 
-export const defaultService = 'https://hypothes.is'
-export const defaultMax = '100'
-export const defaultGroup = 'all'
-export const defaultExactTagSearch = 'false'
-export const defaultExpanded = 'false'
+const defaultSettings:settings = {
+  // facets
+  user: '',
+  group: 'all',
+  url: '',
+  wildcard_uri: '',
+  tag: '',
+  any: '',
+  // settings
+  service: 'https://hypothes.is',
+  exactTagSearch: 'false',
+  expanded: 'false',
+}
+
 export const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
 export const defaultControlledTags = 'tag1, tag2, tag3'
 const clearInputEvent = new Event('clearInput')
@@ -80,14 +86,16 @@ export function getSettings() {
   return settings
 }
 
+export function getDefaultSettings() {
+  return defaultSettings
+}
+
+
 export function updateSetting(name:string, value:string) {
-  if (name === 'max' && typeof parseInt(value) !== 'number') {  // need to get more mileage out of type hlibSettings
-    value = defaultMax
-  }  
   settings[name] = value
 }
 
-export function settingsFromLocalStorage() : hlibSettings {
+export function settingsFromLocalStorage() : settings {
   let value = localStorage.getItem('h_settings') as string 
   let settings = ! value 
     ? {
@@ -95,24 +103,23 @@ export function settingsFromLocalStorage() : hlibSettings {
         user: '',
         url: '',
         wildcard_uri: '',
-        group: defaultGroup,
+        group: defaultSettings.group,
         tag: '',
         any: '',
         // settings
-        service: defaultService,
-        max: defaultMax,
-        exactTagSearch: defaultExactTagSearch,
-        expanded: defaultExpanded
-      } as hlibSettings
-    : JSON.parse(value) as hlibSettings
+        service: defaultSettings.service,
+        exactTagSearch: defaultSettings.exactTagSearch,
+        expanded: defaultSettings.expanded
+      } as settings
+    : JSON.parse(value) as settings
     return settings
   }
 
-export function settingsToLocalStorage(settings: hlibSettings) {
+export function settingsToLocalStorage(settings: settings) {
   localStorage.setItem('h_settings', JSON.stringify(settings))
 }
 
-export function settingsToUrl(settings: hlibSettings) { 
+export function settingsToUrl(settings: settings) { 
   let url = new URL(location.href)
   function setOrDelete(settingName:string, settingValue:string, isBoolean?: boolean) {
     // prep 
@@ -126,9 +133,6 @@ export function settingsToUrl(settings: hlibSettings) {
       url.searchParams.delete(settingName)
     }
     // exceptions
-    if (settingName === 'max' && settingValue === defaultMax) {
-      url.searchParams.delete(settingName)
-    }
     if (settingName === 'group' && settingValue === 'all') {
       url.searchParams.delete(settingName)
     }
@@ -141,8 +145,6 @@ export function settingsToUrl(settings: hlibSettings) {
   setOrDelete('tag', settings.tag)
   setOrDelete('any', settings.any)
   // settings
-  setOrDelete('max', settings.max)
-  setOrDelete('searchReplies', settings.searchReplies, true)
   setOrDelete('exactTagSearch', settings.exactTagSearch, true)
   setOrDelete('expanded', settings.expanded, true)
   // special
@@ -155,7 +157,7 @@ export function settingsToUrl(settings: hlibSettings) {
 /** Promisified XMLHttpRequest 
  *  This predated fetch() and now wraps it. 
  * */ 
-export function httpRequest(opts: httpOpts):Promise<any> {
+export function httpRequest(opts: httpOpts):Promise<httpResponse> {
   return new Promise( (resolve, reject) => {
     const input = new Request(opts.url)
     const init:any = {
@@ -735,11 +737,6 @@ export function createAnyInputForm(element: HTMLElement) {
   createInputForm(name, syncContainer(name), element)
 }
 
-export function createMaxInputForm(element: HTMLElement) {
-  const name = 'max'  
-  createInputForm(name, syncContainer(name), element)
-}
-
 export function createSearchRepliesCheckbox(element: HTMLElement) {
   const name = 'searchReplies'  
   createInputForm(name, syncContainer(name), element, 'checkbox')
@@ -1113,7 +1110,7 @@ export function getTokenFromLocalStorage() {
 /** Display the params a bit less plainly
  */
 
-export function syntaxColorParams(params:hlibSettings, excluded:string[]) : string {
+export function syntaxColorParams(params:settings, excluded:string[]) : string {
   const keys = Object.keys(params) as string[]
   function wrappedKey(key) {
     return `<span class="params key">${key}</span>`
