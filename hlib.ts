@@ -732,14 +732,9 @@ export function createTagInputForm(element: HTMLElement) {
   createInputForm(name, syncContainer(name), element)
 }
 
-export function createAnyInputForm(element: HTMLElement) {
+export function createAnyInputForm(element: HTMLElement, msg?: string) {
   const name = 'any'
-  createInputForm(name, syncContainer(name), element)
-}
-
-export function createSearchRepliesCheckbox(element: HTMLElement) {
-  const name = 'searchReplies'  
-  createInputForm(name, syncContainer(name), element, 'checkbox')
+  createInputForm(name, syncContainer(name), element, '', msg)
 }
 
 export function createExactTagSearchCheckbox(element: HTMLElement) {
@@ -754,7 +749,7 @@ export function createExpandedCheckbox(element: HTMLElement) {
 
 /** Create an input field with a handler to save the changed value,
  *  optionally with a default value, optionally with a type (e.g. password).
- *  Should be rnamed to createPersistentInputForm.
+ *  Should be renamed to createUrlAndStorageSyncedInputForm
  */
 export function createNamedInputForm(args: inputFormArgs) {
   const { element, name, id, value, onchange, type, msg } = args
@@ -776,7 +771,7 @@ export function createNamedInputForm(args: inputFormArgs) {
     form = `
       <div class="checkboxContainer">
         <div class="formLabel">${name}</div>
-        <div class="${id}Form"><input type="${type}" ${_checked} id="${id}searchRepliesForm"></div>
+        <div class="${id}Form"><input type="${type}" ${_checked} id="${id}Form"></div>
       </div>
       <div class="formMessage"></div>`
   }
@@ -792,6 +787,7 @@ export function createNamedInputForm(args: inputFormArgs) {
 
 /** Create a simple input field. */
 export function createFacetInputForm(e: HTMLElement, facet: string, msg?: string, value?: string) {
+  if (!msg) { msg = '' }
   if (!value) { value = '' }
   const form = `
     <div class="formLabel">${facet}</div>
