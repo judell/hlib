@@ -58,6 +58,7 @@ export type settings = {
   tag: string
   any:string
   // settings
+  max: string
   service: string
   exactTagSearch: string
   expanded: string
@@ -72,6 +73,7 @@ const defaultSettings:settings = {
   tag: '',
   any: '',
   // settings
+  max: '50',
   service: 'https://hypothes.is',
   exactTagSearch: 'false',
   expanded: 'false',
@@ -92,6 +94,9 @@ export function getDefaultSettings() {
 
 
 export function updateSetting(name:string, value:string) {
+  if (name === 'max' && ! value) {
+    value = defaultSettings.max
+  }
   settings[name] = value
 }
 
@@ -107,6 +112,7 @@ export function settingsFromLocalStorage() : settings {
         tag: '',
         any: '',
         // settings
+        max: defaultSettings.max,
         service: defaultSettings.service,
         exactTagSearch: defaultSettings.exactTagSearch,
         expanded: defaultSettings.expanded
@@ -145,6 +151,7 @@ export function settingsToUrl(settings: settings) {
   setOrDelete('tag', settings.tag)
   setOrDelete('any', settings.any)
   // settings
+  setOrDelete('max', settings.max)
   setOrDelete('exactTagSearch', settings.exactTagSearch, true)
   setOrDelete('expanded', settings.expanded, true)
   // special
@@ -693,7 +700,7 @@ export function createApiTokenInputForm(element: HTMLElement) {
     onchange: setToken,
     type: 'password',
     msg:
-      `to write (or read private) annotations, copy/paste your <a target="_token" href="${getSettings().service}/profile/developer">token</a>`
+      `Find it <a title="Your Hypothesis account" target="_token" href="${getSettings().service}/profile/developer">here</a>`
   }
   createNamedInputForm(tokenArgs)
 }
@@ -734,6 +741,11 @@ export function createTagInputForm(element: HTMLElement) {
 
 export function createAnyInputForm(element: HTMLElement, msg?: string) {
   const name = 'any'
+  createInputForm(name, syncContainer(name), element, '', msg)
+}
+
+export function createMaxInputForm(element: HTMLElement, msg?: string) {
+  const name = 'max'
   createInputForm(name, syncContainer(name), element, '', msg)
 }
 
@@ -1174,3 +1186,6 @@ export function getControlledTagsFromLocalStorage() {
   return _controlledTags ? _controlledTags : defaultControlledTags
 }
 
+export function insertNodeAfter(newNode:HTMLElement, referenceNode:HTMLElement) {
+  referenceNode.parentNode!.insertBefore(newNode, referenceNode.nextSibling)  
+}
