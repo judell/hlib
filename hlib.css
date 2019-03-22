@@ -94,9 +94,11 @@ img {
   margin: 8px
 }
 
-.externalLink:after {
- content: url('https://jonudell.info/hlib/externalLink.png');
- margin: 0 0 0 5px;
+.externalLinkImage {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  margin-left: 4px;
 }
 
 .params {

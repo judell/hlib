@@ -921,7 +921,7 @@ export function csvRow(level: number, anno: any): string {
 }
 
 /** Render an annotation card. */
-export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string) {
+export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string, externalLink?: string) {
 
   function getGroupName(anno:any):any {
     let groupName = anno.group
@@ -957,6 +957,11 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
 
   const standaloneAnnotationUrl = `${settings.service}/a/${anno.id}`
 
+  const _externalLink = externalLink ? externalLink : `
+    <a title="view/edit/reply" target="_standalone" href="${standaloneAnnotationUrl}">
+      <img class="externalLinkImage" src="https://jonudell.info/hlib/externalLink.png">
+    </a>`
+ 
   const marginLeft = level * 20
 
   const borderLeft = level == 0 ? '' : "border-left-style:solid; border-left-width:thin;"
@@ -980,11 +985,12 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
         <span class="user">
           <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
         </span>
+        <span>&nbsp;</span>
         <span class="dateTime">${dt_str}</span>
+        <span>&nbsp;</span>
         <span class="groupSlug">${groupSlug}</span>
-        <a class="externalLink" title="visit thread to view/edit/reply" 
-          target="_standalone" href="${standaloneAnnotationUrl}">
-        </a>
+        <span>&nbsp;</span>
+        <span class="externalLink">${_externalLink}</span>
       </div>
       <div class="annotationQuote">${anno.quote}</div>
       <div class="annotationBody">
