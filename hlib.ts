@@ -809,13 +809,25 @@ export function setSelectedGroup(selectId:string) {
   settingsToUrl(settings)
 }
 
-export function getSelectedGroup(selectId?:string) {
+export function getSelectedGroupInfo(selectId?:string) {
   let _selector = selectId ? selectId : 'groupsList'
   _selector = '#' + _selector
   const groupSelector = document.querySelector(_selector) as HTMLSelectElement
   const options:HTMLOptionsCollection = groupSelector.options
   const selectedGroup = options[options.selectedIndex].value
-  return selectedGroup
+  const selectedGroupName = options[options.selectedIndex].innerText
+  return {
+    selectedGroup: selectedGroup,
+    selectedGroupName: selectedGroupName
+  }
+}
+
+export function getSelectedGroup(selectId?:string) {
+  return getSelectedGroupInfo(selectId).selectedGroup
+}
+
+export function getSelectedGroupName(selectId?:string) {
+  return getSelectedGroupInfo(selectId).selectedGroupName
 }
 
 /** Create a Hypothesis group picker. */
