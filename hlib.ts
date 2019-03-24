@@ -719,9 +719,12 @@ export function createInputForm(name: string, handler: EventHandlerNonNull, elem
   createNamedInputForm(params)
 }
 
-export function createUserInputForm(element: HTMLElement) {
+export function createUserInputForm(element: HTMLElement, msg?: string) {
+  if (! msg) {
+    msg = 'For search, not authentication'
+  }
   const name = 'user'
-  createInputForm(name, syncContainer(name), element, '', 'Not for authentication, only for search')
+  createInputForm(name, syncContainer(name), element, '', msg)
 }
 
 export function createUrlInputForm(element: HTMLElement) {
@@ -731,7 +734,7 @@ export function createUrlInputForm(element: HTMLElement) {
 
 export function createWildcardUriInputForm(element: HTMLElement) {
   const name = 'wildcard_uri'
-  createInputForm(name, syncContainer(name), element, '', 'Example: https://www.nytimes.com/*')
+  createInputForm(name, syncContainer(name), element, '', 'e.g. https://www.nytimes.com/*')
 }
 
 export function createTagInputForm(element: HTMLElement) {
@@ -878,7 +881,7 @@ export function createGroupInputForm(e: HTMLElement, selectId?: string) {
         const response: any = JSON.parse(data.response)
         let msg = ''
         if (!token) {
-          msg = 'add token and <a href="javascript:location.href=location.href">refresh</a> to see all groups here'
+          msg = 'Add token and <a href="javascript:location.href=location.href">refresh</a> to see all groups here'
         }
         const form = `
           <div class="formLabel">group</div>
@@ -984,23 +987,23 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
  
   const marginLeft = level * 20
 
-  const borderLeft = level == 0 ? '' : "border-left-style:solid; border-left-width:thin;"
-
   const groupName = getGroupName(anno)
 
   let groupSlug = 'in Public'
   if (anno.group !== '__world__') {
     groupSlug = `
-      in group
-      <span class="groupid"><a title="search group" target="_group" href="./?group=${anno.group}">${groupName}</a>
+      in <span class="groupid"><a title="search group" target="_group" href="./?group=${anno.group}">${groupName}</a>
       </span>`
   }
 
   const type = anno.isReply ? 'reply' : 'annotation'
+  const downRightArrow = anno.isReply 
+    ? `<div class="downRightArrow" style="margin-top:-8px; margin-bottom:-32px; margin-left:${marginLeft-12}px">\u{2937}</div>`
+    : ''
 
   const output = `
-    <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; ${borderLeft} margin-left:${marginLeft}px;">
-      <div class="csvRow">${csvRow(level, anno)}</div>
+    ${downRightArrow}
+    <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
       <div class="annotationHeader">
         <span class="user">
           <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
@@ -1083,16 +1086,30 @@ export function expandAll() {
   showCards(cards)
 }
 
+function findArrows(toggler: HTMLElement) {
+  const header = toggler.closest('.urlHeading') as HTMLElement
+  const cards = header.nextElementSibling as HTMLElement
+  return cards.querySelectorAll('.downRightArrow')as NodeListOf<HTMLElement>
+}
+
 /** Set expand/collapse toggle to collapsed. */
 export function setToggleControlCollapse(toggler: HTMLElement) {
   toggler.innerHTML = '\u{25b6}'
   toggler.title = 'expand'
+  const downRightArrows = findArrows(toggler)
+  downRightArrows.forEach(arrow => {
+    arrow.style.display = 'none'
+  })
 }
 
 /** Set expand/collapse toggle to expanded. */
 export function setToggleControlExpand(toggler: HTMLElement) {
   toggler.innerHTML = '\u{25bc}'
   toggler.title = 'collapse'
+  const downRightArrows = findArrows(toggler)
+  downRightArrows.forEach(arrow => {
+    arrow.style.display = 'block'
+  })
 }
 
 /** Show a setof annotation cards. */

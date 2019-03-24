@@ -1,6 +1,11 @@
 
 @import url(https://fonts.googleapis.com/css?family=Raleway:500,400,300,800,700);
 
+a {
+  text-decoration: none;
+  color: #795548;;
+}
+
 body {
   font-family: Raleway;
   font-weight: 500;
@@ -9,23 +14,89 @@ body {
   margin-right: .25in;
   }
 
+button {
+  margin-bottom:  14px;
+}
+
+img {
+  width: 90%;
+  margin: 8px
+}
+
 input {
   margin-top: 2px;
   margin-bottom: 2px;
 }
 
-button {
-  margin-bottom:  14px;
+.annotationCard {
+  margin-left: 30px;
+  margin-top: 20px;
+  border-top-style: solid;
+  border-top-width: thin;
+  border-color: #d3d3d37a;
+  margin-bottom: 18px;
+  padding-left: 8px;
 }
 
-.help {
-  font-size:smaller;
+.annotationCardDivider {
+  display: none;
 }
 
+.annotationHeader {
+  background-color: #efeeeb4f;
+  display: flex;
+}
 
-.inputForm {
-  margin-top: 4px;
-  margin-bottom: 4px;
+.annotationTag {
+  border-width: thin;
+  border-style: solid;
+  padding: 2px;
+  border-color: lightgray;
+  font-size: smaller;
+  background-color: #f6f8fa;
+  font-size: x-small;
+}
+
+.annotationTags input {
+  width: 12em;
+}
+
+.annotationText, .annotationQuote {
+  font-size: smaller;
+}
+
+.annotationText blockquote {
+  margin-left: 0px;
+  font-style: italic;
+  border-left-style: solid;
+  border-left-color: lightgray;
+  border-left-width: 3px;
+  padding-left: 4px;
+  color: #8d8282;  
+}
+
+.annotationQuote {
+  margin-top: 12px;
+  color: #777;
+  font-style: italic;
+  margin-bottom: 12px;
+  border-left-style: solid;
+  border-left-width:thin;
+  border-left-color:lightgray;
+  padding-left: 6px;
+}
+
+.checkboxContainer {
+  display: flex;
+}
+
+.clearInput {
+  font-size: smaller;
+  cursor: pointer;
+}
+
+.dateTime {
+  font-size: smaller;
 }
 
 .formField {
@@ -41,64 +112,17 @@ button {
   font-size: smaller;
 }
 
-.csvRow {
-  display: none;
+.groupSlug {
+  font-size: smaller;
 }
 
-a {
-  text-decoration: none;
-  color: #795548;;
+.help {
+  font-size:smaller;
 }
 
-.annotationHeader {
-  background-color: #f6f8fa;  
-}
-
-.annotationCard {
-  margin-left: 20px;
-  border-top-style: solid;
-  border-top-width: thin;
-  border-color: lightgray;
-  padding-left: 8px;
-  margin-top: 16px;
-  margin-bottom: 14px;
-}
-
-.annotationCard {
-  margin-bottom: 20px;
-}
-
-.annotationCardDivider {
-  display: none;
-}
-
-.annotationTag {
-  font-size: small;
-  text-decoration: none;
-  padding: 3px;
-  color: #4B4040;
-}
-
-.annotationQuote {
-  margin-top: 12px;
-  color: #777;
-  font-style: italic;
-}
-
-.annotationQuote:empty {
-  margin-top: 0;
-}
-
-img {
-  width: 90%;
-  margin: 8px
-}
-
-.externalLinkImage {
-  width: 12px;
-  height: 12px;
-  margin: 0;
-  margin-left: 4px;
+.inputForm {
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .params {
@@ -119,21 +143,3 @@ img {
 .params .value {
   color:#030815
 }
-
-.checkboxContainer {
-  display: flex;
-}
-
-.clearInput {
-  font-size: smaller;
-  cursor: pointer;
-}
-
-.groupSlug {
-  font-size: smaller;
-}
-
-.dateTime {
-  font-size: smaller;
-}
-
