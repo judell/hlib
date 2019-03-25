@@ -58,7 +58,7 @@ input {
 }
 
 .annotationTags input {
-  width: 12em;
+  width: 10em;
 }
 
 .annotationText, .annotationQuote {
