@@ -143,3 +143,12 @@ input {
 .params .value {
   color:#030815
 }
+
+.quoteContext {
+  text-decoration: dotted underline;
+}
+
+.exactQuote {
+  color:#321305;
+  font-style: normal;
+}

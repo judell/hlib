@@ -346,7 +346,9 @@ export function parseAnnotation(row: any): annotation {
       for (let i = 0; i < selectors.length; i++) {
         let selector = selectors[i]
         if (selector.type === 'TextQuoteSelector') {
-          quote = selector.exact
+          quote = `<span class="quoteContext">${selector.prefix}</span>`
+          quote += `<span class="exactQuote">${selector.exact}</span>`
+          quote += `<span class="quoteContext">${selector.suffix}</span>`
         }
       }
     }
