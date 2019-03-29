@@ -347,7 +347,7 @@ export function parseAnnotation(row: any): annotation {
         let selector = selectors[i]
         if (selector.type === 'TextQuoteSelector') {
           quote = `<span class="quoteContext">${selector.prefix}</span>`
-          quote += `<span class="exactQuote">${selector.exact}</span>`
+          quote += `<span class="quoteExact">${selector.exact}</span> `
           quote += `<span class="quoteContext">${selector.suffix}</span>`
         }
       }
@@ -739,9 +739,9 @@ export function createWildcardUriInputForm(element: HTMLElement) {
   createInputForm(name, syncContainer(name), element, '', 'e.g. https://www.nytimes.com/*')
 }
 
-export function createTagInputForm(element: HTMLElement) {
+export function createTagInputForm(element: HTMLElement, msg?: string) {
   const name = 'tag'
-  createInputForm(name, syncContainer(name), element)
+  createInputForm(name, syncContainer(name), element, '', msg)
 }
 
 export function createAnyInputForm(element: HTMLElement, msg?: string) {
@@ -1208,3 +1208,24 @@ export function getControlledTagsFromLocalStorage() {
 export function insertNodeAfter(newNode:HTMLElement, referenceNode:HTMLElement) {
   referenceNode.parentNode!.insertBefore(newNode, referenceNode.nextSibling)  
 }
+
+export function manageTokenDisplayAndReset() {
+  function resetToken() {
+    localStorage.setItem('h_token', '')
+  }    
+  let token = getToken()
+  const tokenContainer = getById('tokenContainer')
+  const tokenResetter = document.querySelector('.tokenReset') as HTMLElement
+  if (token) {
+    tokenContainer.style.display = 'none'
+    tokenResetter.style.display = 'block'
+  } else {
+    tokenContainer.style.display = 'block'
+    tokenResetter.style.display = 'none'
+  }
+  tokenResetter.onclick = function() {
+    resetToken()
+    location.href = location.href
+  }
+}
+
