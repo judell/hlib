@@ -15,7 +15,10 @@ body {
   }
 
 button {
-  margin-bottom:  14px;
+  border-width: thin;
+  background-color:#efeeeb4f;
+  color: #170802;
+  margin-right: 4px;
 }
 
 img {
