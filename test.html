@@ -55,7 +55,7 @@ function checkAndDeleteTestAnnotation(data, token) {
         const selectors = hlib.parseSelectors(response.target)
         eq(scratchQuote, selectors.TextQuote.exact)
         const annotation = hlib.parseAnnotation(response)
-        eq(scratchQuote, annotation.quote)
+        assert(annotation.quote.indexOf(`class="quoteExact">${scratchQuote}</span>`))
       }
       assert(response.id)
       assert(response.updated)
@@ -92,7 +92,7 @@ tests({
     initializeSettings()
     clearUrlLine()
     const settings = hlib.getSettings()
-    eq(hlib.defaultMax, settings.max )
+    eq(hlib.getDefaultSettings().max, settings.max )
     eq('false', settings.exactTagSearch)
     eq('https://hypothes.is', settings.service)
     resolve()
