@@ -270,20 +270,6 @@ export function search(params: any, progressId?: string): Promise<any> {
   })
 }
 
-export function showThread(row:any, level:number, replies:any[], displayed:string[], displayElement:HTMLElement) {
-  if (displayed.indexOf(row.id) != -1) {
-    return
-  } else {
-    displayed.push(row.id)
-    const _replies = findRepliesForId(row.id, replies)
-    const anno = parseAnnotation(row)
-    displayElement.innerHTML += showAnnotation(anno, level)
-    _replies.forEach(_reply => {
-      showThread(_reply, level+1, _replies, displayed, displayElement)
-    })
-  }
-}
-
 export type gatheredResult = {
   updated: string
   title: string
@@ -506,7 +492,6 @@ function syncUrlAndLocalStorageFromForm(formId: string) {
   updateSetting(key, value)
   settingsToUrl(getSettings())
   settingsToLocalStorage(getSettings())
-  console.log(`dispatching for ${formId}`)
   form.dispatchEvent(formUrlStorageSyncEvent)
 }
 
@@ -1157,10 +1142,10 @@ export function getTokenFromLocalStorage() {
 
 export function syntaxColorParams(params:settings, excluded:string[]) : string {
   const keys = Object.keys(params) as string[]
-  function wrappedKey(key) {
+  function wrappedKey(key: string) {
     return `<span class="params key">${key}</span>`
   }
-  function wrappedValue(value) {
+  function wrappedValue(value: string) {
     return `<span class="params value">${value}</span>`
   }
   let buffer = ''
@@ -1180,13 +1165,14 @@ export function syntaxColorParams(params:settings, excluded:string[]) : string {
 function clearInput(e: MouseEvent) {
   const target = e.target as HTMLElement
   const formElement = target.closest('.formField') as HTMLElement
-  formElement.querySelector('input').value = ''
+  const inputElement = formElement.querySelector('input') as HTMLInputElement
+  inputElement.value = ''
   const setting  = formElement.id.replace('Container','')
   updateSetting(setting, '')
   settingsToUrl(getSettings())
   settingsToLocalStorage(getSettings())
-  console.log(`dispatching for ${target}`)
-  target.closest('.formField').dispatchEvent(clearInputEvent)
+  const formField = target.closest('.formField') as HTMLElement
+  formField.dispatchEvent(clearInputEvent)
 }
 
 export function getSubjectUserTokensFromLocalStorage() {
