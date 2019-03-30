@@ -39,6 +39,8 @@ input {
   border-color: #d3d3d37a;
   margin-bottom: 18px;
   padding-left: 8px;
+  border-style: solid;
+  border-width: thin;
 }
 
 .annotationCardDivider {
