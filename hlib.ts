@@ -64,6 +64,21 @@ export type settings = {
   expanded: string
 }
 
+export type toggler = {
+  togglerTitle: string
+  togglerUnicodeChar: string
+}
+
+export const expandToggler:toggler = {
+  togglerTitle: 'collapse',
+  togglerUnicodeChar: '\u{25bc}'
+}
+
+export const collapseToggler:toggler = {
+  togglerTitle: 'expand',
+  togglerUnicodeChar: '\u{25b6}'
+}
+
 const defaultSettings:settings = {
   // facets
   user: '',
@@ -767,7 +782,8 @@ export function createNamedInputForm(args: inputFormArgs) {
   if (type !== 'checkbox') {
     form = `
       <div class="formLabel">${name}</div>
-      <div class="${id}Form"><input ondrop="dropHandler(event)" ${_type} ${_value} id="${id}Form"></input><a title="clear input" class="clearInput"> x</a></div>
+      <div class="${id}Form"><input ondrop="dropHandler(event)" ${_type} ${_value} 
+        id="${id}Form"></input><a title="clear input" class="clearInput"> x</a></div>
       <div class="formMessage">${msg}</div>`
   } else {
     form = `
@@ -1076,13 +1092,13 @@ export function expandAll() {
 function findArrows(toggler: HTMLElement) {
   const header = toggler.closest('.urlHeading') as HTMLElement
   const cards = header.nextElementSibling as HTMLElement
-  return cards.querySelectorAll('.downRightArrow')as NodeListOf<HTMLElement>
+  return cards.querySelectorAll('.downRightArrow') as NodeListOf<HTMLElement>
 }
 
 /** Set expand/collapse toggle to collapsed. */
 export function setToggleControlCollapse(toggler: HTMLElement) {
-  toggler.innerHTML = '\u{25b6}'
-  toggler.title = 'expand'
+  toggler.innerHTML = collapseToggler.togglerUnicodeChar
+  toggler.title = collapseToggler.togglerTitle
   const downRightArrows = findArrows(toggler)
   downRightArrows.forEach(arrow => {
     arrow.style.display = 'none'
@@ -1091,8 +1107,8 @@ export function setToggleControlCollapse(toggler: HTMLElement) {
 
 /** Set expand/collapse toggle to expanded. */
 export function setToggleControlExpand(toggler: HTMLElement) {
-  toggler.innerHTML = '\u{25bc}'
-  toggler.title = 'collapse'
+  toggler.innerHTML = expandToggler.togglerUnicodeChar
+  toggler.title = expandToggler.togglerTitle
   const downRightArrows = findArrows(toggler)
   downRightArrows.forEach(arrow => {
     arrow.style.display = 'block'
