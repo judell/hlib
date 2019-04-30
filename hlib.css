@@ -112,6 +112,12 @@ input {
   font-size: smaller;
 }
 
+.externalLinkImage {
+  width: 1em;
+  height: 1em;
+  margin: 0;
+}
+
 .formField {
   margin-bottom: 14px;
 }
@@ -158,6 +164,7 @@ input {
 }
 
 .quoteContext {
+  font-size: smaller;
 }
 
 .quoteExact {
