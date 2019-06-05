@@ -960,7 +960,7 @@ export function csvRow(level: number, anno: any): string {
 }
 
 /** Render an annotation card. */
-export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string, externalLink?: string) {
+export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string, externalLink?: string, copyIdButton?: string) {
 
   function getGroupName(anno:any):any {
     let groupName = anno.group
@@ -1001,6 +1001,9 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
       <img class="externalLinkImage" src="https://jonudell.info/hlib/externalLink.png">
     </a>`
  
+  const _copyIdButton = copyIdButton ? copyIdButton : `
+    <button onclick="(function(){navigator.clipboard.writeText('${anno.id}')})();">${anno.id}</button>`
+
   const marginLeft = level * 20
 
   const groupName = getGroupName(anno)
@@ -1030,6 +1033,8 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
         <span class="groupSlug">${groupSlug}</span>
         <span>&nbsp;</span>
         <span class="externalLink">${_externalLink}</span>
+        <span>&nbsp;</span>
+        <span class="copyIdButton">${_copyIdButton}</span>
       </div>
       <div class="annotationQuote">${anno.quote}</div>
       <div class="annotationBody">
