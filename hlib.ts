@@ -21,6 +21,7 @@ export type annotation = {
   user: string
   text: string
   quote: string
+  exact: string
   tags: string[]
   group: string
   target: object
@@ -341,6 +342,7 @@ export function parseAnnotation(row: any): annotation {
   const refs = row.references ? row.references : []
   const user = row.user.replace('acct:', '').replace('@hypothes.is', '')
   let quote = ''
+  let exact = ''
   if (row.target && row.target.length) {
     const selectors = row.target[0].selector
     if (selectors) {
@@ -350,6 +352,7 @@ export function parseAnnotation(row: any): annotation {
           quote = `<span title="quote prefix" class="quoteContext">${selector.prefix}</span>`
           quote += `<span title="exact quote" class="quoteExact">${selector.exact}</span> `
           quote += `<span title="quote suffix" class="quoteContext">${selector.suffix}</span>`
+          exact = selector.exact
         }
       }
     }
@@ -384,6 +387,7 @@ export function parseAnnotation(row: any): annotation {
     user: user,
     text: text,
     quote: quote,
+    exact: exact,
     tags: tags,
     group: group,
     target: row.target
@@ -418,6 +422,15 @@ export function parseSelectors(target: any): object {
           end: textPosition[0].end
         }
       }
+      const range = selectors.filter(function(x: any) {
+        return x.type === 'RangeSelector'
+      })
+      if (range.length) {
+        parsedSelectors['Range'] = {
+          startContainer: range[0].startContainer,
+          endContainer: range[0].endContainer
+        }
+      }   
     }
   }
   return parsedSelectors
