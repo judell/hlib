@@ -32,7 +32,7 @@ import * as hlib from './hlib.js'
 // ... I can debug the library, which uses export statements, directly. 
 
 // For deployed apps based on this library, the pattern so far is:
-//  - bundle as hlib.bundle.js
+//  - bundle as hlib2.bundle.js
 //  - run webpack
 //  - use devtool to produce a source map
 //  - use source-map-loader to load the source map
@@ -224,7 +224,7 @@ tests({
     })
  },
 
-  'creates an annotation': function () {
+ 'creates an annotation': function () {
     return new Promise(resolve => {
       async function runTest() {
         const token = hlib.getToken()
@@ -237,6 +237,37 @@ tests({
         const payload = hlib.createAnnotationPayload(params)
         const data = await hlib.postAnnotation(payload, token)
         await checkAndDeleteTestAnnotation(data, token)
+      }
+      resolve(runTest())
+    })
+  },
+
+  'creates a reply': function () {
+    return new Promise(resolve => {
+      async function runTest() {
+        const token = hlib.getToken()
+        const annoParams = {
+          uri: scratchUri,
+          text: scratchText,
+        }
+        const annoPayload = hlib.createAnnotationPayload(annoParams)
+        const annoData = await hlib.postAnnotation(annoPayload, token)
+        const annoId = JSON.parse(annoData.response).id
+        const replyParams = {
+          uri: scratchUri,
+          text: scratchText,
+          references: [ annoId ]
+        }
+        const replyPayload = hlib.createAnnotationPayload(replyParams)
+        const replyData = await hlib.postAnnotation(replyPayload, token)
+        const newAnnoId = JSON.parse(annoData.response).id
+        const newReplyReference = JSON.parse(replyData.response).references[0]
+        assertEquals(
+          newAnnoId, 
+          newReplyReference
+          )
+        await checkAndDeleteTestAnnotation(annoData, token)
+        await checkAndDeleteTestAnnotation(replyData, token)
       }
       resolve(runTest())
     })
