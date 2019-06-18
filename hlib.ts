@@ -574,7 +574,7 @@ export function createTextPositionSelector(start: number, end: number): textPosi
  * exact, prefix, suffix: Info for TextQuoteSelector, only exact is required
  * start, stop: Info for TextPositionSelector, optional
  * username: Hypothesis username
- * group: Hypothesis group (use `__world__` for Public)
+ * group: Hypothesis group (use `__world__` for Public, ignored if you are posting a reply)
  * text: Body of annotation (could be markdown or html)
  * tags: Hypothesis tags
  * references: Array of ids. To post a reply: [ '{threadRootId}' ]
