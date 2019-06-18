@@ -577,11 +577,12 @@ export function createTextPositionSelector(start: number, end: number): textPosi
  * group: Hypothesis group (use `__world__` for Public)
  * text: Body of annotation (could be markdown or html)
  * tags: Hypothesis tags
+ * references: Array of ids. To post a reply: [ '{threadRootId}' ]
  * extra: Extra data, invisible to user but available through H API
  * ```
  */
 export function createAnnotationPayload(params: any): string {
-  //uri, exact, username, group, text, tags, extra){
+  // uri, exact, username, group, text, tags, references, extra
   let textQuoteSelector
   let textPositionSelector
 
@@ -609,6 +610,7 @@ export function createAnnotationPayload(params: any): string {
   }
 
   const payload: any = {
+    target: [ target ],
     uri: params.uri,
     group: params.group,
     permissions: createPermissions(params.username, params.group),
@@ -618,9 +620,9 @@ export function createAnnotationPayload(params: any): string {
     },
     tags: params.tags ? params.tags : []
   }
-
-  if (target) {
-    payload.target = [ target ]
+  
+  if (params.references) {
+    payload.references = params.references
   }
 
   if (params.extra) {
