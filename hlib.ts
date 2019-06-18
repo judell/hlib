@@ -1173,6 +1173,11 @@ export function getTokenFromLocalStorage() {
   return value ? value : ''
 }
 
+export function getUserFromLocalStorage() {
+  const value = localStorage.getItem('h_user')
+  return value ? value : ''
+}
+
 /** Display the params a bit less plainly
  */
 
