@@ -717,7 +717,7 @@ export function createApiTokenInputForm(element: HTMLElement) {
     onchange: setToken,
     type: 'password',
     msg:
-      `Find it by loggin in <a title="Your Hypothesis account" target="_token" href="${getSettings().service}/profile/developer">here</a>`
+      `Find it by logging in <a title="Your Hypothesis account" target="_token" href="${getSettings().service}/profile/developer">here</a>`
   }
   createNamedInputForm(tokenArgs)
 }
