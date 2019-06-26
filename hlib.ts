@@ -717,7 +717,7 @@ export function createApiTokenInputForm(element: HTMLElement) {
     onchange: setToken,
     type: 'password',
     msg:
-      `Find it <a title="Your Hypothesis account" target="_token" href="${getSettings().service}/profile/developer">here</a>`
+      `Find it by loggin in <a title="Your Hypothesis account" target="_token" href="${getSettings().service}/profile/developer">here</a>`
   }
   createNamedInputForm(tokenArgs)
 }
@@ -1235,6 +1235,23 @@ export function getControlledTagsFromLocalStorage() {
 export function insertNodeAfter(newNode:HTMLElement, referenceNode:HTMLElement) {
   referenceNode.parentNode!.insertBefore(newNode, referenceNode.nextSibling)  
 }
+
+/* manageTokenDisplayAndReset is called like so in facet and elsewhere
+
+<script>
+  setTimeout(_ => {
+    hlib.manageTokenDisplayAndReset()
+  }, 200)
+</script>
+</body>
+
+It works with a page element like this:
+
+<div class="tokenReset">
+  <a title="click to reset">reset API token</a>
+</div>
+
+*/
 
 export function manageTokenDisplayAndReset() {
   function resetToken() {
