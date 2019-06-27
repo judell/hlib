@@ -25,6 +25,7 @@ export type annotation = {
   tags: string[]
   group: string
   target: object
+  document: object
 }
 
 export type textPositionSelector = {
@@ -390,7 +391,8 @@ export function parseAnnotation(row: any): annotation {
     exact: exact,
     tags: tags,
     group: group,
-    target: row.target
+    target: row.target,
+    document: row.document
   }
 
   return r
