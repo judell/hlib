@@ -948,7 +948,8 @@ export function csvRow(level: number, anno: any): string {
     anno.quote,
     anno.text
   ]
-  fields.push(`https://hyp.is/${anno.id}`) // add direct link
+  fields.push(`https://hyp.is/${anno.id}`) // add hyp.is link
+  fields.push(`${anno.url}#annotations:${anno.id}`) // add direct link
   fields = fields.map(function(field) {
     if (field) {
       field = field.replace(/&/g, '&amp;') // the resulting text will be added as html to the dom
