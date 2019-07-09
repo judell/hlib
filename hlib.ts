@@ -232,7 +232,7 @@ export function search(params: any, progressId?: string): Promise<any> {
       }
 
       const separateReplies = params._separate_replies==='true' ? '&_separate_replies=true' : ''
-      const afterClause = after ? `&search_after=${after}` : ''
+      const afterClause = after ? `&search_after=${encodeURIComponent(after)}` : ''
 
 
       let opts: httpOpts = {
