@@ -198,7 +198,8 @@ export function httpRequest(opts: httpOpts):Promise<httpResponse> {
           .then(text => {
             return  {
               status: fetchResponse.status, 
-              response: text
+              response: text,
+              headers: fetchResponse.headers,
             }
           })
       })
