@@ -118,7 +118,12 @@ export function updateSetting(name:string, value:string) {
 }
 
 export function settingsFromLocalStorage() : settings {
-  let value = localStorage.getItem('h_settings') as string 
+  let value
+  try {
+    value = localStorage.getItem('h_settings') as string 
+  } catch (e) {  // not accessible from a web worker
+    return defaultSettings
+  }
   let settings = ! value 
     ? {
         // facets
