@@ -1033,8 +1033,8 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
 
   const output = `
     ${downRightArrow}
-    <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
-      <div class="annotationHeader">
+    <annotationCard class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
+      <div slot="annotationHeader" class="annotationHeader">
         <span class="user">
           <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
         </span>
@@ -1047,8 +1047,8 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
         <span>&nbsp;</span>
         <span class="copyIdButton">${_copyIdButton}</span>
       </div>
-      <div class="annotationQuote">${anno.quote}</div>
-      <div class="annotationBody">
+      <div slot="annotationQuote" class="annotationQuote">${anno.quote}</div>
+      <div slot="annotationBody" class="annotationBody">
         <div class="annotationText">${html}</div>
         <div class="annotationTags">${tags}</div>
       </div>
