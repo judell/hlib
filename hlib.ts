@@ -1304,12 +1304,19 @@ export async function delaySeconds(seconds: number) {
 	return new Promise((resolve) => setTimeout(resolve, seconds * 1000))
 }
 
+export function maybeTruncateAndAddEllipsis(str: string, count: number) {
+  if (str.length > count) {
+    str = str.slice(0, 30) + ' ...'
+  }
+  return str
+}
+
 export function displayKeysAndHiddenValues(dictionary: Map<string,string>) {
   let newDictionary: Map<string,string> = Object.assign({}, dictionary)
   Object.keys(newDictionary).forEach(function (key) {
       newDictionary[key] = '***'
     })
-  return JSON.stringify(newDictionary).slice(0, 30) + ' ...'
+  return maybeTruncateAndAddEllipsis(JSON.stringify(newDictionary), 30)
 }
 
 // custom elements
@@ -1328,10 +1335,8 @@ class EditOrSaveIcon extends HTMLSpanElement {
     }
   }
   disconnectedCallback() {
-    //alert('icon disconnected')
   }
   connectedCallback() {
-    //alert('icon connected')
     const state = this.parentElement!.getAttribute('state')
     let iconName
     if (state === 'viewing') {
@@ -1446,7 +1451,7 @@ class ControlledTagsDisplay extends HTMLSpanElement {
     super()
   }
   connectedCallback() {
-    this.innerText = JSON.stringify(getControlledTagsFromLocalStorage()).slice(0,30) + ' ...'
+    this.innerText = maybeTruncateAndAddEllipsis(getControlledTagsFromLocalStorage(), 30)
   }
 }
 customElements.define('controlled-tags-display', ControlledTagsDisplay, { extends: "span" })
