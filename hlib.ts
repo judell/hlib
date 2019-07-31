@@ -1251,8 +1251,12 @@ export function saveSubjectUserTokensToLocalStorage(value: string) {
 }
 
 export function getControlledTagsFromLocalStorage() {
-  const _controlledTags = localStorage.getItem('h_controlledTags')
-  return _controlledTags ? _controlledTags : defaultControlledTags
+  const controlledTags = localStorage.getItem('h_controlledTags')
+  return controlledTags ? controlledTags : defaultControlledTags
+}
+
+export function saveControlledTagsToLocalStorage(value: string) {
+  localStorage.setItem('h_controlledTags', value)
 }
 
 export function insertNodeAfter(newNode:HTMLElement, referenceNode:HTMLElement) {
@@ -1310,32 +1314,6 @@ export function displayKeysAndHiddenValues(dictionary: Map<string,string>) {
 
 // custom elements
 
-class SubjectUserTokensInput extends HTMLTextAreaElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()  
-    const formattedSubjectUserTokens = JSON.stringify(subjectUserTokens, null, 2).trim()    
-    this.innerHTML = formattedSubjectUserTokens
-  }
-}
-customElements.define('subject-user-tokens-input', SubjectUserTokensInput, { extends: "textarea" })
-
-class SubjectUserTokensDisplay extends HTMLSpanElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-
-    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
-    const hiddenUserTokens = displayKeysAndHiddenValues(subjectUserTokens)      
-    this.innerText = hiddenUserTokens
-  }
-
-}
-customElements.define('subject-user-tokens-display', SubjectUserTokensDisplay, { extends: "span" })
-
 class EditOrSaveIcon extends HTMLSpanElement {
   constructor() {
     super()
@@ -1365,6 +1343,8 @@ class EditOrSaveIcon extends HTMLSpanElement {
   }
 }
 customElements.define('edit-or-save-icon', EditOrSaveIcon, { extends: "span" })
+
+// subject user tokens
 
 class SubjectUserTokensEditor extends HTMLDivElement {
   static get observedAttributes() { return ['state'] } 
@@ -1401,6 +1381,88 @@ class SubjectUserTokensEditor extends HTMLDivElement {
   }
 }
 customElements.define('subject-user-tokens-editor', SubjectUserTokensEditor, { extends: "div" })
+
+class SubjectUserTokensDisplay extends HTMLSpanElement {
+  constructor() {
+    super()
+  }
+  connectedCallback() {
+    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
+    const hiddenUserTokens = displayKeysAndHiddenValues(subjectUserTokens)      
+    this.innerText = hiddenUserTokens
+  }
+}
+customElements.define('subject-user-tokens-display', SubjectUserTokensDisplay, { extends: "span" })
+
+class SubjectUserTokensInput extends HTMLTextAreaElement {
+  constructor() {
+    super()
+  }
+  connectedCallback() {
+    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()  
+    const formattedSubjectUserTokens = JSON.stringify(subjectUserTokens, null, 2).trim()    
+    this.innerHTML = formattedSubjectUserTokens
+  }
+}
+customElements.define('subject-user-tokens-input', SubjectUserTokensInput, { extends: "textarea" })
+
+// controlled tags
+
+class ControlledTagsEditor extends HTMLDivElement {
+  static get observedAttributes() { return ['state'] } 
+  constructor() {
+    super()
+  }
+  get state() {
+    return this.getAttribute('state')!
+  }
+  set state(value: string) {
+    this.setAttribute('state', value)
+  }    
+  connectedCallback() {
+    this.innerHTML = '<div class="formLabel">controlled tags</div>'
+  }
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+
+    if (!oldValue) { return }
+    if (name === 'state') {
+      if (oldValue === 'viewing') {
+        this.querySelector('*[is="controlled-tags-display"]')!.remove()
+        this.innerHTML += `<textarea is="controlled-tags-input" class="controlledTagsInput" />`
+      } else {
+        saveControlledTagsToLocalStorage(this.querySelector('textarea')!.value)
+        this.querySelector('*[is="controlled-tags-input"]')!.remove()
+        this.innerHTML += `<span is="controlled-tags-display" class="controlledTagsDisplay" />`
+      }
+      this.querySelector('*[is="edit-or-save-icon"]')!.remove()
+      this.innerHTML += ` <span is="edit-or-save-icon"/>`
+    }
+  }
+}
+customElements.define('controlled-tags-editor', ControlledTagsEditor, { extends: "div" })
+
+class ControlledTagsDisplay extends HTMLSpanElement {
+  constructor() {
+    super()
+  }
+  connectedCallback() {
+    this.innerText = JSON.stringify(getControlledTagsFromLocalStorage()).slice(0,30) + ' ...'
+  }
+}
+customElements.define('controlled-tags-display', ControlledTagsDisplay, { extends: "span" })
+
+class ControlledTagsInput extends HTMLTextAreaElement {
+  constructor() {
+    super()
+  }
+  connectedCallback() {
+    this.innerText = getControlledTagsFromLocalStorage()
+  }
+}
+customElements.define('controlled-tags-input', ControlledTagsInput, { extends: "textarea" })
+
+
+
 
 
 
