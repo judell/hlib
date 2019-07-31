@@ -1033,8 +1033,8 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
 
   const output = `
     ${downRightArrow}
-    <annotationCard class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
-      <div slot="annotationHeader" class="annotationHeader">
+    <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
+      <div class="annotationHeader">
         <span class="user">
           <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
         </span>
@@ -1047,8 +1047,8 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
         <span>&nbsp;</span>
         <span class="copyIdButton">${_copyIdButton}</span>
       </div>
-      <div slot="annotationQuote" class="annotationQuote">${anno.quote}</div>
-      <div slot="annotationBody" class="annotationBody">
+      <div class="annotationQuote">${anno.quote}</div>
+      <div class="annotationBody">
         <div class="annotationText">${html}</div>
         <div class="annotationTags">${tags}</div>
       </div>
@@ -1236,6 +1236,20 @@ export function getSubjectUserTokensFromLocalStorage() {
   return subjectUserTokens
 }
 
+export function saveSubjectUserTokensToLocalStorage(value: string) {
+  try {
+    value = value.replace(/[,\n}]+$/, '\n}') // silently fix most likely error
+    if (value === '') { value = '{}' }
+    JSON.parse(value)
+    localStorage.setItem('h_subjectUserTokens', value)
+    return true
+  } catch (e) {
+    alert(`That is not valid JSON. Format is "name" : "token" pairs, comma-separated.
+        Please check your input at https://jsoneditoronline.org/`)
+    return false
+  }
+}
+
 export function getControlledTagsFromLocalStorage() {
   const _controlledTags = localStorage.getItem('h_controlledTags')
   return _controlledTags ? _controlledTags : defaultControlledTags
@@ -1285,5 +1299,109 @@ export function manageTokenDisplayAndReset() {
 export async function delaySeconds(seconds: number) {
 	return new Promise((resolve) => setTimeout(resolve, seconds * 1000))
 }
+
+export function displayKeysAndHiddenValues(dictionary: Map<string,string>) {
+  let newDictionary: Map<string,string> = Object.assign({}, dictionary)
+  Object.keys(newDictionary).forEach(function (key) {
+      newDictionary[key] = '***'
+    })
+  return JSON.stringify(newDictionary).slice(0, 30) + ' ...'
+}
+
+// custom elements
+
+class SubjectUserTokensInput extends HTMLTextAreaElement {
+  constructor() {
+    super()
+  }
+  connectedCallback() {
+    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()  
+    const formattedSubjectUserTokens = JSON.stringify(subjectUserTokens, null, 2).trim()    
+    this.innerHTML = formattedSubjectUserTokens
+  }
+}
+customElements.define('subject-user-tokens-input', SubjectUserTokensInput, { extends: "textarea" })
+
+class SubjectUserTokensDisplay extends HTMLSpanElement {
+  constructor() {
+    super()
+  }
+  connectedCallback() {
+
+    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
+    const hiddenUserTokens = displayKeysAndHiddenValues(subjectUserTokens)      
+    this.innerText = hiddenUserTokens
+  }
+
+}
+customElements.define('subject-user-tokens-display', SubjectUserTokensDisplay, { extends: "span" })
+
+class EditOrSaveIcon extends HTMLSpanElement {
+  constructor() {
+    super()
+    this.addEventListener('click', handler)
+    function handler() {
+      const element: HTMLSpanElement = this
+      if (element.parentElement!.getAttribute('state') === 'viewing') {
+        element.parentElement!.setAttribute('state','editing')
+      } else {
+        element.parentElement!.setAttribute('state','viewing')
+      }
+    }
+  }
+  disconnectedCallback() {
+    //alert('icon disconnected')
+  }
+  connectedCallback() {
+    //alert('icon connected')
+    const state = this.parentElement!.getAttribute('state')
+    let iconName
+    if (state === 'viewing') {
+      iconName = 'icon-pencil' // viewing, offer to edit
+    } else { 
+      iconName = 'icon-floppy' // editing, offer to save
+    }
+    this.innerHTML = `<svg class="${iconName}"><use xlink:href="#${iconName}"></use></svg>`
+  }
+}
+customElements.define('edit-or-save-icon', EditOrSaveIcon, { extends: "span" })
+
+class SubjectUserTokensEditor extends HTMLDivElement {
+  static get observedAttributes() { return ['state'] } 
+  constructor() {
+    super()
+  }
+  get state() {
+    return this.getAttribute('state')!
+  }
+  set state(value: string) {
+    this.setAttribute('state', value)
+  }    
+  connectedCallback() {
+    this.innerHTML = '<div class="formLabel">subject user tokens</div>'
+  }
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+
+    if (!oldValue) { return }
+    if (name === 'state') {
+      if (oldValue === 'viewing') {
+        this.querySelector('*[is="subject-user-tokens-display"]')!.remove()
+        this.innerHTML += `<textarea is="subject-user-tokens-input" class="subjectUserTokensInput" />`
+      } else {
+        if (saveSubjectUserTokensToLocalStorage(this.querySelector('textarea')!.value)) {
+          this.querySelector('*[is="subject-user-tokens-input"]')!.remove()
+          this.innerHTML += `<span is="subject-user-tokens-display" class="subjectUserTokensDisplay" />`
+        } else {
+          return
+        }
+      }
+      this.querySelector('*[is="edit-or-save-icon"]')!.remove()
+      this.innerHTML += ` <span is="edit-or-save-icon"/>`
+    }
+  }
+}
+customElements.define('subject-user-tokens-editor', SubjectUserTokensEditor, { extends: "div" })
+
+
 
 
