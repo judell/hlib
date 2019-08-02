@@ -109,7 +109,6 @@ export function getDefaultSettings() {
   return defaultSettings
 }
 
-
 export function updateSetting(name:string, value:string) {
   if (name === 'max' && ! value) {
     value = defaultSettings.max
@@ -1034,27 +1033,30 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
   const output = `
     ${downRightArrow}
     <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
-      <div class="annotationHeader">
-        <span class="user">
-          <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
-        </span>
-        <span>&nbsp;</span>
-        <span class="dateTime">${dt_str}</span>
-        <span>&nbsp;</span>
-        <span class="groupSlug">${groupSlug}</span>
-        <span>&nbsp;</span>
-        <span class="externalLink">${_externalLink}</span>
-        <span>&nbsp;</span>
-        <span class="copyIdButton">${_copyIdButton}</span>
-      </div>
-      <div class="annotationQuote">${anno.quote}</div>
-      <div class="annotationBody">
-        <div class="annotationText">${html}</div>
-        <div class="annotationTags">${tags}</div>
-      </div>
-      <hr class="annotationCardDivider">
+      <annotation-viewer>
+          <div slot="annotation-header" class="annotationHeader">
+            <span class="user">
+              <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
+            </span>
+            <span>&nbsp;</span>
+            <span class="dateTime">${dt_str}</span>
+            <span>&nbsp;</span>
+            <span class="groupSlug">${groupSlug}</span>
+            <span>&nbsp;</span>
+            <span class="externalLink">${_externalLink}</span>
+            <span>&nbsp;</span>
+            <span class="copyIdButton">${_copyIdButton}</span>
+          </div>
+        <div slot="annotation-quote" class="annotationQuote">
+          ${anno.quote}
+        </div>
+        <div slot="annotation-body" class="annotationBody">
+          <div class="annotationText">${html}</div>
+          <div class="annotationTags">${tags}</div>
+        </div>
+      </annotation-viewer>
     </div>`
-    
+
   return output
 }
 
@@ -1466,9 +1468,26 @@ class ControlledTagsInput extends HTMLTextAreaElement {
 }
 customElements.define('controlled-tags-input', ControlledTagsInput, { extends: "textarea" })
 
+// annotation card
 
-
-
-
-
+class AnnotationViewer extends HTMLElement {
+  constructor() {
+    super()
+    let template = document.getElementById('annotation-viewer-template') as HTMLTemplateElement
+    if (! template) {
+      template = document.createElement('template')
+      template.id = 'annotation-viewer-template'
+      template.innerHTML = `
+        <slot name="annotation-header">header</slot>
+        <slot name="annotation-quote">quote</slot>
+        <slot name="annotation-body">body</slot>
+      `
+    }
+    const shadowRoot = this.attachShadow({mode:'open'})
+    shadowRoot.appendChild(template.content.cloneNode(true))
+  }
+  connectedCallback() {
+  }
+}
+customElements.define('annotation-viewer', AnnotationViewer)
 
