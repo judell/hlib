@@ -98,6 +98,7 @@ const defaultSettings:settings = {
 
 export const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
 export const defaultControlledTags = 'tag1, tag2, tag3'
+
 const clearInputEvent = new Event('clearInput')
 const settings = settingsFromLocalStorage()
 
@@ -1030,31 +1031,36 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     ? `<div class="downRightArrow" style="margin-top:-8px; margin-bottom:-32px; margin-left:${marginLeft-12}px">\u{2937}</div>`
     : ''
 
+  const userCanEdit = true
+  const svgIconMarkup = '<span is="edit-or-save-icon"></span>'
+
   const output = `
     ${downRightArrow}
     <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
-      <annotation-viewer>
-          <div slot="annotation-header" class="annotationHeader">
-            <span class="user">
-              <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
-            </span>
-            <span>&nbsp;</span>
-            <span class="dateTime">${dt_str}</span>
-            <span>&nbsp;</span>
-            <span class="groupSlug">${groupSlug}</span>
-            <span>&nbsp;</span>
-            <span class="externalLink">${_externalLink}</span>
-            <span>&nbsp;</span>
-            <span class="copyIdButton">${_copyIdButton}</span>
-          </div>
+      <annotation-editor edit-or-save-icon-state="viewing">
+        <div slot="annotation-header" class="annotationHeader">
+          <span class="user">
+            <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
+          </span>
+          <span>&nbsp;</span>
+          <span class="dateTime">${dt_str}</span>
+          <span>&nbsp;</span>
+          <span class="groupSlug">${groupSlug}</span>
+          <span>&nbsp;</span>
+          <span class="externalLink">${_externalLink}</span>
+          <span>&nbsp;</span>
+          <span class="copyIdButton">${_copyIdButton}</span>
+        </div>
         <div slot="annotation-quote" class="annotationQuote">
+          ${userCanEdit ? svgIconMarkup : ''}
           ${anno.quote}
         </div>
-        <div slot="annotation-body" class="annotationBody">
-          <div class="annotationText">${html}</div>
-          <div class="annotationTags">${tags}</div>
+        <div slot="annotation-text" class="annotationText">
+          
+          ${html}
         </div>
-      </annotation-viewer>
+        <div slot="annotation-tags" class="annotationTags">${tags}</div>
+      </annotation-editor>
     </div>`
 
   return output
@@ -1324,22 +1330,28 @@ export function displayKeysAndHiddenValues(dictionary: Map<string,string>) {
 // custom elements
 
 class EditOrSaveIcon extends HTMLSpanElement {
+  controllingElement: HTMLElement
+  clickHandlerAttached: boolean
+  static controllingAttribute: string = 'edit-or-save-icon-state'
   constructor() {
     super()
-    this.addEventListener('click', handler)
-    function handler() {
-      const element: HTMLSpanElement = this
-      if (element.parentElement!.getAttribute('state') === 'viewing') {
-        element.parentElement!.setAttribute('state','editing')
-      } else {
-        element.parentElement!.setAttribute('state','viewing')
-      }
-    }
-  }
-  disconnectedCallback() {
+    this.controllingElement = this
+    this.clickHandlerAttached = false
   }
   connectedCallback() {
-    const state = this.parentElement!.getAttribute('state')
+    this.controllingElement = this.closest(`*[${EditOrSaveIcon.controllingAttribute}]`) as HTMLElement
+    function handler() {
+      if (this.controllingElement.getAttribute(`${EditOrSaveIcon.controllingAttribute}`) === 'viewing') {
+        this.controllingElement.setAttribute(`${EditOrSaveIcon.controllingAttribute}`,'editing')
+      } else {
+        this.controllingElement.setAttribute(`${EditOrSaveIcon.controllingAttribute}`,'viewing')
+      }
+    }
+    if (! this.clickHandlerAttached) {
+      this.addEventListener('click', handler)
+      this.clickHandlerAttached = true
+    }
+    const state = this.controllingElement.getAttribute(`${EditOrSaveIcon.controllingAttribute}`)
     let iconName
     if (state === 'viewing') {
       iconName = 'icon-pencil' // viewing, offer to edit
@@ -1349,28 +1361,23 @@ class EditOrSaveIcon extends HTMLSpanElement {
     this.innerHTML = `<svg class="${iconName}"><use xlink:href="#${iconName}"></use></svg>`
   }
 }
+
 customElements.define('edit-or-save-icon', EditOrSaveIcon, { extends: "span" })
 
 // subject user tokens
 
 class SubjectUserTokensEditor extends HTMLDivElement {
-  static get observedAttributes() { return ['state'] } 
+  static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] }
   constructor() {
     super()
   }
-  get state() {
-    return this.getAttribute('state')!
-  }
-  set state(value: string) {
-    this.setAttribute('state', value)
-  }    
   connectedCallback() {
     this.innerHTML = '<div class="formLabel">subject user tokens</div>'
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
 
     if (!oldValue) { return }
-    if (name === 'state') {
+    if (name === EditOrSaveIcon.controllingAttribute) {
       if (oldValue === 'viewing') {
         this.querySelector('*[is="subject-user-tokens-display"]')!.remove()
         this.innerHTML += `<textarea is="subject-user-tokens-input" class="subjectUserTokensInput" />`
@@ -1416,23 +1423,17 @@ customElements.define('subject-user-tokens-input', SubjectUserTokensInput, { ext
 // controlled tags
 
 class ControlledTagsEditor extends HTMLDivElement {
-  static get observedAttributes() { return ['state'] } 
+  static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] } 
   constructor() {
     super()
   }
-  get state() {
-    return this.getAttribute('state')!
-  }
-  set state(value: string) {
-    this.setAttribute('state', value)
-  }    
   connectedCallback() {
     this.innerHTML = '<div class="formLabel">controlled tags</div>'
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
 
     if (!oldValue) { return }
-    if (name === 'state') {
+    if (name === EditOrSaveIcon.controllingAttribute) {
       if (oldValue === 'viewing') {
         this.querySelector('*[is="controlled-tags-display"]')!.remove()
         this.innerHTML += `<textarea is="controlled-tags-input" class="controlledTagsInput" />`
@@ -1470,18 +1471,20 @@ customElements.define('controlled-tags-input', ControlledTagsInput, { extends: "
 
 // annotation card
 
-class AnnotationViewer extends HTMLElement {
+const defaultAnnotationEditorTemplate = `
+  <slot name="annotation-header">header</slot>
+  <slot name="annotation-quote">quote</slot>
+  <slot name="annotation-text"></slot>
+  <slot name="annotation-tags">tags</slot>
+  `
+class AnnotationEditor extends HTMLElement {
   constructor() {
     super()
-    let template = document.getElementById('annotation-viewer-template') as HTMLTemplateElement
+    let template = document.getElementById('annotation-editor-template') as HTMLTemplateElement
     if (! template) {
       template = document.createElement('template')
-      template.id = 'annotation-viewer-template'
-      template.innerHTML = `
-        <slot name="annotation-header">header</slot>
-        <slot name="annotation-quote">quote</slot>
-        <slot name="annotation-body">body</slot>
-      `
+      template.id = 'annotation-editor-template'
+      template.innerHTML = defaultAnnotationEditorTemplate
     }
     const shadowRoot = this.attachShadow({mode:'open'})
     shadowRoot.appendChild(template.content.cloneNode(true))
@@ -1489,5 +1492,46 @@ class AnnotationViewer extends HTMLElement {
   connectedCallback() {
   }
 }
-customElements.define('annotation-viewer', AnnotationViewer)
+customElements.define('annotation-editor', AnnotationEditor)
 
+// icons
+
+export const svgIcons = `
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden" version="1.1" xmlns="http://www.w3.org/2000/svg"
+xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs>
+  <symbol id="icon-floppy" viewBox="0 0 353.073 353.073">
+      <path d="M340.969,0H12.105C5.423,0,0,5.423,0,12.105v328.863c0,6.68,5.423,12.105,12.105,12.105h328.864
+       c6.679,0,12.104-5.426,12.104-12.105V12.105C353.073,5.423,347.647,0,340.969,0z M67.589,18.164h217.895v101.884H67.589V18.164z
+       M296.082,327.35H57.003V176.537h239.079V327.35z M223.953,33.295h30.269v72.638h-30.269V33.295z M274.135,213.863H78.938v-12.105
+       h195.197V213.863z M274.135,256.231H78.938v-12.105h195.197V256.231z M274.135,297.087H78.938v-12.105h195.197V297.087z"/>
+    <title>save</title>
+  </symbol>
+  <symbol id="icon-pencil" viewBox="0 0 512 512">
+     <title>edit</title>
+     <path d="M311.18,78.008L32.23,356.958L0.613,485.716c-1.771,7.209,0.355,14.818,5.604,20.067
+       c5.266,5.266,12.88,7.368,20.067,5.604l128.759-31.617l278.95-278.95L311.18,78.008z M40.877,471.123l10.871-44.271l33.4,33.4
+       L40.877,471.123z"/>
+     <path d="M502.598,86.818L425.182,9.402c-12.536-12.536-32.86-12.536-45.396,0l-30.825,30.825l122.812,122.812l30.825-30.825
+       C515.134,119.679,515.134,99.354,502.598,86.818z"/>
+  </symbol>
+  <symbol id="icon-delete" viewBox="0 0 348.333 348.334">
+      <title>delete</title>
+      <path d="M336.559,68.611L231.016,174.165l105.543,105.549c15.699,15.705,15.699,41.145,0,56.85
+      c-7.844,7.844-18.128,11.769-28.407,11.769c-10.296,0-20.581-3.919-28.419-11.769L174.167,231.003L68.609,336.563
+      c-7.843,7.844-18.128,11.769-28.416,11.769c-10.285,0-20.563-3.919-28.413-11.769c-15.699-15.698-15.699-41.139,0-56.85
+      l105.54-105.549L11.774,68.611c-15.699-15.699-15.699-41.145,0-56.844c15.696-15.687,41.127-15.687,56.829,0l105.563,105.554
+      L279.721,11.767c15.705-15.687,41.139-15.687,56.832,0C352.258,27.466,352.258,52.912,336.559,68.611z"/>
+  </symbol>
+  <title>view/edit/reply</title>
+  <symbol id="icon-external-link" viewBox="0 0 26 26">
+      <path d="M18,17.759v3.366C18,22.159,17.159,23,16.125,23H4.875C3.841,23,3,22.159,3,21.125V9.875
+        C3,8.841,3.841,8,4.875,8h3.429l3.001-3h-6.43C2.182,5,0,7.182,0,9.875v11.25C0,23.818,2.182,26,4.875,26h11.25
+        C18.818,26,21,23.818,21,21.125v-6.367L18,17.759z"/>
+      <path d="M22.581,0H12.322c-1.886,0.002-1.755,0.51-0.76,1.504l3.22,3.22l-5.52,5.519
+        c-1.145,1.144-1.144,2.998,0,4.141l2.41,2.411c1.144,1.141,2.996,1.142,4.14-0.001l5.52-5.52l3.16,3.16
+        c1.101,1.1,1.507,1.129,1.507-0.757L26,3.419C25.999-0.018,26.024-0.001,22.581,0z"/>
+  </symbol>
+</defs>
+</svg>
+`
