@@ -1056,11 +1056,10 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
           <span class="copyIdButton">${_copyIdButton}</span>
         </div>
         <div slot="annotation-quote" class="annotationQuote">
-          ${userCanEdit ? svgIconMarkup : ''}
           ${anno.quote}
         </div>
         <div slot="annotation-text" class="annotationText">
-          
+          ${userCanEdit ? svgIconMarkup : ''}
           ${html}
         </div>
         <div slot="annotation-tags" class="annotationTags">${tags}</div>
@@ -1435,7 +1434,6 @@ class ControlledTagsEditor extends HTMLDivElement {
     this.innerHTML = '<div class="formLabel">controlled tags</div>'
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-
     if (!oldValue) { return }
     if (name === EditOrSaveIcon.controllingAttribute) {
       if (oldValue === 'viewing') {
@@ -1493,7 +1491,20 @@ class AnnotationEditor extends HTMLElement {
     const shadowRoot = this.attachShadow({mode:'open'})
     shadowRoot.appendChild(template.content.cloneNode(true))
   }
-  connectedCallback() {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (!oldValue) { return }
+    if (name === EditOrSaveIcon.controllingAttribute) {
+      if (oldValue === 'viewing') {
+        this.querySelector('*[is="controlled-tags-display"]')!.remove()
+        this.innerHTML += `<textarea is="controlled-tags-input" class="controlledTagsInput" />`
+      } else {
+        saveControlledTagsToLocalStorage(this.querySelector('textarea')!.value)
+        this.querySelector('*[is="controlled-tags-input"]')!.remove()
+        this.innerHTML += `<span is="controlled-tags-display" class="controlledTagsDisplay" />`
+      }
+      this.querySelector('*[is="edit-or-save-icon"]')!.remove()
+      this.innerHTML += ` <span is="edit-or-save-icon"/>`
+    }
   }
 }
 customElements.define('annotation-editor', AnnotationEditor)
