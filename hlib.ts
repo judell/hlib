@@ -1031,8 +1031,12 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     ? `<div class="downRightArrow" style="margin-top:-8px; margin-bottom:-32px; margin-left:${marginLeft-12}px">\u{2937}</div>`
     : ''
 
-  const userCanEdit = true
+  let userCanEdit = false
   const svgIconMarkup = '<span is="edit-or-save-icon"></span>'
+  const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
+  if (subjectUserTokens.hasOwnProperty(anno.user)) {
+    userCanEdit = true
+  }
 
   const output = `
     ${downRightArrow}
