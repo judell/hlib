@@ -986,6 +986,17 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     }
     return groupName
   }
+
+  // the body is sanitized by markdown but the quote,
+  // which now includes prefix, exact, and suffix, needs escaping
+  function sanitizeQuote(html: string) {
+    const tagsToEscape = ['iframe']
+    for (let tag of tagsToEscape) {
+      const regex = new RegExp('<' + tag, 'i' )
+      html = html.replace(regex, '&lt;' + tag)
+    }
+    return html
+  }
   const dt = new Date(anno.updated)
   const dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
 
@@ -1042,27 +1053,29 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     ${downRightArrow}
     <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
       <annotation-editor edit-or-save-icon-state="viewing">
-        <div slot="annotation-header" class="annotationHeader">
-          <span class="user">
-            <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
-          </span>
-          <span>&nbsp;</span>
-          <span class="dateTime">${dt_str}</span>
-          <span>&nbsp;</span>
-          <span class="groupSlug">${groupSlug}</span>
-          <span>&nbsp;</span>
-          <span class="externalLink">${_externalLink}</span>
-          <span>&nbsp;</span>
-          <span class="copyIdButton">${_copyIdButton}</span>
+        <div is="annotation-display">
+          <div slot="annotation-header" class="annotationHeader">
+            <span class="user">
+              <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
+            </span>
+            <span>&nbsp;</span>
+            <span class="dateTime">${dt_str}</span>
+            <span>&nbsp;</span>
+            <span class="groupSlug">${groupSlug}</span>
+            <span>&nbsp;</span>
+            <span class="externalLink">${_externalLink}</span>
+            <span>&nbsp;</span>
+            <span class="copyIdButton">${_copyIdButton}</span>
+          </div>
+          <div slot="annotation-quote" class="annotationQuote">
+            ${sanitizeQuote(anno.quote)}
+          </div>
+          <div slot="annotation-text" class="annotationText">
+            ${userCanEdit ? svgIconMarkup : ''}
+            ${html}
+          </div>
+          <div slot="annotation-tags" class="annotationTags">${tags}</div>
         </div>
-        <div slot="annotation-quote" class="annotationQuote">
-          ${anno.quote}
-        </div>
-        <div slot="annotation-text" class="annotationText">
-          ${userCanEdit ? svgIconMarkup : ''}
-          ${html}
-        </div>
-        <div slot="annotation-tags" class="annotationTags">${tags}</div>
       </annotation-editor>
     </div>`
 
@@ -1480,16 +1493,13 @@ const defaultAnnotationEditorTemplate = `
   <slot name="annotation-tags">tags</slot>
   `
 class AnnotationEditor extends HTMLElement {
+  static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] }   
   constructor() {
     super()
-    let template = document.getElementById('annotation-editor-template') as HTMLTemplateElement
-    if (! template) {
-      template = document.createElement('template')
-      template.id = 'annotation-editor-template'
-      template.innerHTML = defaultAnnotationEditorTemplate
-    }
-    const shadowRoot = this.attachShadow({mode:'open'})
-    shadowRoot.appendChild(template.content.cloneNode(true))
+
+  }
+  connectedCallback() {
+    console.log('editor connected')
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (!oldValue) { return }
@@ -1508,6 +1518,42 @@ class AnnotationEditor extends HTMLElement {
   }
 }
 customElements.define('annotation-editor', AnnotationEditor)
+
+class AnnotationDisplay extends HTMLDivElement {
+  constructor() {
+    super()
+    let template = document.getElementById('annotation-editor-template') as HTMLTemplateElement
+    if (! template) {
+      template = document.createElement('template')
+      template.id = 'annotation-editor-template'
+      template.innerHTML = defaultAnnotationEditorTemplate
+    }
+    const shadowRoot = this.attachShadow({mode:'open'})
+    shadowRoot.appendChild(template.content.cloneNode(true))
+  }
+  connectedCallback() {
+    console.log('AnnotationDisplay connected')
+  }
+}
+customElements.define('annotation-display', AnnotationDisplay)
+
+class AnnotationEdit extends HTMLDivElement {
+  constructor() {
+    super()
+    let template = document.getElementById('annotation-editor-template') as HTMLTemplateElement
+    if (! template) {
+      template = document.createElement('template')
+      template.id = 'annotation-editor-template'
+      template.innerHTML = defaultAnnotationEditorTemplate
+    }
+    const shadowRoot = this.attachShadow({mode:'open'})
+    shadowRoot.appendChild(template.content.cloneNode(true))
+  }
+  connectedCallback() {
+    console.log('AnnotationEdit connected')
+  }
+}
+customElements.define('annotation-edit', AnnotationEdit)
 
 // icons
 
