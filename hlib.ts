@@ -1053,29 +1053,29 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     ${downRightArrow}
     <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
       <annotation-editor edit-or-save-icon-state="viewing">
-        <div is="annotation-display">
-          <div slot="annotation-header" class="annotationHeader">
-            <span class="user">
-              <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
-            </span>
-            <span>&nbsp;</span>
-            <span class="dateTime">${dt_str}</span>
-            <span>&nbsp;</span>
-            <span class="groupSlug">${groupSlug}</span>
-            <span>&nbsp;</span>
-            <span class="externalLink">${_externalLink}</span>
-            <span>&nbsp;</span>
-            <span class="copyIdButton">${_copyIdButton}</span>
-          </div>
-          <div slot="annotation-quote" class="annotationQuote">
-            ${sanitizeQuote(anno.quote)}
-          </div>
-          <div slot="annotation-text" class="annotationText">
-            ${userCanEdit ? svgIconMarkup : ''}
-            ${html}
-          </div>
-          <div slot="annotation-tags" class="annotationTags">${tags}</div>
+        <div class="annotationHeader">
+          <span class="user">
+            <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
+          </span>
+          <span>&nbsp;</span>
+          <span class="dateTime">${dt_str}</span>
+          <span>&nbsp;</span>
+          <span class="groupSlug">${groupSlug}</span>
+          <span>&nbsp;</span>
+          <span class="externalLink">${_externalLink}</span>
+          <span>&nbsp;</span>
+          <span class="copyIdButton">${_copyIdButton}</span>
         </div>
+        <div class="annotationQuote">
+          ${sanitizeQuote(anno.quote)}
+        </div>
+        <div class="annotationText">
+          ${userCanEdit ? svgIconMarkup : ''}
+          <div is="annotation-display">
+            ${html}
+          </html>
+        </div>
+        <div class="annotationTags">${tags}</div>
       </annotation-editor>
     </div>`
 
@@ -1486,35 +1486,13 @@ customElements.define('controlled-tags-input', ControlledTagsInput, { extends: "
 
 // annotation card
 
-const defaultAnnotationEditorTemplate = `
-  <slot name="annotation-header">header</slot>
-  <slot name="annotation-quote">quote</slot>
-  <slot name="annotation-text"></slot>
-  <slot name="annotation-tags">tags</slot>
-  `
 class AnnotationEditor extends HTMLElement {
   static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] }   
   constructor() {
     super()
-
   }
   connectedCallback() {
     console.log('editor connected')
-  }
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (!oldValue) { return }
-    if (name === EditOrSaveIcon.controllingAttribute) {
-      if (oldValue === 'viewing') {
-        this.querySelector('*[is="controlled-tags-display"]')!.remove()
-        this.innerHTML += `<textarea is="controlled-tags-input" class="controlledTagsInput" />`
-      } else {
-        saveControlledTagsToLocalStorage(this.querySelector('textarea')!.value)
-        this.querySelector('*[is="controlled-tags-input"]')!.remove()
-        this.innerHTML += `<span is="controlled-tags-display" class="controlledTagsDisplay" />`
-      }
-      this.querySelector('*[is="edit-or-save-icon"]')!.remove()
-      this.innerHTML += ` <span is="edit-or-save-icon"/>`
-    }
   }
 }
 customElements.define('annotation-editor', AnnotationEditor)
@@ -1522,14 +1500,6 @@ customElements.define('annotation-editor', AnnotationEditor)
 class AnnotationDisplay extends HTMLDivElement {
   constructor() {
     super()
-    let template = document.getElementById('annotation-editor-template') as HTMLTemplateElement
-    if (! template) {
-      template = document.createElement('template')
-      template.id = 'annotation-editor-template'
-      template.innerHTML = defaultAnnotationEditorTemplate
-    }
-    const shadowRoot = this.attachShadow({mode:'open'})
-    shadowRoot.appendChild(template.content.cloneNode(true))
   }
   connectedCallback() {
     console.log('AnnotationDisplay connected')
@@ -1540,14 +1510,6 @@ customElements.define('annotation-display', AnnotationDisplay)
 class AnnotationEdit extends HTMLDivElement {
   constructor() {
     super()
-    let template = document.getElementById('annotation-editor-template') as HTMLTemplateElement
-    if (! template) {
-      template = document.createElement('template')
-      template.id = 'annotation-editor-template'
-      template.innerHTML = defaultAnnotationEditorTemplate
-    }
-    const shadowRoot = this.attachShadow({mode:'open'})
-    shadowRoot.appendChild(template.content.cloneNode(true))
   }
   connectedCallback() {
     console.log('AnnotationEdit connected')
