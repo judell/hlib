@@ -1501,10 +1501,6 @@ class AnnotationEditor extends HTMLElement {
     this.subjectUserTokens = getSubjectUserTokensFromLocalStorage()    
   }
 
-  annoIdFromDomAnnoId(domAnnoId:string) {
-    return 
-  }
-
   connectedCallback() {
     this.domAnnoId = this.closest('.annotationCard')!.getAttribute('id') as string
     this.annoId = this.domAnnoId.replace(/^_/,'')  
@@ -1527,16 +1523,11 @@ class AnnotationEditor extends HTMLElement {
   }
 
   save(body: HTMLElement) {
-    function annoIdFromDomAnnoId(domAnnoId:string) {
-      return domAnnoId.replace(/^_/,'')  
-    }
-    async function _save(_this:AnnotationEditor) {
-      const domAnnoId = _this.closest('.annotationCard')!.getAttribute('id') as string
-      const annoId = annoIdFromDomAnnoId(domAnnoId)
+    async function _save(self:AnnotationEditor) {
       const text = body.innerText
       const payload = JSON.stringify( { text: text } )
-      const token = _this.subjectUserTokens[_this.username]
-      const r = await updateAnnotation(annoId, token, payload)
+      const token = self.subjectUserTokens[self.username]
+      const r = await updateAnnotation(self.annoId, token, payload)
       let updatedText = JSON.parse(r.response).text
       if ( updatedText !== text) {
         alert (`unable to update, ${r.response}`)
