@@ -1487,12 +1487,65 @@ customElements.define('controlled-tags-input', ControlledTagsInput, { extends: "
 // annotation card
 
 class AnnotationEditor extends HTMLElement {
-  static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] }   
+
+  static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] }
+
+  annoId = ''
+  deleteButtonStyle = 'style="display:inline; width:8px; height:8px; fill:#2c1409b5; margin-left:2px'  
+  domAnnoId = ''
+  username:string = ''
+  subjectUserTokens = new Map<string,string>()
+  
   constructor() {
     super()
+    this.subjectUserTokens = getSubjectUserTokensFromLocalStorage()    
   }
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
 
+  annoIdFromDomAnnoId(domAnnoId:string) {
+    return 
+  }
+
+  connectedCallback() {
+    this.domAnnoId = this.closest('.annotationCard')!.getAttribute('id') as string
+    this.annoId = this.domAnnoId.replace(/^_/,'')  
+    const userElement  = this.querySelector('.user') as HTMLElement
+    this.username = userElement.innerText.trim()
+    const deleteButton = document.createElement('span')
+    deleteButton.setAttribute('class', 'deleteButton')
+    const icon = this.renderIcon('icon-delete', this.deleteButtonStyle)
+    if (this.subjectUserTokens.hasOwnProperty(this.username)) {
+      deleteButton.innerHTML = `<a title="delete annotation" onclick="deleteAnnotation('${this.domAnnoId}')">${icon}</a>`
+    } else {
+      deleteButton.innerHTML = ``
+    }
+    const externalLink = this.querySelector('.externalLink') as HTMLAnchorElement
+    insertNodeAfter(deleteButton, externalLink)      
+  }
+
+ renderIcon(iconClass:string, style?: string) {
+    return `<svg ${style} class="${iconClass}"><use xlink:href="#${iconClass}"></use></svg>`
+  }
+
+  save(body: HTMLElement) {
+    function annoIdFromDomAnnoId(domAnnoId:string) {
+      return domAnnoId.replace(/^_/,'')  
+    }
+    async function _save(_this:AnnotationEditor) {
+      const domAnnoId = _this.closest('.annotationCard')!.getAttribute('id') as string
+      const annoId = annoIdFromDomAnnoId(domAnnoId)
+      const text = body.innerText
+      const payload = JSON.stringify( { text: text } )
+      const token = _this.subjectUserTokens[_this.username]
+      const r = await updateAnnotation(annoId, token, payload)
+      let updatedText = JSON.parse(r.response).text
+      if ( updatedText !== text) {
+        alert (`unable to update, ${r.response}`)
+      }
+    }
+    _save(this)
+  }  
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (!oldValue) { return }
     this.querySelector('*[is="edit-or-save-icon"]')!.remove()
     const body = this.querySelector('.annotationBody')! as HTMLElement
@@ -1503,6 +1556,7 @@ class AnnotationEditor extends HTMLElement {
       } else {
         body.removeAttribute('contentEditable')
         body.style.backgroundColor = null
+        this.save(body)
       }
     }
     this.querySelector('.annotationText')!.innerHTML = '<span is="edit-or-save-icon"></span>' + body.outerHTML
