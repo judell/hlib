@@ -1043,7 +1043,7 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     : ''
 
   let userCanEdit = false
-  const svgIconMarkup = '<span is="edit-or-save-icon"></span>'
+
   const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
   if (subjectUserTokens.hasOwnProperty(anno.user)) {
     userCanEdit = true
@@ -1070,12 +1070,17 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
           ${sanitizeQuote(anno.quote)}
         </div>
         <div class="annotationText">
-          ${userCanEdit ? svgIconMarkup : ''}
-          <div class="annotationBody">
-            ${html}
-          </div>
+        ${userCanEdit ? '<span is="edit-or-save-icon" target="body"></span>' : ''}
+        <div class="annotationBody">
+          ${html}
         </div>
-        <div class="annotationTags">${tags}</div>
+        </div>
+        <annotation-tag-editor edit-or-save-icon-state="viewing">
+          <div class="annotationTags">
+            ${userCanEdit ? '<span is="edit-or-save-icon" display="none"></span>' : ''}
+            ${tags}
+          </div>
+        </annotation-tag-editor>
       </annotation-editor>
     </div>`
 
@@ -1346,6 +1351,7 @@ export function displayKeysAndHiddenValues(dictionary: Map<string,string>) {
 // custom elements
 
 class EditOrSaveIcon extends HTMLSpanElement {
+  static get observedAttributes() { return ['display'] }
   controllingElement: HTMLElement
   clickHandlerAttached: boolean
   static controllingAttribute: string = 'edit-or-save-icon-state'
@@ -1356,6 +1362,11 @@ class EditOrSaveIcon extends HTMLSpanElement {
   }
   connectedCallback() {
     this.controllingElement = this.closest(`*[${EditOrSaveIcon.controllingAttribute}]`) as HTMLElement
+    if (this.getAttribute('display') === 'none') {
+      this.style.display = 'none'
+    } else {
+      this.style.display = 'inline'
+    }
     function handler() {
       if (this.controllingElement.getAttribute(`${EditOrSaveIcon.controllingAttribute}`) === 'viewing') {
         this.controllingElement.setAttribute(`${EditOrSaveIcon.controllingAttribute}`,'editing')
@@ -1371,10 +1382,14 @@ class EditOrSaveIcon extends HTMLSpanElement {
     let iconName
     if (state === 'viewing') {
       iconName = 'icon-pencil' // viewing, offer to edit
-    } else { 
+    } else if (state === 'editing') { 
       iconName = 'icon-floppy' // editing, offer to save
-    }
+    } 
     this.innerHTML = `<svg class="${iconName}"><use xlink:href="#${iconName}"></use></svg>`
+  }
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (!oldValue) { return }
+    this.style.display = newValue
   }
 }
 
@@ -1488,7 +1503,7 @@ customElements.define('controlled-tags-input', ControlledTagsInput, { extends: "
 
 class AnnotationEditor extends HTMLElement {
 
-  static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] }
+  static get observedAttributes() { return [EditOrSaveIcon.controllingAttribute] }
 
   annoId = ''
   deleteButtonStyle = 'style="display:inline; width:8px; height:8px; fill:#2c1409b5; margin-left:2px'  
@@ -1544,10 +1559,12 @@ class AnnotationEditor extends HTMLElement {
       if (oldValue === 'viewing') {
         body.setAttribute('contentEditable', 'true')
         body.style.backgroundColor = 'rgb(241, 238, 234)'
+        this.querySelector('.annotationTags *[is="edit-or-save-icon"]')!.setAttribute('display','inline')
       } else {
         body.removeAttribute('contentEditable')
         body.style.backgroundColor = null
         this.save(body)
+        this.querySelector('.annotationTags *[is="edit-or-save-icon"]')!.setAttribute('display','none')
       }
     }
     this.querySelector('.annotationText')!.innerHTML = '<span is="edit-or-save-icon"></span>' + body.outerHTML
