@@ -1071,9 +1071,9 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
         </div>
         <div class="annotationText">
           ${userCanEdit ? svgIconMarkup : ''}
-          <div is="annotation-display">
+          <div class="annotationBody">
             ${html}
-          </html>
+          </div>
         </div>
         <div class="annotationTags">${tags}</div>
       </annotation-editor>
@@ -1491,31 +1491,23 @@ class AnnotationEditor extends HTMLElement {
   constructor() {
     super()
   }
-  connectedCallback() {
-    console.log('editor connected')
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+
+    if (!oldValue) { return }
+    this.querySelector('*[is="edit-or-save-icon"]')!.remove()
+    const body = this.querySelector('.annotationBody')!
+    if (name === EditOrSaveIcon.controllingAttribute) {
+      if (oldValue === 'viewing') {
+        body!.setAttribute('contentEditable', 'true')
+      } else {
+        body!.removeAttribute('contentEditable')
+      }
+    }
+    this.querySelector('.annotationText')!.innerHTML = '<span is="edit-or-save-icon"></span>' + body.outerHTML
   }
 }
 customElements.define('annotation-editor', AnnotationEditor)
 
-class AnnotationDisplay extends HTMLDivElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-    console.log('AnnotationDisplay connected')
-  }
-}
-customElements.define('annotation-display', AnnotationDisplay)
-
-class AnnotationEdit extends HTMLDivElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-    console.log('AnnotationEdit connected')
-  }
-}
-customElements.define('annotation-edit', AnnotationEdit)
 
 // icons
 
