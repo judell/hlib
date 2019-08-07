@@ -1495,12 +1495,14 @@ class AnnotationEditor extends HTMLElement {
 
     if (!oldValue) { return }
     this.querySelector('*[is="edit-or-save-icon"]')!.remove()
-    const body = this.querySelector('.annotationBody')!
+    const body = this.querySelector('.annotationBody')! as HTMLElement
     if (name === EditOrSaveIcon.controllingAttribute) {
       if (oldValue === 'viewing') {
-        body!.setAttribute('contentEditable', 'true')
+        body.setAttribute('contentEditable', 'true')
+        body.style.backgroundColor = 'rgb(241, 238, 234)'
       } else {
-        body!.removeAttribute('contentEditable')
+        body.removeAttribute('contentEditable')
+        body.style.backgroundColor = null
       }
     }
     this.querySelector('.annotationText')!.innerHTML = '<span is="edit-or-save-icon"></span>' + body.outerHTML
