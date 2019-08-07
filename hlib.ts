@@ -997,6 +997,7 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     }
     return html
   }
+
   const dt = new Date(anno.updated)
   const dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
 
@@ -1075,12 +1076,10 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
           ${html}
         </div>
         </div>
-        <annotation-tag-editor edit-or-save-icon-state="viewing">
-          <div class="annotationTags">
-            ${userCanEdit ? '<span is="edit-or-save-icon" display="none"></span>' : ''}
-            ${tags}
-          </div>
-        </annotation-tag-editor>
+        <div is="annotation-tags-display" 
+          user-can-edit="${userCanEdit}" 
+          tags="${encodeURIComponent(JSON.stringify(anno.tags))}">
+        </div>
       </annotation-editor>
     </div>`
 
@@ -1553,7 +1552,6 @@ class AnnotationEditor extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (!oldValue) { return }
-    this.querySelector('*[is="edit-or-save-icon"]')!.remove()
     const body = this.querySelector('.annotationBody')! as HTMLElement
     if (name === EditOrSaveIcon.controllingAttribute) {
       if (oldValue === 'viewing') {
@@ -1571,6 +1569,37 @@ class AnnotationEditor extends HTMLElement {
   }
 }
 customElements.define('annotation-editor', AnnotationEditor)
+
+// tags
+
+class AnnotationTagsInput extends HTMLDivElement {
+  constructor() {
+    super()
+  }
+  connectedCallback() {
+    alert ('tag input')
+  }  
+}
+customElements.define('annotation-tags-input', AnnotationTagsInput, { extends: "div" })
+
+class AnnotationTagsDisplay extends HTMLDivElement {
+  tags = []
+  userCanEdit = false
+  constructor() {
+    super()
+  }
+  connectedCallback() {
+    this.tags = JSON.parse(decodeURIComponent(this.getAttribute('tags')!))
+    this.userCanEdit = this.getAttribute('user-can-edit') === 'true'
+    this.innerHTML = `
+      <div class="annotationTags">
+        ${this.userCanEdit ? '<span is="edit-or-save-icon" display="none"></span>' : ''}
+        ${this.tags.join(',')}
+      </div>`
+  }  
+}
+
+customElements.define('annotation-tags-display', AnnotationTagsDisplay, { extends: "div" })
 
 
 // icons
