@@ -1583,18 +1583,28 @@ class AnnotationTagsInput extends HTMLDivElement {
 customElements.define('annotation-tags-input', AnnotationTagsInput, { extends: "div" })
 
 class AnnotationTagsDisplay extends HTMLDivElement {
-  tags = []
+  tags = [] as Array<string>
   userCanEdit = false
   constructor() {
     super()
   }
+  formatTags(tags: string[], urlPrefix?: string): string {
+    const formattedTags: string[] = []
+    tags.forEach(function(tag) {
+      const url = urlPrefix ? urlPrefix + tag : `./?tag=${tag}`
+      const formattedTag = `<a target="_tag" href="${url}"><span class="annotationTag">${tag}</span></a>`
+      formattedTags.push(formattedTag)
+    })
+    return formattedTags.join(' ')
+  }
   connectedCallback() {
     this.tags = JSON.parse(decodeURIComponent(this.getAttribute('tags')!))
+    const formattedTags = this.formatTags(this.tags)
     this.userCanEdit = this.getAttribute('user-can-edit') === 'true'
     this.innerHTML = `
-      <div class="annotationTags">
+      <div class="annotationTags" edit-or-save-icon-state="viewing">
         ${this.userCanEdit ? '<span is="edit-or-save-icon" display="none"></span>' : ''}
-        ${this.tags.join(',')}
+        ${formattedTags}
       </div>`
   }  
 }
