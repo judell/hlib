@@ -1053,8 +1053,9 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
   const output = `
     ${downRightArrow}
     <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
-      <annotation-editor edit-or-save-icon-state="viewing">
-        <div class="annotationHeader">
+      <annotation-editor state="viewing">
+      ${userCanEdit ? '<span is="edit-or-save-icon"></span>' : ''}
+      <div class="annotationHeader">
           <span class="user">
             <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
           </span>
@@ -1071,12 +1072,11 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
           ${sanitizeQuote(anno.quote)}
         </div>
         <div class="annotationText">
-        ${userCanEdit ? '<span is="edit-or-save-icon" target="body"></span>' : ''}
-        <div class="annotationBody">
           ${html}
         </div>
-        </div>
-        <div is="annotation-tags-display" 
+        <div is="annotation-tags-editor" 
+          state="viewing" 
+          class="annotationTags" 
           user-can-edit="${userCanEdit}" 
           tags="${encodeURIComponent(JSON.stringify(anno.tags))}">
         </div>
@@ -1350,46 +1350,46 @@ export function displayKeysAndHiddenValues(dictionary: Map<string,string>) {
 // custom elements
 
 class EditOrSaveIcon extends HTMLSpanElement {
-  static get observedAttributes() { return ['display'] }
-  controllingElement: HTMLElement
+  static get observedAttributes() { return [ 'state' ] }  
+  state: string
+  iconName: string
   clickHandlerAttached: boolean
-  static controllingAttribute: string = 'edit-or-save-icon-state'
   constructor() {
     super()
-    this.controllingElement = this
     this.clickHandlerAttached = false
+    this.state = 'viewing'
+    this.iconName = 'icon-pencil'
+  }
+  handler() {
+    let iconName
+    if (this.state === 'viewing') { // viewing, offer to edit
+      this.state = 'editing'
+      this.iconName = 'icon-floppy' 
+      this.parentElement.setAttribute('state', 'editing')
+    } else { // editing, offer to save
+      this.state = 'viewing'
+      this.iconName = 'icon-pencil' 
+      this.parentElement.setAttribute('state', 'viewing')
+    }
+    this.innerHTML = `<svg class="${this.iconName}"><use xlink:href="#${this.iconName}"></use></svg>`
   }
   connectedCallback() {
-    this.controllingElement = this.closest(`*[${EditOrSaveIcon.controllingAttribute}]`) as HTMLElement
-    if (this.getAttribute('display') === 'none') {
-      this.style.display = 'none'
-    } else {
-      this.style.display = 'inline'
-    }
-    function handler() {
-      if (this.controllingElement.getAttribute(`${EditOrSaveIcon.controllingAttribute}`) === 'viewing') {
-        this.controllingElement.setAttribute(`${EditOrSaveIcon.controllingAttribute}`,'editing')
-      } else {
-        this.controllingElement.setAttribute(`${EditOrSaveIcon.controllingAttribute}`,'viewing')
-      }
-    }
+    this.state = this.getAttribute('state')!
+    this.innerHTML = `<svg class="${this.iconName}"><use xlink:href="#${this.iconName}"></use></svg>`
     if (! this.clickHandlerAttached) {
-      this.addEventListener('click', handler)
+      this.addEventListener('click', this.handler)
       this.clickHandlerAttached = true
     }
-    const state = this.controllingElement.getAttribute(`${EditOrSaveIcon.controllingAttribute}`)
-    let iconName
-    if (state === 'viewing') {
-      iconName = 'icon-pencil' // viewing, offer to edit
-    } else if (state === 'editing') { 
-      iconName = 'icon-floppy' // editing, offer to save
-    } 
-    this.innerHTML = `<svg class="${iconName}"><use xlink:href="#${iconName}"></use></svg>`
+    this.handler()
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (!oldValue) { return }
-    this.style.display = newValue
-  }
+    if (name === 'state') {
+      if (oldValue === 'viewing') {
+      } else {
+      }
+    }
+  }  
 }
 
 customElements.define('edit-or-save-icon', EditOrSaveIcon, { extends: "span" })
@@ -1397,7 +1397,7 @@ customElements.define('edit-or-save-icon', EditOrSaveIcon, { extends: "span" })
 // subject user tokens
 
 class SubjectUserTokensEditor extends HTMLDivElement {
-  static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] }
+  static get observedAttributes() { return [ 'state' ] }
   constructor() {
     super()
   }
@@ -1407,7 +1407,7 @@ class SubjectUserTokensEditor extends HTMLDivElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
 
     if (!oldValue) { return }
-    if (name === EditOrSaveIcon.controllingAttribute) {
+    if (name === 'state') {
       if (oldValue === 'viewing') {
         this.querySelector('*[is="subject-user-tokens-display"]')!.remove()
         this.innerHTML += `<textarea is="subject-user-tokens-input" class="subjectUserTokensInput" />`
@@ -1453,7 +1453,7 @@ customElements.define('subject-user-tokens-input', SubjectUserTokensInput, { ext
 // controlled tags
 
 class ControlledTagsEditor extends HTMLDivElement {
-  static get observedAttributes() { return [`${EditOrSaveIcon.controllingAttribute}`] } 
+  static get observedAttributes() { return [ 'state' ] }  
   constructor() {
     super()
   }
@@ -1462,7 +1462,7 @@ class ControlledTagsEditor extends HTMLDivElement {
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (!oldValue) { return }
-    if (name === EditOrSaveIcon.controllingAttribute) {
+    if (name === 'state') {
       if (oldValue === 'viewing') {
         this.querySelector('*[is="controlled-tags-display"]')!.remove()
         this.innerHTML += `<textarea is="controlled-tags-input" class="controlledTagsInput" />`
@@ -1502,7 +1502,7 @@ customElements.define('controlled-tags-input', ControlledTagsInput, { extends: "
 
 class AnnotationEditor extends HTMLElement {
 
-  static get observedAttributes() { return [EditOrSaveIcon.controllingAttribute] }
+  static get observedAttributes() { return [ 'state' ] }  
 
   annoId = ''
   deleteButtonStyle = 'style="display:inline; width:8px; height:8px; fill:#2c1409b5; margin-left:2px'  
@@ -1551,65 +1551,67 @@ class AnnotationEditor extends HTMLElement {
   }  
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (!oldValue) { return }
-    const body = this.querySelector('.annotationBody')! as HTMLElement
-    if (name === EditOrSaveIcon.controllingAttribute) {
+    if (!oldValue || oldValue === newValue) { return }
+    const text = this.querySelector('.annotationText')! as HTMLElement
+    const tagEditor = this.querySelector('*[is="annotation-tags-editor"]') as TagEditor
+    if (name === 'state') {
       if (oldValue === 'viewing') {
-        body.setAttribute('contentEditable', 'true')
-        body.style.backgroundColor = 'rgb(241, 238, 234)'
-        this.querySelector('.annotationTags *[is="edit-or-save-icon"]')!.setAttribute('display','inline')
+        text.setAttribute('contentEditable', 'true')
+        text.style.backgroundColor = 'rgb(241, 238, 234)'
       } else {
-        body.removeAttribute('contentEditable')
-        body.style.backgroundColor = null
-        this.save(body)
-        this.querySelector('.annotationTags *[is="edit-or-save-icon"]')!.setAttribute('display','none')
+        text.removeAttribute('contentEditable')
+        text.style.backgroundColor = null
+        this.save(text)
       }
+    tagEditor.setAttribute('state', newValue)
     }
-    this.querySelector('.annotationText')!.innerHTML = '<span is="edit-or-save-icon"></span>' + body.outerHTML
   }
 }
 customElements.define('annotation-editor', AnnotationEditor)
 
 // tags
 
-class AnnotationTagsInput extends HTMLDivElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-    alert ('tag input')
-  }  
-}
-customElements.define('annotation-tags-input', AnnotationTagsInput, { extends: "div" })
-
-class AnnotationTagsDisplay extends HTMLDivElement {
+class TagEditor extends HTMLDivElement {
+  static get observedAttributes() { return ['state'] }  
   tags = [] as Array<string>
+  formattedTags = [] as Array<string>
   userCanEdit = false
   constructor() {
     super()
   }
-  formatTags(tags: string[], urlPrefix?: string): string {
-    const formattedTags: string[] = []
+  formatTags(tags: string[], urlPrefix?: string) {
+    const formattedTags = [] as Array<string>
     tags.forEach(function(tag) {
       const url = urlPrefix ? urlPrefix + tag : `./?tag=${tag}`
       const formattedTag = `<a target="_tag" href="${url}"><span class="annotationTag">${tag}</span></a>`
       formattedTags.push(formattedTag)
     })
-    return formattedTags.join(' ')
+    return formattedTags
+  }
+  handler() {
+    if (this.getAttribute('state') === 'viewing') {
+      this.innerHTML = `
+        viewing 
+        ${this.formattedTags}
+        `
+    } else {
+      this.innerHTML = `
+      editing 
+      ${this.formattedTags}
+      `
+    }
   }
   connectedCallback() {
     this.tags = JSON.parse(decodeURIComponent(this.getAttribute('tags')!))
-    const formattedTags = this.formatTags(this.tags)
-    this.userCanEdit = this.getAttribute('user-can-edit') === 'true'
-    this.innerHTML = `
-      <div class="annotationTags" edit-or-save-icon-state="viewing">
-        ${this.userCanEdit ? '<span is="edit-or-save-icon" display="none"></span>' : ''}
-        ${formattedTags}
-      </div>`
-  }  
+    this.formattedTags = this.formatTags(this.tags)
+    this.handler()
+  }
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    this.handler()
+  }
 }
 
-customElements.define('annotation-tags-display', AnnotationTagsDisplay, { extends: "div" })
+customElements.define('annotation-tags-editor', TagEditor, { extends: "div" })
 
 
 // icons
