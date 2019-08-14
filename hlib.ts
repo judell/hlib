@@ -1054,8 +1054,8 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
     ${downRightArrow}
     <div class="annotationCard ${type}" id="_${anno.id}" style="display:block; margin-left:${marginLeft}px;">
       <annotation-editor state="viewing">
-      ${userCanEdit ? '<span is="edit-or-save-icon"></span>' : ''}
-      <div class="annotationHeader">
+        ${userCanEdit ? '<span is="edit-or-save-icon"></span>' : ''}
+        <div class="annotationHeader">
           <span class="user">
             <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
           </span>
@@ -1354,41 +1354,37 @@ class EditOrSaveIcon extends HTMLSpanElement {
   state: string
   iconName: string
   clickHandlerAttached: boolean
+  controllingElementSelector: string
   constructor() {
     super()
     this.clickHandlerAttached = false
-    this.state = 'viewing'
     this.iconName = 'icon-pencil'
+    this.state = 'viewing'
+    this.controllingElementSelector = '*[state="viewing"], [state="editing"]'
   }
   handler() {
     let iconName
     if (this.state === 'viewing') { // viewing, offer to edit
       this.state = 'editing'
       this.iconName = 'icon-floppy' 
-      this.parentElement.setAttribute('state', 'editing')
+      this.closest(this.controllingElementSelector)!.setAttribute('state', 'editing')
     } else { // editing, offer to save
       this.state = 'viewing'
       this.iconName = 'icon-pencil' 
-      this.parentElement.setAttribute('state', 'viewing')
+      this.closest(this.controllingElementSelector)!.setAttribute('state', 'viewing')
     }
     this.innerHTML = `<svg class="${this.iconName}"><use xlink:href="#${this.iconName}"></use></svg>`
   }
   connectedCallback() {
-    this.state = this.getAttribute('state')!
     this.innerHTML = `<svg class="${this.iconName}"><use xlink:href="#${this.iconName}"></use></svg>`
     if (! this.clickHandlerAttached) {
       this.addEventListener('click', this.handler)
       this.clickHandlerAttached = true
     }
-    this.handler()
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (!oldValue) { return }
-    if (name === 'state') {
-      if (oldValue === 'viewing') {
-      } else {
-      }
-    }
+    this.handler()
   }  
 }
 
@@ -1398,105 +1394,96 @@ customElements.define('edit-or-save-icon', EditOrSaveIcon, { extends: "span" })
 
 class SubjectUserTokensEditor extends HTMLDivElement {
   static get observedAttributes() { return [ 'state' ] }
+  subjectUserTokens: Map<string,string>
+  formattedUserTokens: string
+  hiddenUserTokens: string
+  labelElement: HTMLElement
+  displayElement: HTMLElement
   constructor() {
     super()
+    this.updateTokens()
+  }
+  updateTokens() {
+    this.subjectUserTokens =  getSubjectUserTokensFromLocalStorage()
+    this.formattedUserTokens = JSON.stringify(this.subjectUserTokens, null, 2).trim();
+    this.hiddenUserTokens = displayKeysAndHiddenValues(this.subjectUserTokens)         
   }
   connectedCallback() {
-    this.innerHTML = '<div class="formLabel">subject user tokens</div>'
+    setTimeout( _ => {
+      this.displayElement = this.querySelector('.subjectUserTokensDisplay') as HTMLElement
+      this.displayElement.innerHTML = this.hiddenUserTokens
+      this.labelElement = this.querySelector('.formLabel') as HTMLElement
+      this.labelElement.innerHTML = 'subject user tokens'
+    }, 100)
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-
-    if (!oldValue) { return }
+    if (!oldValue) { 
+      return 
+    }
+    if (! this.displayElement) {
+      return
+    }
     if (name === 'state') {
-      if (oldValue === 'viewing') {
-        this.querySelector('*[is="subject-user-tokens-display"]')!.remove()
-        this.innerHTML += `<textarea is="subject-user-tokens-input" class="subjectUserTokensInput" />`
-      } else {
-        if (saveSubjectUserTokensToLocalStorage(this.querySelector('textarea')!.value)) {
-          this.querySelector('*[is="subject-user-tokens-input"]')!.remove()
-          this.innerHTML += `<span is="subject-user-tokens-display" class="subjectUserTokensDisplay" />`
-        } else {
-          return
+      if (newValue === 'viewing') {
+        const value = this.querySelector('textarea')!.value
+        if (saveSubjectUserTokensToLocalStorage(value)) {
+          this.updateTokens()
+          this.displayElement.innerHTML = `<span>${this.hiddenUserTokens}</span`
         }
+      } else {
+        this.displayElement.innerHTML = 
+          `<textarea class="subjectUserTokensInput">${this.formattedUserTokens}</textarea>`
       }
-      this.querySelector('*[is="edit-or-save-icon"]')!.remove()
-      this.innerHTML += ` <span is="edit-or-save-icon"/>`
     }
   }
 }
-customElements.define('subject-user-tokens-editor', SubjectUserTokensEditor, { extends: "div" })
 
-class SubjectUserTokensDisplay extends HTMLSpanElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
-    const hiddenUserTokens = displayKeysAndHiddenValues(subjectUserTokens)      
-    this.innerText = hiddenUserTokens
-  }
-}
-customElements.define('subject-user-tokens-display', SubjectUserTokensDisplay, { extends: "span" })
-
-class SubjectUserTokensInput extends HTMLTextAreaElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()  
-    const formattedSubjectUserTokens = JSON.stringify(subjectUserTokens, null, 2).trim()    
-    this.innerHTML = formattedSubjectUserTokens
-  }
-}
-customElements.define('subject-user-tokens-input', SubjectUserTokensInput, { extends: "textarea" })
+customElements.define('subject-user-tokens-editor', SubjectUserTokensEditor, {extends:"div"})
 
 // controlled tags
 
 class ControlledTagsEditor extends HTMLDivElement {
-  static get observedAttributes() { return [ 'state' ] }  
+  static get observedAttributes() { return [ 'state' ] }
+  controlledTags: string
+  labelElement: HTMLElement
+  displayElement: HTMLElement
   constructor() {
     super()
+    this.updateTags()
+  }
+  updateTags() {
+    this.controlledTags = getControlledTagsFromLocalStorage()
   }
   connectedCallback() {
-    this.innerHTML = '<div class="formLabel">controlled tags</div>'
+    setTimeout( _ => {
+      this.displayElement = this.querySelector('.controlledTagsDisplay') as HTMLElement
+      this.displayElement.innerHTML = this.controlledTags
+      this.labelElement = this.querySelector('.formLabel') as HTMLElement
+      this.labelElement.innerHTML = 'controlled tags'
+    }, 100)
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (!oldValue) { return }
+    if (!oldValue) { 
+      return 
+    }
+    if (! this.displayElement) {
+      return
+    }
     if (name === 'state') {
-      if (oldValue === 'viewing') {
-        this.querySelector('*[is="controlled-tags-display"]')!.remove()
-        this.innerHTML += `<textarea is="controlled-tags-input" class="controlledTagsInput" />`
+      if (newValue === 'viewing') {
+        const value = this.querySelector('textarea')!.value
+        saveControlledTagsToLocalStorage(value)
+        this.updateTags()
+        this.displayElement.innerHTML = `<span>${this.controlledTags}</span`
       } else {
-        saveControlledTagsToLocalStorage(this.querySelector('textarea')!.value)
-        this.querySelector('*[is="controlled-tags-input"]')!.remove()
-        this.innerHTML += `<span is="controlled-tags-display" class="controlledTagsDisplay" />`
+        this.displayElement.innerHTML = 
+          `<textarea class="controlledTagsInput">${this.controlledTags}</textarea>`
       }
-      this.querySelector('*[is="edit-or-save-icon"]')!.remove()
-      this.innerHTML += ` <span is="edit-or-save-icon"/>`
     }
   }
 }
-customElements.define('controlled-tags-editor', ControlledTagsEditor, { extends: "div" })
 
-class ControlledTagsDisplay extends HTMLSpanElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-    this.innerText = maybeTruncateAndAddEllipsis(getControlledTagsFromLocalStorage(), 30)
-  }
-}
-customElements.define('controlled-tags-display', ControlledTagsDisplay, { extends: "span" })
-
-class ControlledTagsInput extends HTMLTextAreaElement {
-  constructor() {
-    super()
-  }
-  connectedCallback() {
-    this.innerText = getControlledTagsFromLocalStorage()
-  }
-}
-customElements.define('controlled-tags-input', ControlledTagsInput, { extends: "textarea" })
+customElements.define('controlled-tags-editor', ControlledTagsEditor, {extends:"div"})
 
 // annotation card
 
