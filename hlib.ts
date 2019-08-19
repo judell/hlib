@@ -938,7 +938,7 @@ export function formatTags(tags: string[], urlPrefix?: string): string {
     const formattedTag = `<a target="_tag" href="${url}"><span class="annotationTag">${tag}</span></a>`
     formattedTags.push(formattedTag)
   })
-  return formattedTags.join(' ')
+  return formattedTags.join('')
 }
 
 /** Format an annotation as a row of a CSV export. */
@@ -1559,42 +1559,123 @@ customElements.define('annotation-editor', AnnotationEditor)
 // tags
 
 class TagEditor extends HTMLDivElement {
-  static get observedAttributes() { return ['state'] }  
+  static get observedAttributes() { return ['state'] }
+  state = ''  
+  annotationId = ''
   tags = [] as Array<string>
   formattedTags = [] as Array<string>
-  userCanEdit = false
+  strControlledTags = ''
+  controlledTags = [] as Array<string>
+  useControlledTags = false
   constructor() {
     super()
+  }
+  // lifecycle callbacks
+  connectedCallback() {
+    this.state = this.getAttribute('state')!
+    this.annotationId = this.annoIdFromDomAnnoId(this.closest('.annotationCard')!.id)
+    this.strControlledTags = getControlledTagsFromLocalStorage()
+    this.useControlledTags = this.strControlledTags !== defaultControlledTags
+    this.controlledTags = this.strControlledTags.split(',').map(t => {return t.trim()})
+    this.tags = JSON.parse(decodeURIComponent(this.getAttribute('tags')!))
+    this.formattedTags = this.formatTags(this.tags)
+    this.innerHTML = this.formattedTags.join('')
+  }
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (! TagEditor.observedAttributes.includes(name) ) {
+      return
+    }
+    if (oldValue === 'viewing' && newValue === 'editing') { // switch to editing
+      this.innerHTML = ''
+      const firstTag = this.tags.length ? this.tags[0] : ''
+      // if controlled tags, use them in the first tag slot
+      if (this.useControlledTags) {
+        const select = this.controlledTagsSelect(firstTag)
+        select.onchange = this.controlledTagChanged
+        const selectWrapper = document.createElement('div')
+        selectWrapper.appendChild(select)
+        this.appendChild(selectWrapper)
+      }
+      const start = this.useControlledTags ? 1 : 0  // if controlled, skip first
+      for (let i = start; i < this.tags.length; i++) {
+        let input = document.createElement('input') as HTMLInputElement
+        input.onchange = () => {
+          this.tags[i] = input.value
+        }
+        input.value = this.tags[i]
+        const inputWrapper = document.createElement('div')
+        inputWrapper.appendChild(input)
+        this.appendChild(inputWrapper)
+      }
+      this.appendTagAdder() 
+    } else if (oldValue === 'editing' && newValue === 'viewing') { // back to viewing
+      this.saveTags()
+      this.formattedTags = this.formatTags(this.tags)      
+      this.innerHTML = this.formattedTags.join('')
+    }
+  }
+  // other methods
+  annoIdFromDomAnnoId(domAnnoId:string) {
+    return domAnnoId.replace(/^_/,'')
+  }
+  addTag() {
+    const tagEditor = this.closest('div[is="annotation-tags-editor"]') as TagEditor
+    const input = document.createElement('input')
+    input.onchange = () => {
+      tagEditor.tags.push(input.value)
+    }
+    const inputWrapper = document.createElement('div')
+    inputWrapper.appendChild(input)
+    const adder = tagEditor.querySelector('.tagAdder')
+    tagEditor.insertBefore(inputWrapper, adder)
+  }
+  appendTagAdder() {
+    const adder = document.createElement('div')
+    adder.setAttribute('class', 'tagAdder')
+    adder.setAttribute('title', 'add a tag')
+    adder.innerHTML = ' + '
+    adder.onclick = this.addTag
+    this.appendChild(adder)
+  }
+  controlledTagChanged() {
+    const tagEditor = this.closest('div[is="annotation-tags-editor"]') as TagEditor
+    const select = tagEditor.querySelector('select') as HTMLSelectElement
+    const selected = select[select.selectedIndex] as HTMLOptionElement
+    tagEditor.tags[0] = selected.value
+  }
+  controlledTagsSelect(firstTag:string) {
+    const select = document.createElement('select') as HTMLSelectElement
+    for (let i = 0; i < this.controlledTags.length; i++) {
+      const controlledTag = this.controlledTags[i]
+      const option = document.createElement('option') as HTMLOptionElement
+      option.value = controlledTag
+      option.innerText = controlledTag;
+      if (firstTag === controlledTag) {
+        option.setAttribute('selected', 'true')
+      }
+      select.options.add(option)
+    }
+    return select
   }
   formatTags(tags: string[], urlPrefix?: string) {
     const formattedTags = [] as Array<string>
     tags.forEach(function(tag) {
       const url = urlPrefix ? urlPrefix + tag : `./?tag=${tag}`
-      const formattedTag = `<a target="_tag" href="${url}"><span class="annotationTag">${tag}</span></a>`
+      const formattedTag = `<div class="annotationTag"><a target="_tag" href="${url}">${tag}</a></div>`
       formattedTags.push(formattedTag)
     })
     return formattedTags
   }
-  handler() {
-    if (this.getAttribute('state') === 'viewing') {
-      this.innerHTML = `
-        viewing 
-        ${this.formattedTags}
-        `
-    } else {
-      this.innerHTML = `
-      editing 
-      ${this.formattedTags}
-      `
-    }
-  }
-  connectedCallback() {
-    this.tags = JSON.parse(decodeURIComponent(this.getAttribute('tags')!))
-    this.formattedTags = this.formatTags(this.tags)
-    this.handler()
-  }
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    this.handler()
+  async saveTags() {
+    const tags = this.tags.filter(tag => { tag }) //exclude empty tagsq
+    const payload = JSON.stringify( {tags: this.tags} )
+    const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
+    const annotationEditor = this.closest('annotation-editor') as AnnotationEditor
+    const userElement = annotationEditor.querySelector('.user') as HTMLElement
+    const username = userElement.innerText
+    const token = subjectUserTokens[username]
+    const r = await updateAnnotation(this.annotationId, token, payload)
+    console.log(JSON.parse(r.response).tags)
   }
 }
 

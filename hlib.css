@@ -21,6 +21,15 @@ button {
   margin-right: 4px;
 }
 
+div[is="annotation-tags-editor"] {
+  display: flex;
+  align-items: center;
+}
+
+div[is="annotation-tags-editor"] select {
+  line-height: 1.6em;
+}
+
 img {
   width: 90%;
   margin: 8px
@@ -64,14 +73,17 @@ input {
   font-size: smaller;
   background-color: #f6f8fa;
   font-size: x-small;
+  margin-left: 4px;
 }
 
 .annotationTags {
+  margin-left: 4px;
   margin-bottom: 6px;
 }
 
 .annotationTags input {
-  width: 10em;
+  margin-left: 4px;
+  width: 8em;
 }
 
 .annotationText, .annotationQuote {
