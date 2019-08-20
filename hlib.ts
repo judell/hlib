@@ -1567,6 +1567,7 @@ class TagEditor extends HTMLDivElement {
   strControlledTags = ''
   controlledTags = [] as Array<string>
   useControlledTags = false
+  selectableValues = [] as Array<string>
   constructor() {
     super()
   }
@@ -1590,9 +1591,10 @@ class TagEditor extends HTMLDivElement {
       const firstTag = this.tags.length ? this.tags[0] : ''
       const select = this.controlledTagsSelect(firstTag)
       const selected = select[select.selectedIndex] as HTMLOptionElement
+      this.selectableValues = Array.from(select.options).map(option => option.value)
       // if controlled tags, use them in the first tag slot
       if (this.useControlledTags) {
-        this.tags.splice(0, 0, selected.value) // swap in selected tag as tag 0
+        this.tags.splice(0, 1, selected.value) // swap in selected tag as tag 0
         select.onchange = this.controlledTagChanged
         const selectWrapper = document.createElement('div')
         selectWrapper.appendChild(select)
@@ -1604,12 +1606,12 @@ class TagEditor extends HTMLDivElement {
         input.onchange = () => {
             this.tags[i] = input.value.trim()
           }
-        if (selected.value !== this.tags[i]) { // don't duplicate the controlled value
+        if (! this.selectableValues.includes(this.tags[i])) { // don't duplicate a controlled value
           input.value = this.tags[i]
+          const inputWrapper = document.createElement('div')
+          inputWrapper.appendChild(input)
+          this.appendChild(inputWrapper)
         }
-        const inputWrapper = document.createElement('div')
-        inputWrapper.appendChild(input)
-        this.appendChild(inputWrapper)
       }
       this.appendTagAdder() 
     } else if (oldValue === 'editing' && newValue === 'viewing') { // back to viewing
@@ -1625,7 +1627,7 @@ class TagEditor extends HTMLDivElement {
     const input = document.createElement('input')
     input.onchange = () => {
       tagEditor.tags.push(input.value.trim())
-    }
+u    }
     const inputWrapper = document.createElement('div')
     inputWrapper.appendChild(input)
     const adder = tagEditor.querySelector('.tagAdder')
@@ -1657,7 +1659,10 @@ class TagEditor extends HTMLDivElement {
       }
       select.options.add(option)
     }
-    select.selectedIndex = 1
+    select.selectedIndex = this.controlledTags.indexOf(firstTag)
+    if (select.selectedIndex === -1 ) {
+      select.selectedIndex = 0
+    }
     return select
   }
   displayTags() {
@@ -1679,7 +1684,7 @@ class TagEditor extends HTMLDivElement {
     return formattedTags
   }
   async saveTags() {
-    const tags = this.tags.filter(tag => { return tag }) //exclude empty tags
+    let tags = this.tags.filter(tag => { return tag }) //exclude empty tags
     const payload = JSON.stringify( {tags: tags} )
     const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
     const annotationEditor = this.closest('annotation-editor') as AnnotationEditor
