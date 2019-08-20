@@ -1593,25 +1593,23 @@ class TagEditor extends HTMLDivElement {
       const selected = select[select.selectedIndex] as HTMLOptionElement
       this.selectableValues = Array.from(select.options).map(option => option.value)
       // if controlled tags, use them in the first tag slot
-      if (this.useControlledTags) {
+      if (this.useControlledTags) { // present controlled tags
         this.tags.splice(0, 1, selected.value) // swap in selected tag as tag 0
         select.onchange = this.controlledTagChanged
         const selectWrapper = document.createElement('div')
         selectWrapper.appendChild(select)
         this.appendChild(selectWrapper)
       }
-      const start = this.useControlledTags ? 1 : 0  // if controlled, skip first
+      const start = this.useControlledTags ? 1 : 0  // if controlled, skip first item
       for (let i = start; i < this.tags.length; i++) { // add input elements
         let input = document.createElement('input') as HTMLInputElement
         input.onchange = () => {
-            this.tags[i] = input.value.trim()
+            this.tags[i] = input.value.trim()  // update this.tags on change
           }
-        if (! this.selectableValues.includes(this.tags[i])) { // don't duplicate a controlled value
-          input.value = this.tags[i]
-          const inputWrapper = document.createElement('div')
-          inputWrapper.appendChild(input)
-          this.appendChild(inputWrapper)
-        }
+        input.value = this.tags[i]
+        const inputWrapper = document.createElement('div')
+        inputWrapper.appendChild(input)
+        this.appendChild(inputWrapper)
       }
       this.appendTagAdder() 
     } else if (oldValue === 'editing' && newValue === 'viewing') { // back to viewing
@@ -1627,7 +1625,7 @@ class TagEditor extends HTMLDivElement {
     const input = document.createElement('input')
     input.onchange = () => {
       tagEditor.tags.push(input.value.trim())
-u    }
+    }
     const inputWrapper = document.createElement('div')
     inputWrapper.appendChild(input)
     const adder = tagEditor.querySelector('.tagAdder')
