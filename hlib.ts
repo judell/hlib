@@ -1040,7 +1040,7 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
 
   const type = anno.isReply ? 'reply' : 'annotation'
   const downRightArrow = anno.isReply 
-    ? `<div class="downRightArrow" style="margin-top:-8px; margin-bottom:-32px; margin-left:${marginLeft-12}px">\u{2937}</div>`
+    ? `<div class="downRightArrow" style="margin-top:-14px; margin-bottom:-20px; margin-left:${marginLeft-12}px">\u{2937}</div>`
     : ''
 
   let userCanEdit = false
