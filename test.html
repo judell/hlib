@@ -1,347 +1,408 @@
 <html>
+
 <head>
-<script src="tinytest.js"></script>
-<style>
-  body {
-    background-color: #99ff99;
-  }
-</style>
+  <script src="tinytest.js"></script>
+  <link rel="stylesheet" href="hlib.css">
+  <style>
+    body {
+      background-color: #99ff99;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="formField" id="tokenContainer"></div>
+  <div class="formField" id="tokenContainer"></div>
 
-<div class="formField" id="anyContainer"></div>
+  <div class="formField" id="anyContainer"></div>
 
-<div class="formField" id="exactTagSearchContainer"></div>
+  <div class="formField" id="exactTagSearchContainer"></div>
 
-<div class="formField" id="wildcard_uriContainer"></div>
+  <div class="formField" id="wildcard_uriContainer"></div>
 
-<div class="formField" id="groupContainer"></div>
+  <div class="formField" id="groupContainer"></div>
 
-<script>
-localStorage.removeItem('h_settings')
-</script>
+  <div id="annotationViewer"></div>
 
- <!-- This module syntax is so convenient... -->
-<script type="module">  
+  <div id="annotationEditor"></div>
 
-// Because with this import method...
-import * as hlib from './hlib.js'
-// ... I can debug the library, which uses export statements, directly. 
-
-// For deployed apps based on this library, the pattern so far is:
-//  - bundle as hlib2.bundle.js
-//  - run webpack
-//  - use devtool to produce a source map
-//  - use source-map-loader to load the source map
-// It will be nice when all that nonsense goes away.
-
-const scratchUri = 'https://jonudell.net/h/scratch.html'
-const scratchQuote = 'First para'
-const scratchText = 'hlib test'
-const testAnnotation = 'M48i_AAkEemMqAtMSK82kg'
-
-function appendBody(element) {
-  document.body.appendChild(element)
-}
-
-function checkAndDeleteTestAnnotation(data, token) {
-  return new Promise(resolve => {
-    async function checkAndDelete() {
-      const response = JSON.parse(data.response)
-      if (response.target[0].selector) {
-        const selectors = hlib.parseSelectors(response.target)
-        eq(scratchQuote, selectors.TextQuote.exact)
-        const annotation = hlib.parseAnnotation(response)
-        assert(annotation.quote.indexOf(`class="quoteExact">${scratchQuote}</span>`))
-      }
-      assert(response.id)
-      assert(response.updated)
-      data = await hlib.deleteAnnotation(response.id, token)
-      console.log('deleted test annotation', data)
-    }
-    resolve(checkAndDelete())
-  })
-}
-
-function initializeSettings() {
-  localStorage.removeItem('h_settings')
-  hlib.settingsToLocalStorage(hlib.getSettings())    
-}
-
-function clearUrlLine() {
-  history.pushState(null, '', location.href.replace(/\?.+/,''))
-}
-
-tests({
-
-'gets token': function () {
-  return new Promise(resolve => {
-   let token = hlib.getToken()
-   let slice = token.slice(0,9)
-   eq('6879-358c', slice)
-   resolve()
-  })
- },
-
-'initial settings as expected': function() {
-  return new Promise(resolve => {
+  <script>
     localStorage.removeItem('h_settings')
-    initializeSettings()
-    clearUrlLine()
-    const settings = hlib.getSettings()
-    eq(hlib.getDefaultSettings().max, settings.max )
-    eq('false', settings.exactTagSearch)
-    eq('https://hypothes.is', settings.service)
-    resolve()
-  })
-},
+  </script>
 
-'input form change updates url and localStorage': function() {
-  return new Promise(resolve => {
-    const container = hlib.getById('anyContainer')
-    hlib.createAnyInputForm(container)
-    const inputElement = container.querySelector('input')
-    const newAny = 'any'
-    inputElement.value = newAny
-    inputElement.onchange()
-    assert(location.href.indexOf(`any=${newAny}` != -1))
-    assert(hlib.getSettings().any == newAny)
-    container.remove()
-    resolve()
-  })
- }, 
+  <!-- This module syntax is so convenient... -->
+  <script type="module">
 
-'checkbox change updates url and localStorage': function() {
-  return new Promise(resolve => {
-    const container = hlib.getById('exactTagSearchContainer')
-    hlib.createExactTagSearchCheckbox(hlib.getById('exactTagSearchContainer'));
-    const inputElement = container.querySelector('input')
-    inputElement.checked = true
-    inputElement.onchange()
-    assert(location.href.indexOf('exactTagSearch=true') != -1)
-    assert(hlib.getSettings().exactTagSearch === 'true')
-    container.outerHTML = `<div class="formField" id="exactTagSearchContainer"></div>`
-    hlib.updateSetting('exactTagSearch','')
-    resolve()
-  })
- },
+    // Because with this import method...
+    import * as hlib from './hlib.js'
+    // ... I can debug the library, which uses export statements, directly. 
 
- 'remembered facets and settings appear on url line': function() {
-  return new Promise(resolve => {
-    initializeSettings()
-    hlib.updateSetting('wildcard_uri', 'https://www.nytimes.com/*')
-    hlib.updateSetting('exactTagSearch', 'true')
-    hlib.settingsToUrl(hlib.getSettings())
-    assert(location.href.indexOf('exactTagSearch=true') != -1)
-    assert(hlib.getSettings().exactTagSearch === 'true')
-    assert(location.href.indexOf('wildcard_uri=https%3A%2F%2Fwww.nytimes.com%2F*') != -1)
-    assert(hlib.getSettings().wildcard_uri === 'https://www.nytimes.com/*')
-    initializeSettings()
-    clearUrlLine()
-    resolve()
-  })
- },
+    // For deployed apps based on this library, the pattern so far is:
+    //  - bundle as hlib2.bundle.js
+    //  - run webpack
+    //  - use devtool to produce a source map
+    //  - use source-map-loader to load the source map
+    // It will be nice when all that nonsense goes away.
 
- 'remembered facets and settings appear on forms': function() {
-  return new Promise(resolve => {
-    initializeSettings() 
-    const wildcard_uriContainer = hlib.getById('wildcard_uriContainer')
-    const wildcard_uriSetting = 'https://www.nytimes.com/*'
-    const exactTagSearchContainer = hlib.getById('exactTagSearchContainer')
-    const exactTagSearchSetting = 'true'
-    hlib.updateSetting('wildcard_uri', wildcard_uriSetting)
-    hlib.updateSetting('exactTagSearch', exactTagSearchSetting)
-    hlib.createWildcardUriInputForm(wildcard_uriContainer)
-    assert(wildcard_uriContainer.querySelector('input').value === wildcard_uriSetting)
-    hlib.createExactTagSearchCheckbox(exactTagSearchContainer)
-    assert(exactTagSearchContainer.querySelector('input').checked)
-    wildcard_uriContainer.outerHTML = `<div class="formField" id="wildcard_uriContainer"></div>`
-    exactTagSearchContainer.outerHTML = `<div class="formField" id="exactTagSearchContainer"></div>`
-    resolve()
-  })
- }, 
+    const scratchUri = 'https://jonudell.net/h/scratch.html'
+    const scratchQuote = 'First para'
+    const scratchText = 'hlib test'
+    const testAnnotationId = 'e7j5ss0vEemSmqt5QQ2I0w'
 
-'gets "" when no user': function() {
-  return new Promise(resolve => {
-    initializeSettings()
-    eq("", hlib.getSettings().user)
-    resolve()
-   })
-  },
-
-'creates default group picklist with > 1 groups when token': function() {
-  return new Promise(resolve => {
-    async function runTest() {
-      let defaultSelectId = 'groupsList'
-      await  hlib.createGroupInputForm(groupContainer)
-      const groupList = hlib.getById(defaultSelectId)
-      assert(groupList)
-      const options = groupList.querySelectorAll('option')
-      assert(groupList.length > 1)
-      eq('__world__', hlib.getSelectedGroup(defaultSelectId))
-      hlib.getById('groupContainer').outerHTML = `<div class="formField" id="groupContainer"></div>`
+    function appendBody(element) {
+      document.body.appendChild(element)
     }
-    resolve(runTest())
-  })
- },
 
-'creates group picklist with 1 group when no token': function() {
-  return new Promise(resolve => {
-    async function runTest() {
-      let token = hlib.getToken()
-      delete localStorage['h_token']
-      const groupContainer = hlib.getById('groupContainer')
-      await hlib.createGroupInputForm(groupContainer)
-      localStorage['h_token'] = token
-      const groupList = hlib.getById('groupsList')
-      assert(groupList)
-      const options = groupList.querySelectorAll('option')
-      assert(groupList.length == 1, `expected 1, got ${groupList.length}`)
-      eq('__world__', hlib.getSelectedGroup())
-      hlib.getById('groupContainer').outerHTML = `<div class="formField" id="groupContainer"></div>`
-    }
-    resolve(runTest())
-  })
-},
-
-'creates a pagenote': function() {
-   return new Promise(resolve => {
-      async function runTest() {
-        const token = hlib.getToken()
-        const params = {
-          uri: scratchUri,
-          group: '__world__',
-          text: scratchText,
+    function checkAndDeleteTestAnnotation(data, token) {
+      return new Promise(resolve => {
+        async function checkAndDelete() {
+          const response = JSON.parse(data.response)
+          if (response.target[0].selector) {
+            const selectors = hlib.parseSelectors(response.target)
+            eq(scratchQuote, selectors.TextQuote.exact)
+            const annotation = hlib.parseAnnotation(response)
+            assert(annotation.quote.indexOf(`class="quoteExact">${scratchQuote}</span>`))
+          }
+          assert(response.id)
+          assert(response.updated)
+          data = await hlib.deleteAnnotation(response.id, token)
+          console.log('deleted test annotation', data)
         }
-        const payload = hlib.createAnnotationPayload(params)
-        const data = await hlib.postAnnotation(payload, token)
-        await checkAndDeleteTestAnnotation(data, token)
-      }
-    resolve (runTest())
-    })
- },
-
- 'creates an annotation': function () {
-    return new Promise(resolve => {
-      async function runTest() {
-        const token = hlib.getToken()
-        const params = {
-          uri: scratchUri,
-          group: '__world__',
-          text: scratchText,
-          exact: scratchQuote,
-        }
-        const payload = hlib.createAnnotationPayload(params)
-        const data = await hlib.postAnnotation(payload, token)
-        await checkAndDeleteTestAnnotation(data, token)
-      }
-      resolve(runTest())
-    })
-  },
-
-  'creates a reply': function () {
-    return new Promise(resolve => {
-      async function runTest() {
-        const token = hlib.getToken()
-        const annoParams = {
-          uri: scratchUri,
-          text: scratchText,
-        }
-        const annoPayload = hlib.createAnnotationPayload(annoParams)
-        const annoData = await hlib.postAnnotation(annoPayload, token)
-        const annoId = JSON.parse(annoData.response).id
-        const replyParams = {
-          uri: scratchUri,
-          text: scratchText,
-          references: [ annoId ]
-        }
-        const replyPayload = hlib.createAnnotationPayload(replyParams)
-        const replyData = await hlib.postAnnotation(replyPayload, token)
-        const newAnnoId = JSON.parse(annoData.response).id
-        const newReplyReference = JSON.parse(replyData.response).references[0]
-        assertEquals(
-          newAnnoId, 
-          newReplyReference
-          )
-        await checkAndDeleteTestAnnotation(annoData, token)
-        await checkAndDeleteTestAnnotation(replyData, token)
-      }
-      resolve(runTest())
-    })
-  },
-
-'finds a test annotation': function() {
-  return new Promise(resolve => {
-    async function runTest() {
-      const token = hlib.getToken()
-      const params = {
-        user: 'judell',
-        tag: 'hlibtest',
-      }
-      const data = await hlib.search(params)
-      const [annos, replies] = data
-      assert(annos.length)
-      eq(testAnnotation, hlib.parseAnnotation(annos[0]).id)
+        resolve(checkAndDelete())
+      })
     }
-    resolve(runTest())
-  })
- },
 
- 'fails to retrieve from wrong service': function() {
-   return new Promise(resolve => {
-     async function runTest() {
-       hlib.updateSetting('service', 'https://WrongService')
-       const params = {}
-       try {
-         const data = await hlib.search(params) // the api request should fail 
-       } catch(e) {
-         hlib.updateSetting('service', 'https://hypothes.is')
-       }
+    function initializeSettings() {
+      localStorage.removeItem('h_settings')
+      hlib.settingsToLocalStorage(hlib.getSettings())
+    }
+
+    function clearUrlLine() {
+      history.pushState(null, '', location.href.replace(/\?.+/, ''))
+    }
+
+    tests({
+
+      'gets token': function () {
+        return new Promise(resolve => {
+          let token = hlib.getToken()
+          let slice = token.slice(0, 9)
+          eq('6879-358c', slice)
+          resolve()
+        })
+      },
+
+      'initial settings as expected': function () {
+        return new Promise(resolve => {
+          localStorage.removeItem('h_settings')
+          initializeSettings()
+          clearUrlLine()
+          const settings = hlib.getSettings()
+          eq(hlib.getDefaultSettings().max, settings.max)
+          eq('false', settings.exactTagSearch)
+          eq('https://hypothes.is', settings.service)
+          resolve()
+        })
+      },
+
+      'input form change updates url and localStorage': function () {
+        return new Promise(resolve => {
+          const container = hlib.getById('anyContainer')
+          hlib.createAnyInputForm(container)
+          const inputElement = container.querySelector('input')
+          const newAny = 'any'
+          inputElement.value = newAny
+          inputElement.onchange()
+          assert(location.href.indexOf(`any=${newAny}` != -1))
+          assert(hlib.getSettings().any == newAny)
+          container.remove()
+          resolve()
+        })
+      },
+
+      'checkbox change updates url and localStorage': function () {
+        return new Promise(resolve => {
+          const container = hlib.getById('exactTagSearchContainer')
+          hlib.createExactTagSearchCheckbox(hlib.getById('exactTagSearchContainer'));
+          const inputElement = container.querySelector('input')
+          inputElement.checked = true
+          inputElement.onchange()
+          assert(location.href.indexOf('exactTagSearch=true') != -1)
+          assert(hlib.getSettings().exactTagSearch === 'true')
+          container.outerHTML = `<div class="formField" id="exactTagSearchContainer"></div>`
+          hlib.updateSetting('exactTagSearch', '')
+          resolve()
+        })
+      },
+
+      'remembered facets and settings appear on url line': function () {
+        return new Promise(resolve => {
+          initializeSettings()
+          hlib.updateSetting('wildcard_uri', 'https://www.nytimes.com/*')
+          hlib.updateSetting('exactTagSearch', 'true')
+          hlib.settingsToUrl(hlib.getSettings())
+          assert(location.href.indexOf('exactTagSearch=true') != -1)
+          assert(hlib.getSettings().exactTagSearch === 'true')
+          assert(location.href.indexOf('wildcard_uri=https%3A%2F%2Fwww.nytimes.com%2F*') != -1)
+          assert(hlib.getSettings().wildcard_uri === 'https://www.nytimes.com/*')
+          initializeSettings()
+          clearUrlLine()
+          resolve()
+        })
+      },
+
+      'remembered facets and settings appear on forms': function () {
+        return new Promise(resolve => {
+          initializeSettings()
+          const wildcard_uriContainer = hlib.getById('wildcard_uriContainer')
+          const wildcard_uriSetting = 'https://www.nytimes.com/*'
+          const exactTagSearchContainer = hlib.getById('exactTagSearchContainer')
+          const exactTagSearchSetting = 'true'
+          hlib.updateSetting('wildcard_uri', wildcard_uriSetting)
+          hlib.updateSetting('exactTagSearch', exactTagSearchSetting)
+          hlib.createWildcardUriInputForm(wildcard_uriContainer)
+          assert(wildcard_uriContainer.querySelector('input').value === wildcard_uriSetting)
+          hlib.createExactTagSearchCheckbox(exactTagSearchContainer)
+          assert(exactTagSearchContainer.querySelector('input').checked)
+          wildcard_uriContainer.outerHTML = `<div class="formField" id="wildcard_uriContainer"></div>`
+          exactTagSearchContainer.outerHTML = `<div class="formField" id="exactTagSearchContainer"></div>`
+          resolve()
+        })
+      },
+
+      'gets "" when no user': function () {
+        return new Promise(resolve => {
+          initializeSettings()
+          eq("", hlib.getSettings().user)
+          resolve()
+        })
+      },
+
+      'creates default group picklist with > 1 groups when token': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            let defaultSelectId = 'groupsList'
+            await hlib.createGroupInputForm(groupContainer)
+            const groupList = hlib.getById(defaultSelectId)
+            assert(groupList)
+            const options = groupList.querySelectorAll('option')
+            assert(groupList.length > 1)
+            eq('__world__', hlib.getSelectedGroup(defaultSelectId))
+            hlib.getById('groupContainer').outerHTML = `<div class="formField" id="groupContainer"></div>`
+          }
+          resolve(runTest())
+        })
+      },
+
+      'creates group picklist with 1 group when no token': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            let token = hlib.getToken()
+            delete localStorage['h_token']
+            const groupContainer = hlib.getById('groupContainer')
+            await hlib.createGroupInputForm(groupContainer)
+            localStorage['h_token'] = token
+            const groupList = hlib.getById('groupsList')
+            assert(groupList)
+            const options = groupList.querySelectorAll('option')
+            assert(groupList.length == 1, `expected 1, got ${groupList.length}`)
+            eq('__world__', hlib.getSelectedGroup())
+            hlib.getById('groupContainer').outerHTML = `<div class="formField" id="groupContainer"></div>`
+          }
+          resolve(runTest())
+        })
+      },
+
+      'creates a pagenote': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            const token = hlib.getToken()
+            const params = {
+              uri: scratchUri,
+              group: '__world__',
+              text: scratchText,
+            }
+            const payload = hlib.createAnnotationPayload(params)
+            const data = await hlib.postAnnotation(payload, token)
+            await checkAndDeleteTestAnnotation(data, token)
+          }
+          resolve(runTest())
+        })
+      },
+
+      'creates an annotation': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            const token = hlib.getToken()
+            const params = {
+              uri: scratchUri,
+              group: '__world__',
+              text: scratchText,
+              exact: scratchQuote,
+            }
+            const payload = hlib.createAnnotationPayload(params)
+            const data = await hlib.postAnnotation(payload, token)
+            await checkAndDeleteTestAnnotation(data, token)
+          }
+          resolve(runTest())
+        })
+      },
+
+      'creates a reply': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            const token = hlib.getToken()
+            const annoParams = {
+              uri: scratchUri,
+              text: scratchText,
+            }
+            const annoPayload = hlib.createAnnotationPayload(annoParams)
+            const annoData = await hlib.postAnnotation(annoPayload, token)
+            const annoId = JSON.parse(annoData.response).id
+            const replyParams = {
+              uri: scratchUri,
+              text: scratchText,
+              references: [annoId]
+            }
+            const replyPayload = hlib.createAnnotationPayload(replyParams)
+            const replyData = await hlib.postAnnotation(replyPayload, token)
+            const newAnnoId = JSON.parse(annoData.response).id
+            const newReplyReference = JSON.parse(replyData.response).references[0]
+            assertEquals(
+              newAnnoId,
+              newReplyReference
+            )
+            await checkAndDeleteTestAnnotation(annoData, token)
+            await checkAndDeleteTestAnnotation(replyData, token)
+          }
+          resolve(runTest())
+        })
+      },
+
+      'finds a test annotation': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            const token = hlib.getToken()
+            const params = {
+              user: 'judell',
+              tag: 'hlibtest',
+            }
+            const data = await hlib.search(params)
+            const [annos, replies] = data
+            assert(annos.length)
+            eq(testAnnotationId, hlib.parseAnnotation(annos[0]).id)
+          }
+          resolve(runTest())
+        })
+      },
+
+      'fails to retrieve from wrong service': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            hlib.updateSetting('service', 'https://WrongService')
+            const params = {}
+            try {
+              const data = await hlib.search(params) // the api request should fail 
+            } catch (e) {
+              hlib.updateSetting('service', 'https://hypothes.is')
+            }
+          }
+          resolve(runTest())
+        })
+      },
+
+      'retrieves 400 annotations': function () {
+        const expected = 400
+        return new Promise(resolve => {
+          async function runTest() {
+            let params = { max: expected }
+            const data = await hlib.search(params)
+            eq(expected, data[0].length + data[1].length)
+          }
+          resolve(runTest())
+        })
+      },
+
+      'uses wildcard uris': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            const token = hlib.getToken()
+            const params = {
+              wildcard_uri: 'https://web.hypothes.is/*',
+              max: 400
+            }
+            const data = await hlib.search(params)
+            const annos = data[0]
+            const uris = annos.map(a => { return a.uri })
+            const blogUris = uris.map(u => u.startsWith('https://web.hypothes.is/blog')).filter(x => { return x })
+            assert(blogUris.length > 1)
+            const faqUris = uris.map(u => u.startsWith('https://web.hypothes.is/faq')).filter(x => { return x })
+            assert(faqUris.length > 1)
+          }
+          resolve(runTest())
+        })
+      },
+
+      'displays annotation for viewing': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            const data = await hlib.getAnnotation(testAnnotationId)
+            const anno = hlib.parseAnnotation(JSON.parse(data.response))
+            const userCanEdit = false
+            const standaloneAnnotationUrl = `${hlib.getSettings().service}/a/${anno.id}`
+            const externalLink = `
+              <a title="view/edit/reply" target="_standalone" href="${standaloneAnnotationUrl}">
+              <img class="externalLinkImage" src="https://jonudell.info/hlib/externalLink.png">
+              </a>`            
+            eq(testAnnotationId, anno.id)
+            hlib.getById('annotationViewer').innerHTML = `
+              <div class="annotationCard annotation" id="_${anno.id}">
+                <annotation-editor state="viewing">
+                  ${userCanEdit ? '<span is="edit-or-save-icon"></span>' : ''}
+                  <div class="annotationHeader">
+                    <span class="user">
+                      <a title="search user" target="_user" href="./?user=${anno.user}">${anno.user}</a>
+                    </span>
+                    <span>&nbsp;</span>
+                    <span class="dateTime">${anno.updated}</span>
+                    <span>&nbsp;</span>
+                    <span class="groupSlug">in ${anno.group}</span>
+                    <span>&nbsp;</span>
+                    <span class="externalLink">${externalLink}</span>
+                  </div>
+                  <div class="annotationQuote">
+                    <span title="exact quote" class="quoteExact">${anno.quote}</span> 
+                  </div>
+                  <div class="annotationText">
+                     ${anno.text}
+                  </div>
+                  <div is="annotation-tags-editor" state="viewing" class="annotationTags" user-can-edit="false" 
+                    tags="${encodeURIComponent(JSON.stringify(anno.tags))}">
+                  </div>
+                </annotation-editor>
+              </div>`
+              const annotationEditor = document.querySelector('annotation-editor')
+              eq('2019-09-02T03:12:23', annotationEditor.querySelector('.dateTime').innerHTML)
+              assert(annotationEditor.querySelector('.quoteExact').innerHTML.includes("This domain is established"))
+              eq('Text of the test annotation.', annotationEditor.querySelector('.annotationText').innerText)
+              eq(1, annotationEditor.querySelectorAll('.annotationTag').length)
+              eq('<a target="_tag" href="./?tag=hlibtest">hlibtest</a>', 
+                annotationEditor.querySelector('.annotationTag').innerHTML)
+              const tagEditor = annotationEditor.querySelector('div[is=["annotation-tags-editor"]')
+              eq('viewing', tagEditor.getAttribute('state'))
+              eq('false', tagEditor.getAttribute('user-can-edit'))
+          }
+          resolve(runTest())
+        })
+
       }
-      resolve(runTest())
+
     })
- },
 
-'retrieves 400 annotations': function() {
-  const expected = 400
-  return new Promise(resolve => {
-    async function runTest() {
-      let params = { max: expected }
-    const data = await hlib.search(params)
-    eq(expected, data[0].length + data[1].length)
-    }
-    resolve(runTest())
-  })
- },
+  </script>
 
-'uses wildcard uris': function() {
-  return new Promise(resolve => {
-    async function runTest() {
-      const token = hlib.getToken()
-      const params = {
-        wildcard_uri: 'https://web.hypothes.is/*',
-        max: 400
-      }
-    const data = await hlib.search(params)
-    const annos = data[0]
-    const uris = annos.map(a => { return a.uri })
-    const blogUris = uris.map(u => u.startsWith('https://web.hypothes.is/blog')).filter(x => {return x})
-    assert(blogUris.length > 1)
-    const faqUris = uris.map(u => u.startsWith('https://web.hypothes.is/faq')).filter(x => {return x})
-    assert(faqUris.length > 1)
-    }
-    resolve(runTest())
- })
-}
-
-})
-
-</script>
-
-<div id="log"></div>
+  <div id="log"></div>
 
 </body>
+
 </html>
