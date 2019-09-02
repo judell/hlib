@@ -7,10 +7,28 @@
     body {
       background-color: #99ff99;
     }
+
+    .icon-floppy, .icon-pencil {
+      font-size: x-small;
+      width: 1em;
+      height: 1em;
+      margin-left: -22px;
+      padding-right: 2px;
+      cursor: pointer;
+    }
+
+    .icon-delete {
+      font-size: x-small;
+      cursor: pointer;
+      display: inline;
+    }
+
   </style>
 </head>
 
 <body>
+
+  <div id="svgDefs"></div>
 
   <div class="formField" id="tokenContainer"></div>
 
@@ -26,10 +44,6 @@
 
   <div id="annotationEditor"></div>
 
-  <script>
-    localStorage.removeItem('h_settings')
-  </script>
-
   <!-- This module syntax is so convenient... -->
   <script type="module">
 
@@ -43,6 +57,11 @@
     //  - use devtool to produce a source map
     //  - use source-map-loader to load the source map
     // It will be nice when all that nonsense goes away.
+
+    localStorage.removeItem('h_settings')
+
+    hlib.getById('svgDefs').outerHTML = hlib.svgIcons
+
 
     const scratchUri = 'https://jonudell.net/h/scratch.html'
     const scratchQuote = 'First para'
@@ -79,6 +98,14 @@
 
     function clearUrlLine() {
       history.pushState(null, '', location.href.replace(/\?.+/, ''))
+    }
+
+    function createExternalLink(anno) {
+      const standaloneAnnotationUrl = `${hlib.getSettings().service}/a/${anno.id}`
+      return `
+        <a title="view/edit/reply" target="_standalone" href="${standaloneAnnotationUrl}">
+        <img class="externalLinkImage" src="https://jonudell.info/hlib/externalLink.png">
+        </a>`          
     }
 
     tests({
@@ -350,12 +377,10 @@
             const anno = hlib.parseAnnotation(JSON.parse(data.response))
             const userCanEdit = false
             const standaloneAnnotationUrl = `${hlib.getSettings().service}/a/${anno.id}`
-            const externalLink = `
-              <a title="view/edit/reply" target="_standalone" href="${standaloneAnnotationUrl}">
-              <img class="externalLinkImage" src="https://jonudell.info/hlib/externalLink.png">
-              </a>`            
+            const externalLink = createExternalLink(anno)
             eq(testAnnotationId, anno.id)
-            hlib.getById('annotationViewer').innerHTML = `
+            const annotationCard = hlib.getById('annotationViewer')
+            annotationCard.innerHTML = `
               <div class="annotationCard annotation" id="_${anno.id}">
                 <annotation-editor state="viewing">
                   ${userCanEdit ? '<span is="edit-or-save-icon"></span>' : ''}
@@ -371,7 +396,7 @@
                     <span class="externalLink">${externalLink}</span>
                   </div>
                   <div class="annotationQuote">
-                    <span title="exact quote" class="quoteExact">${anno.quote}</span> 
+                    ${anno.quote}
                   </div>
                   <div class="annotationText">
                      ${anno.text}
@@ -381,16 +406,96 @@
                   </div>
                 </annotation-editor>
               </div>`
-              const annotationEditor = document.querySelector('annotation-editor')
-              eq('2019-09-02T03:12:23', annotationEditor.querySelector('.dateTime').innerHTML)
-              assert(annotationEditor.querySelector('.quoteExact').innerHTML.includes("This domain is established"))
-              eq('Text of the test annotation.', annotationEditor.querySelector('.annotationText').innerText)
-              eq(1, annotationEditor.querySelectorAll('.annotationTag').length)
-              eq('<a target="_tag" href="./?tag=hlibtest">hlibtest</a>', 
-                annotationEditor.querySelector('.annotationTag').innerHTML)
-              const tagEditor = annotationEditor.querySelector('div[is=["annotation-tags-editor"]')
-              eq('viewing', tagEditor.getAttribute('state'))
-              eq('false', tagEditor.getAttribute('user-can-edit'))
+            const annotationEditor = document.querySelector('annotation-editor')
+            assert(annotationEditor.querySelector('.quoteExact').innerHTML.includes("This domain is established"))
+            eq('Text of the test annotation.', annotationEditor.querySelector('.annotationText').innerText)
+            eq(1, annotationEditor.querySelectorAll('.annotationTag').length)
+            eq('<a target="_tag" href="./?tag=hlibtest">hlibtest</a>', 
+            annotationEditor.querySelector('.annotationTag').innerHTML)
+            const tagEditor = annotationEditor.querySelector('div[is="annotation-tags-editor"]')
+            eq('viewing', tagEditor.getAttribute('state'))
+            eq('false', tagEditor.getAttribute('user-can-edit'))
+            await hlib.delaySeconds(2)
+            annotationCard.remove()
+          }
+          resolve(runTest())
+        })
+
+      },
+
+      'displays annotation for editing': function () {
+        return new Promise(resolve => {
+          async function runTest() {
+            let data = await hlib.getAnnotation(testAnnotationId)
+            let anno = hlib.parseAnnotation(JSON.parse(data.response))
+            const userCanEdit = true
+            const externalLink = createExternalLink(anno)
+            eq(testAnnotationId, anno.id)
+            const annotationCard = hlib.getById('annotationEditor')
+            annotationCard.innerHTML = `
+              <div class="annotationCard annotation" id="_${anno.id}">
+                <annotation-editor state="viewing">
+                  ${userCanEdit ? '<span is="edit-or-save-icon"></span>' : ''}
+                  <div class="annotationHeader">
+                    <span class="user">
+                      <a title="search user" target="_user" href="./?user=${anno.user}">${anno.user}</a>
+                    </span>
+                    <span>&nbsp;</span>
+                    <span class="dateTime">${anno.updated}</span>
+                    <span>&nbsp;</span>
+                    <span class="groupSlug">in ${anno.group}</span>
+                    <span>&nbsp;</span>
+                    <span class="externalLink">${externalLink}</span>
+                  </div>
+                  <div class="annotationQuote">
+                    ${anno.quote}
+                  </div>
+                  <div class="annotationText">
+                     ${anno.text}
+                  </div>
+                  <div is="annotation-tags-editor" state="viewing" class="annotationTags" user-can-edit="${userCanEdit}" 
+                    tags="${encodeURIComponent(JSON.stringify(anno.tags))}">
+                  </div>
+                </annotation-editor>
+              </div>`
+            const annotationEditor = document.querySelector('annotation-editor')
+            assert(annotationEditor.querySelector('.quoteExact').innerHTML.includes("This domain is established"))
+            const annotationText = annotationEditor.querySelector('.annotationText')
+            eq('Text of the test annotation.', annotationText.innerText)
+            eq(1, annotationEditor.querySelectorAll('.annotationTag').length)
+            eq('<a target="_tag" href="./?tag=hlibtest">hlibtest</a>', 
+            annotationEditor.querySelector('.annotationTag').innerHTML)
+            const tagEditor = annotationEditor.querySelector('div[is="annotation-tags-editor"]')
+            eq('viewing', tagEditor.getAttribute('state'))
+            eq('true', tagEditor.getAttribute('user-can-edit'))
+            await hlib.delaySeconds(1)
+            const editOrSaveIcon = document.querySelector('span[is="edit-or-save-icon"]')
+            editOrSaveIcon.click()
+            eq('true', annotationText.getAttribute('contentEditable'))
+            eq('editing', tagEditor.getAttribute('state'))
+            annotationText.innerText = "Temporarily changed"
+            const tagInput = tagEditor.querySelector('input')
+            tagInput.value = 'changed'
+            const tagChangeEvent = new Event('change')
+            tagInput.dispatchEvent(tagChangeEvent) 
+            editOrSaveIcon.click()
+            await hlib.delaySeconds(1)
+            data = await hlib.getAnnotation(testAnnotationId)
+            anno = hlib.parseAnnotation(JSON.parse(data.response))
+            eq('Temporarily changed', anno.text)
+            eq('changed', anno.tags[0])
+            editOrSaveIcon.click()
+            eq('true', annotationText.getAttribute('contentEditable'))
+            eq('editing', tagEditor.getAttribute('state'))
+            annotationText.innerText = "Text of the test annotation."
+            tagInput.value = 'hlibtest'
+            tagInput.dispatchEvent(tagChangeEvent)
+            editOrSaveIcon.click()
+            await hlib.delaySeconds(1)
+            data = await hlib.getAnnotation(testAnnotationId)
+            anno = hlib.parseAnnotation(JSON.parse(data.response))
+            eq('Text of the test annotation.', anno.text)
+            eq('hlibtest', anno.tags[0])
           }
           resolve(runTest())
         })
