@@ -1388,7 +1388,9 @@ class EditOrSaveIcon extends HTMLSpanElement {
   }  
 }
 
-customElements.define('edit-or-save-icon', EditOrSaveIcon, { extends: "span" })
+if (customElements) {
+  customElements.define('edit-or-save-icon', EditOrSaveIcon, { extends: "span" })
+}
 
 // subject user tokens
 
@@ -1438,7 +1440,9 @@ class SubjectUserTokensEditor extends HTMLDivElement {
   }
 }
 
-customElements.define('subject-user-tokens-editor', SubjectUserTokensEditor, {extends:"div"})
+if (customElements) {
+  customElements.define('subject-user-tokens-editor', SubjectUserTokensEditor, {extends:"div"})
+}
 
 // controlled tags
 
@@ -1483,7 +1487,9 @@ class ControlledTagsEditor extends HTMLDivElement {
   }
 }
 
-customElements.define('controlled-tags-editor', ControlledTagsEditor, {extends:"div"})
+if (customElements) {
+   customElements.define('controlled-tags-editor', ControlledTagsEditor, {extends:"div"})
+}
 
 // annotation card
 
@@ -1554,7 +1560,10 @@ class AnnotationEditor extends HTMLElement {
     }
   }
 }
-customElements.define('annotation-editor', AnnotationEditor)
+
+if (customElements) {
+  customElements.define('annotation-editor', AnnotationEditor)
+}
 
 // tags
 
@@ -1696,8 +1705,9 @@ class TagEditor extends HTMLDivElement {
   }
 }
 
-customElements.define('annotation-tags-editor', TagEditor, { extends: "div" })
-
+if (customElements) {
+  customElements.define('annotation-tags-editor', TagEditor, { extends: "div" })
+}
 
 // icons
 
