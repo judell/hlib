@@ -40,6 +40,10 @@ input {
   margin-bottom: 2px;
 }
 
+*[is="edit-or-save-icon"] {
+  position: absolute;
+}
+
 .annotationBody{
   padding-right: 6px;
 }
