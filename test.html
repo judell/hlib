@@ -44,6 +44,10 @@
 
   <div id="annotationEditor"></div>
 
+  <script>
+    localStorage.removeItem('h_settings')
+  </script>
+
   <!-- This module syntax is so convenient... -->
   <script type="module">
 
@@ -121,7 +125,6 @@
 
       'initial settings as expected': function () {
         return new Promise(resolve => {
-          localStorage.removeItem('h_settings')
           initializeSettings()
           clearUrlLine()
           const settings = hlib.getSettings()
@@ -470,7 +473,7 @@
             eq('true', tagEditor.getAttribute('user-can-edit'))
             await hlib.delaySeconds(1)
             const editOrSaveIcon = document.querySelector('span[is="edit-or-save-icon"]')
-            editOrSaveIcon.click()
+            editOrSaveIcon.click() // switch to editing
             eq('true', annotationText.getAttribute('contentEditable'))
             eq('editing', tagEditor.getAttribute('state'))
             annotationText.innerText = "Temporarily changed"
@@ -478,19 +481,19 @@
             tagInput.value = 'changed'
             const tagChangeEvent = new Event('change')
             tagInput.dispatchEvent(tagChangeEvent) 
-            editOrSaveIcon.click()
+            editOrSaveIcon.click()  // save and switch back to viewing
             await hlib.delaySeconds(1)
             data = await hlib.getAnnotation(testAnnotationId)
             anno = hlib.parseAnnotation(JSON.parse(data.response))
             eq('Temporarily changed', anno.text)
             eq('changed', anno.tags[0])
-            editOrSaveIcon.click()
+            editOrSaveIcon.click() // switch back to editing to restore original values
             eq('true', annotationText.getAttribute('contentEditable'))
             eq('editing', tagEditor.getAttribute('state'))
             annotationText.innerText = "Text of the test annotation."
             tagInput.value = 'hlibtest'
             tagInput.dispatchEvent(tagChangeEvent)
-            editOrSaveIcon.click()
+            editOrSaveIcon.click() // switch back to viewing
             await hlib.delaySeconds(1)
             data = await hlib.getAnnotation(testAnnotationId)
             anno = hlib.parseAnnotation(JSON.parse(data.response))
