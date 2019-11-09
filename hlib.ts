@@ -20,8 +20,9 @@ export type annotation = {
   isPagenote: boolean
   user: string
   text: string
-  quote: string
+  prefix: string
   exact: string
+  suffix: string
   tags: string[]
   group: string
   target: object
@@ -348,18 +349,18 @@ export function parseAnnotation(row: any): annotation {
   let title = url
   const refs = row.references ? row.references : []
   const user = row.user.replace('acct:', '').replace('@hypothes.is', '')
-  let quote = ''
+  let prefix = ''
   let exact = ''
+  let suffix = ''
   if (row.target && row.target.length) {
     const selectors = row.target[0].selector
     if (selectors) {
       for (let i = 0; i < selectors.length; i++) {
         let selector = selectors[i]
         if (selector.type === 'TextQuoteSelector') {
-          quote = `<span title="quote prefix" class="quoteContext">${selector.prefix}</span>`
-          quote += `<span title="exact quote" class="quoteExact">${selector.exact}</span> `
-          quote += `<span title="quote suffix" class="quoteContext">${selector.suffix}</span>`
+          prefix = selector.prefix
           exact = selector.exact
+          suffix = selector.suffix
         }
       }
     }
@@ -393,8 +394,9 @@ export function parseAnnotation(row: any): annotation {
     isPagenote: isPagenote,
     user: user,
     text: text,
-    quote: quote,
+    prefix: prefix,
     exact: exact,
+    suffix: suffix,
     tags: tags,
     group: group,
     target: row.target,
@@ -641,7 +643,7 @@ export function createAnnotationPayload(params: any): string {
 }
 
 /** Create an annotation */
-export function postAnnotation(payload: string, token: string) {
+export function postAnnotation(payload: string, token: string) : Promise<httpResponse> {
   const url = `${getSettings().service}/api/annotations`
   let opts: httpOpts = {
     method: 'post',
@@ -971,9 +973,13 @@ export function csvRow(level: number, anno: any): string {
 }
 
 /** Render an annotation card. */
-export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: string, externalLink?: string, copyIdButton?: string) {
+export function showAnnotation(anno: annotation, level: number, params: any) {
+  if (!params) {
+    params  = {}
+  }
+  const { addQuoteContext, copyIdButton, externalLink, tagUrlPrefix } = params
 
-  function getGroupName(anno:any):any {
+  function getGroupName(anno:annotation):any {
     let groupName = anno.group
     let groups:any = {}
     const groupsJson = localStorage.getItem('h_groups')
@@ -985,6 +991,18 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
       }
     }
     return groupName
+  }
+
+  function formatQuote(anno:annotation) {
+    let quote = `<span title="quote" class="quoteExact">${anno.exact}</span>`
+    if (addQuoteContext) {
+      quote = `
+        <span title="prefix" class="quotePrefix">${anno.prefix}</span>
+        ${quote}
+        <span title="suffix" class="quoteSuffix">${anno.suffix}</span>
+      `
+    }
+    return quote
   }
 
   // the body is sanitized by markdown but the quote,
@@ -1069,7 +1087,7 @@ export function showAnnotation(anno: annotation, level: number, tagUrlPrefix?: s
           <span class="copyIdButton">${_copyIdButton}</span>
         </div>
         <div class="annotationQuote">
-          ${sanitizeQuote(anno.quote)}
+          ${sanitizeQuote(formatQuote(anno))}
         </div>
         <div class="annotationText">
           ${html}
@@ -1495,7 +1513,7 @@ if (customElements) {
 
 class AnnotationEditor extends HTMLElement {
 
-  static get observedAttributes() { return [ 'state' ] }  
+  static get observedAttributes() { return [ 'state' ] }
 
   annoId = ''
   deleteButtonStyle = 'style="display:inline; width:8px; height:8px; fill:#2c1409b5; margin-left:2px'  
@@ -1522,7 +1540,7 @@ class AnnotationEditor extends HTMLElement {
       deleteButton.innerHTML = ``
     }
     const externalLink = this.querySelector('.externalLink') as HTMLAnchorElement
-    insertNodeAfter(deleteButton, externalLink)      
+    insertNodeAfter(deleteButton, externalLink)
   }
 
  renderIcon(iconClass:string, style?: string) {
