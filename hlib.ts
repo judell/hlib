@@ -65,6 +65,7 @@ export type settings = {
   service: string
   exactTagSearch: string
   expanded: string
+  addQuoteContext: string
 }
 
 export type toggler = {
@@ -95,6 +96,7 @@ const defaultSettings:settings = {
   service: 'https://hypothes.is',
   exactTagSearch: 'false',
   expanded: 'false',
+  addQuoteContext: 'false'
 }
 
 export const formUrlStorageSyncEvent = new Event('formUrlStorageSync')
@@ -125,23 +127,10 @@ export function settingsFromLocalStorage() : settings {
   } catch (e) {  // not accessible from a web worker
     return defaultSettings
   }
-  let settings = ! value 
-    ? {
-        // facets
-        user: '',
-        url: '',
-        wildcard_uri: '',
-        group: defaultSettings.group,
-        tag: '',
-        any: '',
-        // settings
-        max: defaultSettings.max,
-        service: defaultSettings.service,
-        exactTagSearch: defaultSettings.exactTagSearch,
-        expanded: defaultSettings.expanded
-      } as settings
+  const settings = ! value  
+    ?  getDefaultSettings() as settings
     : JSON.parse(value) as settings
-    return settings
+  return settings
   }
 
 export function settingsToLocalStorage(settings: settings) {
@@ -177,6 +166,7 @@ export function settingsToUrl(settings: settings) {
   setOrDelete('max', settings.max)
   setOrDelete('exactTagSearch', settings.exactTagSearch, true)
   setOrDelete('expanded', settings.expanded, true)
+  setOrDelete('addQuoteContext', settings.addQuoteContext, true)
   // special
   url.searchParams.delete('service')
   url.searchParams.delete('subjectUserTokens')
@@ -781,6 +771,11 @@ export function createMaxInputForm(element: HTMLElement, msg?: string) {
 
 export function createExactTagSearchCheckbox(element: HTMLElement) {
   const name = 'exactTagSearch'  
+  createInputForm(name, syncContainer(name), element, 'checkbox')
+}
+
+export function createAddQuoteContextCheckbox(element: HTMLElement) {
+  const name = 'addQuoteContext'  
   createInputForm(name, syncContainer(name), element, 'checkbox')
 }
 
