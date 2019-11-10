@@ -56,10 +56,7 @@
     const scratchQuote = 'First para'
     const scratchText = 'hlib test'
     const testAnnotationId = 'm_kD8AJbEeqznH9NqWlwvQ'
-
-    function appendBody(element) {
-      document.body.appendChild(element)
-    }
+    const testUser = 'judell'
 
     function checkAndDeleteTestAnnotation(data, token) {
       return new Promise(resolve => {
@@ -69,7 +66,7 @@
             const selectors = hlib.parseSelectors(response.target)
             eq(scratchQuote, selectors.TextQuote.exact)
             const annotation = hlib.parseAnnotation(response)
-            assert(annotation.exact === scratchQuote)
+           eq(scratchQuote, annotation.exact)
           }
           assert(response.id)
           assert(response.updated)
@@ -115,6 +112,7 @@
           const settings = hlib.getSettings()
           eq(hlib.getDefaultSettings().max, settings.max)
           eq('false', settings.exactTagSearch)
+          eq('false', settings.addQuoteContext)
           eq('https://hypothes.is', settings.service)
           resolve()
         })
@@ -299,7 +297,7 @@
           async function runTest() {
             const token = hlib.getToken()
             const params = {
-              user: 'judell',
+              user: testUser,
               tag: 'hlibtest',
             }
             const data = await hlib.search(params)
