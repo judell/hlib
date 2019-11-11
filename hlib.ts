@@ -23,6 +23,8 @@ export type annotation = {
   prefix: string
   exact: string
   suffix: string
+  start: number
+  end: number
   tags: string[]
   group: string
   target: object
@@ -342,6 +344,8 @@ export function parseAnnotation(row: any): annotation {
   let prefix = ''
   let exact = ''
   let suffix = ''
+  let start
+  let end
   if (row.target && row.target.length) {
     const selectors = row.target[0].selector
     if (selectors) {
@@ -351,6 +355,10 @@ export function parseAnnotation(row: any): annotation {
           prefix = selector.prefix
           exact = selector.exact
           suffix = selector.suffix
+        }
+        if (selector.type === 'TextPositionSelector') {
+          start = selector.start
+          end = selector.end
         }
       }
     }
@@ -387,6 +395,8 @@ export function parseAnnotation(row: any): annotation {
     prefix: prefix,
     exact: exact,
     suffix: suffix,
+    start: start,
+    end: end,
     tags: tags,
     group: group,
     target: row.target,
