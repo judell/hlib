@@ -13,6 +13,7 @@ export type httpResponse = {
 export type annotation = {
   id: string
   url: string
+  created: string
   updated: string
   title: string
   refs: string[]
@@ -336,6 +337,7 @@ export function gatherAnnotationsByUrl(rows: any[]) : gatheredResults {
 export function parseAnnotation(row: any): annotation {
   const id = row.id
   const url = row.uri
+  const created = row.created.slice(0, 19)
   const updated = row.updated.slice(0, 19)
   const group = row.group
   let title = url
@@ -385,6 +387,7 @@ export function parseAnnotation(row: any): annotation {
  const r: annotation = {
     id: id,
     url: url,
+    created: created,
     updated: updated,
     title: title,
     refs: refs,
@@ -952,6 +955,7 @@ export function formatTags(tags: string[], urlPrefix?: string): string {
 export function csvRow(level: number, anno: any): string {
   let fields = [
     level.toString(),
+    anno.created,
     anno.updated,
     anno.url,
     anno.user,
