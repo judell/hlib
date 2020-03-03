@@ -1025,8 +1025,15 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
     return html
   }
 
-  const dt = new Date(anno.updated)
-  const dt_str = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
+  function displayDate(anno:annotation): string {
+    const created = formatDate(new Date(anno.created))
+    const updated = formatDate(new Date(anno.updated))
+    if (created === updated) {
+      return created
+    } else {
+      return `(edited ${updated}) ${created}`
+    }
+  }
 
   let html = anno.text == null ? '' : anno.text
   let converter
@@ -1087,7 +1094,7 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
             <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
           </span>
           <span>&nbsp;</span>
-          <span class="dateTime">${dt_str}</span>
+          <span class="dateTime">${displayDate(anno)}</span>
           <span>&nbsp;</span>
           <span class="groupSlug">${groupSlug}</span>
           <span>&nbsp;</span>
@@ -1111,6 +1118,10 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
     </div>`
 
   return output
+}
+
+function formatDate(dt: Date): string {
+  return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString().replace(/:\d{2}\s/, ' ')
 }
 
 /** Save exported annotations to a file. */
