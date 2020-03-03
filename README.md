@@ -44,8 +44,10 @@ http://jonudell.info/hlib/doc/modules/_hlib_.html
 
 2. Open browser console, run:
 
- `localStorage.setItem('h_token', 'HYPOTHESIS_API_TOKEN')`
- `localStorage.setItem('h_user', 'HYPOTHESIS_USERNAME')`
- `localStorage.setItem('h_subjectUserTokens', JSON.parse('{ HYPOTHESIS_USERNAME: HYPOTHESIS_API_TOKEN }'))
+```
+localStorage.setItem('h_token', 'HYPOTHESIS_API_TOKEN')`;
+localStorage.setItem('h_user', 'HYPOTHESIS_USERNAME')`;
+localStorage.setItem('h_subjectUserTokens', JSON.stringify({ HYPOTHESIS_USERNAME: HYPOTHESIS_API_TOKEN }));
+```
 
 3. http://localhost:8000/test.html
