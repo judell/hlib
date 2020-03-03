@@ -2,8 +2,8 @@
 @import url(https://fonts.googleapis.com/css?family=Raleway:500,400,300,800,700);
 
 a {
+  color: #795548;
   text-decoration: none;
-  color: #795548;;
 }
 
 body {
