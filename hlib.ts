@@ -12,8 +12,10 @@ export type httpResponse = {
 
 export type annotation = {
   id: string
+  authority: string
   url: string
-  created: string
+  created: string,
+  displayName: string,
   updated: string
   title: string
   refs: string[]
@@ -336,6 +338,7 @@ export function gatherAnnotationsByUrl(rows: any[]) : gatheredResults {
 /** Parse a row returned from `/api/search` */
 export function parseAnnotation(row: any): annotation {
   const id = row.id
+  const authority = row.user.match(/@(.+)/)[1]
   const url = row.uri
   const created = row.created.slice(0, 19)
   const updated = row.updated.slice(0, 19)
@@ -343,6 +346,7 @@ export function parseAnnotation(row: any): annotation {
   let title = url
   const refs = row.references ? row.references : []
   const user = row.user.replace('acct:', '').replace('@hypothes.is', '')
+  const displayName = row.user_info.display_name
   let prefix = ''
   let exact = ''
   let suffix = ''
@@ -386,6 +390,7 @@ export function parseAnnotation(row: any): annotation {
 
  const r: annotation = {
     id: id,
+    authority: authority,
     url: url,
     created: created,
     updated: updated,
@@ -394,6 +399,7 @@ export function parseAnnotation(row: any): annotation {
     isReply: isReply,
     isPagenote: isPagenote,
     user: user,
+    displayName: displayName,
     text: text,
     prefix: prefix,
     exact: exact,
@@ -1049,7 +1055,11 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
     tags = formatTags(anno.tags, tagUrlPrefix)
   }
 
-  const user = anno.user.replace('acct:', '').replace('@hypothes.is', '')
+  const bareUsername = anno.user.replace('acct:', '').replace('@hypothes.is', '')
+
+  const userForDisplay = ( anno.authority === 'hypothes.is' )
+    ? bareUsername
+    : anno.displayName
 
   const standaloneAnnotationUrl = `${settings.service}/a/${anno.id}`
 
@@ -1091,7 +1101,7 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
         ${userCanEdit ? '<span is="edit-or-save-icon"></span>' : ''}
         <div class="annotationHeader">
           <span class="user">
-            <a title="search user" target="_user"  href="./?user=${user}">${user}</a>
+            <a title="search user" target="_user"  href="./?user=${bareUsername}">${userForDisplay}</a>
           </span>
           <span>&nbsp;</span>
           <span class="dateTime">${displayDate(anno)}</span>
