@@ -803,6 +803,12 @@ export function createExpandedCheckbox(element: HTMLElement) {
   createInputForm(name, syncContainer(name), element, 'checkbox')
 }
 
+export function createLmsModeCheckbox(element: HTMLElement) {
+  const name = 'lmsMode'
+  createInputForm(name, syncContainer(name), element, 'checkbox')
+}
+
+
 /** Create an input field with a handler to save the changed value,
  *  optionally with a default value, optionally with a type (e.g. password).
  *  Should be renamed to createUrlAndStorageSyncedInputForm
