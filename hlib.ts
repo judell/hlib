@@ -974,7 +974,7 @@ export function csvRow(level: number, anno: any): string {
     anno.id,
     anno.group,
     anno.tags.join(', '),
-    anno.quote,
+    anno.exact,
     anno.text
   ]
   fields.push(`https://hyp.is/${anno.id}`) // add hyp.is link
