@@ -91,6 +91,7 @@ input {
 
 .annotationText, .annotationQuote {
   font-size: smaller;
+  word-break: break-word;
 }
 
 .annotationText blockquote {
@@ -108,9 +109,6 @@ input {
   color: #777;
   font-style: italic;
   margin-bottom: 12px;
-  border-left-style: solid;
-  border-left-width:thin;
-  border-left-color:lightgray;
   padding-left: 6px;
 }
 
@@ -199,7 +197,6 @@ input {
 
 .quoteExact {
   color:#321305;
-  font-style: normal;
   padding-left: 4px;
   padding-right: 2px;
 }
@@ -209,5 +206,9 @@ input {
   cursor: pointer;
   display: none;
   margin-bottom: 4px;
+}
+
+.searchHit {
+  background-color: #eaea2a;
 }
 
