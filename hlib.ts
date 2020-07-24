@@ -57,7 +57,7 @@ export type inputFormArgs = {
   msg?: string // help message for the field
 }
 
-export type settings = {
+export type settings = {[index: string]:string} & {
   // facets
   user: string
   group: string
@@ -258,7 +258,7 @@ export function search(params: any, progressId?: string): Promise<any> {
       httpRequest(opts)
         .then(function(data) {
           const response = JSON.parse(data.response)
-          let _annos = response.rows
+          let _annos: any[]  = response.rows
           let _replies = _annos.filter(a => { return a.hasOwnProperty('references') })
           const replyIds = _replies.map(r => { return r.id })
           _annos = _annos.filter(a => {
