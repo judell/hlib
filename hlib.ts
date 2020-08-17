@@ -296,9 +296,7 @@ export type gatheredResult = {
   replies: annotation[]
 }
 
-export type gatheredResults = {
-  results: Map<string, gatheredResult>
-}
+export type gatheredResults = Map<string, gatheredResult>
 
 /** Organize a set of annotations, from ${settings.service}/api/search, by url */
 export function gatherAnnotationsByUrl(rows: any[]) : gatheredResults {
@@ -314,22 +312,23 @@ export function gatherAnnotationsByUrl(rows: any[]) : gatheredResults {
     const anno = parseAnnotation(row) // parse the annotation
     let url = anno.url // remember these things
     url = url.replace(/\/$/, '') // strip trailing slash
-    if (! results[url]) {
-      results[url] = result
-    } 
+    if (! results.has(url)) {
+      results.set(url, result)
+    }
+    let gathered_result: gatheredResult = results.get(url)!
     if (anno.isReply) {
-      results[url].replies.push(anno)
+      gathered_result.replies.push(anno)
     } else 
-    results[url].annos.push(anno)
+      gathered_result.annos.push(anno)
 
     const updated = anno.updated
-    if (updated > results[url].updated) {
-      results[url].updated = updated
+    if (updated > (gathered_result.updated || 0)) {
+      gathered_result.updated = updated
     }
 
     let title = anno.title
-    if (! results[url].title) {
-      results[url].title = title
+    if (! gathered_result.title) {
+      gathered_result.title = title
     }
   }
   return results
