@@ -1464,7 +1464,7 @@ class SubjectUserTokensEditor extends HTMLDivElement {
     this.hiddenUserTokens = displayKeysAndHiddenValues(this.subjectUserTokens)         
   }
   connectedCallback() {
-    setTimeout( _ => {
+    setTimeout( () => {
       this.displayElement = this.querySelector('.subjectUserTokensDisplay') as HTMLElement
       this.displayElement.innerHTML = this.hiddenUserTokens
       this.labelElement = this.querySelector('.formLabel') as HTMLElement
@@ -1512,7 +1512,7 @@ class ControlledTagsEditor extends HTMLDivElement {
     this.controlledTags = getControlledTagsFromLocalStorage()
   }
   connectedCallback() {
-    setTimeout( _ => {
+    setTimeout( () => {
       this.displayElement = this.querySelector('.controlledTagsDisplay') as HTMLElement
       this.displayElement.innerHTML = this.controlledTags
       this.labelElement = this.querySelector('.formLabel') as HTMLElement
