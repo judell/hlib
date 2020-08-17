@@ -1002,7 +1002,7 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
 
   function getGroupName(anno:annotation):any {
     let groupName = anno.group
-    let groups:any = {}
+    let groups: {id: string, name: string}[]
     const groupsJson = localStorage.getItem('h_groups')
     if ( groupsJson) {
       groups = JSON.parse(groupsJson)
