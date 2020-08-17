@@ -1396,7 +1396,7 @@ export function maybeTruncateAndAddEllipsis(str: string, count: number) {
 export function displayKeysAndHiddenValues(dictionary: Map<string,string>) {
   let newDictionary: Map<string,string> = Object.assign({}, dictionary)
   Object.keys(newDictionary).forEach(function (key) {
-      newDictionary[key] = '***'
+      newDictionary.set(key, '***')
     })
   return maybeTruncateAndAddEllipsis(JSON.stringify(newDictionary), 30)
 }
@@ -1587,7 +1587,7 @@ class AnnotationEditor extends HTMLElement {
     async function _save(self:AnnotationEditor) {
       const text = body.innerText
       const payload = JSON.stringify( { text: text } )
-      const token = self.subjectUserTokens[self.username]
+      const token = self.subjectUserTokens.get(self.username)!
       const r = await updateAnnotation(self.annoId, token, payload)
       let updatedText = JSON.parse(r.response).text
       if ( updatedText !== text) {
@@ -1751,7 +1751,7 @@ class TagEditor extends HTMLDivElement {
     const annotationEditor = this.closest('annotation-editor') as AnnotationEditor
     const userElement = annotationEditor.querySelector('.user') as HTMLElement
     const username = userElement.innerText
-    const token = subjectUserTokens[username]
+    const token = subjectUserTokens.get(username)!
     const r = await updateAnnotation(this.annotationId, token, payload)
     this.formattedTags = this.formatTags(tags)
     this.displayTags()
