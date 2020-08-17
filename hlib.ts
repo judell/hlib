@@ -1606,7 +1606,7 @@ class AnnotationEditor extends HTMLElement {
         text.style.backgroundColor = 'rgb(241, 238, 234)'
       } else {
         text.removeAttribute('contentEditable')
-        text.style.backgroundColor = null
+        text.style.backgroundColor = ''
         this.save(text)
       }
     tagEditor.setAttribute('state', newValue)
