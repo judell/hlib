@@ -1449,11 +1449,11 @@ if (customElements) {
 
 class SubjectUserTokensEditor extends HTMLDivElement {
   static get observedAttributes() { return [ 'state' ] }
-  subjectUserTokens: Map<string,string>
-  formattedUserTokens: string
-  hiddenUserTokens: string
-  labelElement: HTMLElement
-  displayElement: HTMLElement
+  subjectUserTokens!: Map<string,string> 
+  formattedUserTokens!: string
+  hiddenUserTokens!: string
+  labelElement: HTMLElement | undefined
+  displayElement: HTMLElement | undefined
   constructor() {
     super()
     this.updateTokens()
@@ -1501,9 +1501,9 @@ if (customElements) {
 
 class ControlledTagsEditor extends HTMLDivElement {
   static get observedAttributes() { return [ 'state' ] }
-  controlledTags: string
-  labelElement: HTMLElement
-  displayElement: HTMLElement
+  controlledTags!: string
+  labelElement: HTMLElement | undefined
+  displayElement: HTMLElement | undefined
   constructor() {
     super()
     this.updateTags()
