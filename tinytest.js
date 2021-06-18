@@ -21,8 +21,8 @@ const TinyTest = {
 
     for (i = 0; i < testNames.length; i++) {
       const testName = testNames[i]
-      await tests[testName]()
       log(testName)
+      await tests[testName]()
     }
 
     log('done')

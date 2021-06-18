@@ -52,12 +52,14 @@ http://jonudell.info/hlib/doc/modules/_hlib_.html
 
 1. python server.py
 
-2. Open localhost:8000, run:
+2. Get your API token from https://hypothes.is/account/developer, open localhost:8000, open a browser console and run this:
 
 ```
 localStorage.setItem('h_token', 'HYPOTHESIS_API_TOKEN');
 localStorage.setItem('h_user', 'HYPOTHESIS_USERNAME');
 localStorage.setItem('h_subjectUserTokens', JSON.stringify({ HYPOTHESIS_USERNAME: "HYPOTHESIS_API_TOKEN" }));
 ```
+
+Then:
 
 3. http://localhost:8000/test.html
