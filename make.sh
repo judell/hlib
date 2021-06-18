@@ -2,4 +2,4 @@
 tsc
 
 # bundle hlib.js as hlib.bundle.js
-webpack
+./node_modules/.bin/webpack
