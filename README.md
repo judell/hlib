@@ -34,6 +34,16 @@ https://github.com/judell/AnnotationPoweredSurvey
 
 https://github.com/judell/TagRename
 
+## Setup
+
+In the folder cloned from github:
+
+```
+npm install --save-dev webpack@latest
+npm install --save-dev webpack-cli@latest
+npm install --save-dev source-map-loader@latest
+```
+
 ## Documentation
 
 http://jonudell.info/hlib/doc/modules/_hlib_.html
