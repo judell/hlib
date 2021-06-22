@@ -57,7 +57,7 @@ export type inputFormArgs = {
   msg?: string // help message for the field
 }
 
-export type settings = {
+export type settings = {[index: string]:string} & {
   // facets
   user: string
   group: string
@@ -258,7 +258,7 @@ export function search(params: any, progressId?: string): Promise<any> {
       httpRequest(opts)
         .then(function(data) {
           const response = JSON.parse(data.response)
-          let _annos = response.rows
+          let _annos: any[] = response.rows
           let _replies = _annos.filter(a => { return a.hasOwnProperty('references') })
           const replyIds = _replies.map(r => { return r.id })
           _annos = _annos.filter(a => {
@@ -296,14 +296,11 @@ export type gatheredResult = {
   replies: annotation[]
 }
 
-export type gatheredResults = {
-  results: Map<string, gatheredResult>
-}
+export type gatheredResults = Map<string, gatheredResult>
 
 /** Organize a set of annotations, from ${settings.service}/api/search, by url */
 export function gatherAnnotationsByUrl(rows: any[]) : gatheredResults {
-
-  const results = {} as gatheredResults
+  const results = new Map() as gatheredResults
   for (let i = 0; i < rows.length; i++) {
     let result = {} as gatheredResult
     result.updated = ''
@@ -312,26 +309,31 @@ export function gatherAnnotationsByUrl(rows: any[]) : gatheredResults {
     result.replies = []
     const row = rows[i]
     const anno = parseAnnotation(row) // parse the annotation
-    let url = anno.url // remember these things
+    let url = anno.url 
     url = url.replace(/\/$/, '') // strip trailing slash
-    if (! results[url]) {
-      results[url] = result
-    } 
+
     if (anno.isReply) {
-      results[url].replies.push(anno)
-    } else 
-    results[url].annos.push(anno)
+      result.replies.push(anno)
+    } else {
+      result.annos.push(anno)
+    }
 
     const updated = anno.updated
-    if (updated > results[url].updated) {
-      results[url].updated = updated
+    if (updated > result.updated) {
+      result.updated = updated
     }
 
     let title = anno.title
-    if (! results[url].title) {
-      results[url].title = title
+    if (! result.title) {
+      result.title = title
     }
+
+    if (! results.get(url)) {
+      results.set(url, result)
+    } 
+    
   }
+
   return results
 }
 
@@ -1002,7 +1004,7 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
 
   function getGroupName(anno:annotation):any {
     let groupName = anno.group
-    let groups:any = {}
+    let groups: {id: string, name: string}[]
     const groupsJson = localStorage.getItem('h_groups')
     if ( groupsJson) {
       groups = JSON.parse(groupsJson)
@@ -1048,13 +1050,11 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
   }
 
   let html = anno.text == null ? '' : anno.text
-  let converter
-  if (typeof(Showdown) === 'object') {
-    converter = new Showdown.converter()
-  } else {
-    converter = new showdown.Converter()
+
+  if (typeof(showdown) === 'object') {
+    const converter = new showdown.Converter()
+    html = converter.makeHtml(html)
   }
-  html = converter.makeHtml(html)
 
   let tags = ''
   if (anno.tags.length) {
@@ -1096,7 +1096,7 @@ export function showAnnotation(anno: annotation, level: number, params: any) {
   let userCanEdit = false
 
   const subjectUserTokens = getSubjectUserTokensFromLocalStorage()
-  if (subjectUserTokens.hasOwnProperty(anno.user)) {
+  if (subjectUserTokens.get(anno.user)) {
     userCanEdit = true
   }
 
@@ -1307,13 +1307,17 @@ function clearInput(e: MouseEvent) {
   formField.dispatchEvent(clearInputEvent)
 }
 
-export function getSubjectUserTokensFromLocalStorage() {
-  let subjectUserTokens = {} as Map<string, string>
-  const _subjectUserTokens = localStorage.getItem('h_subjectUserTokens')
-  if (_subjectUserTokens) {
-    subjectUserTokens = JSON.parse(_subjectUserTokens) 
+export function getSubjectUserTokensFromLocalStorage() : Map<string,string> {
+  const subjectUserTokens = new Map<string, string>()
+  const objAsJson = localStorage.getItem('h_subjectUserTokens')
+  let obj = {}
+  if (objAsJson) {
+    obj = JSON.parse(objAsJson) 
   } else {
-    subjectUserTokens = JSON.parse(`{"user1" : "token1", "user2" : "token2"}`) as Map<string,string>
+    obj = JSON.parse(`{"user1" : "token1", "user2" : "token2"}`)
+  }
+  for (let key of Object.keys(obj) as string[]) {
+    subjectUserTokens.set(key, (obj as any)[key] )
   }
   return subjectUserTokens
 }
@@ -1393,12 +1397,11 @@ export function maybeTruncateAndAddEllipsis(str: string, count: number) {
   return str
 }
 
-export function displayKeysAndHiddenValues(dictionary: Map<string,string>) {
-  let newDictionary: Map<string,string> = Object.assign({}, dictionary)
-  Object.keys(newDictionary).forEach(function (key) {
-      newDictionary[key] = '***'
-    })
-  return maybeTruncateAndAddEllipsis(JSON.stringify(newDictionary), 30)
+export function displayKeysAndHiddenValues(map: Map<string,string>): string {
+  for (let key of map.keys()) {
+    map.set(key, '***')
+  }
+  return maybeTruncateAndAddEllipsis(JSON.stringify(Object.fromEntries(map)), 30)
 }
 
 // custom elements
@@ -1450,22 +1453,22 @@ if (customElements) {
 
 class SubjectUserTokensEditor extends HTMLDivElement {
   static get observedAttributes() { return [ 'state' ] }
-  subjectUserTokens: Map<string,string>
-  formattedUserTokens: string
-  hiddenUserTokens: string
-  labelElement: HTMLElement
-  displayElement: HTMLElement
+  subjectUserTokens: Map<string,string> = new Map<string,string>()
+  formattedUserTokens: string = ''
+  hiddenUserTokens: string = ''
+  labelElement: HTMLElement = document.createElement('div')
+  displayElement: HTMLElement = document.createElement('div')
   constructor() {
     super()
     this.updateTokens()
   }
   updateTokens() {
     this.subjectUserTokens =  getSubjectUserTokensFromLocalStorage()
-    this.formattedUserTokens = JSON.stringify(this.subjectUserTokens, null, 2).trim();
+    this.formattedUserTokens = JSON.stringify(Object.fromEntries(this.subjectUserTokens), null, 2).trim();
     this.hiddenUserTokens = displayKeysAndHiddenValues(this.subjectUserTokens)         
   }
   connectedCallback() {
-    setTimeout( _ => {
+    setTimeout( () => {
       this.displayElement = this.querySelector('.subjectUserTokensDisplay') as HTMLElement
       this.displayElement.innerHTML = this.hiddenUserTokens
       this.labelElement = this.querySelector('.formLabel') as HTMLElement
@@ -1502,9 +1505,9 @@ if (customElements) {
 
 class ControlledTagsEditor extends HTMLDivElement {
   static get observedAttributes() { return [ 'state' ] }
-  controlledTags: string
-  labelElement: HTMLElement
-  displayElement: HTMLElement
+  controlledTags: string = ''
+  labelElement: HTMLElement = document.createElement('div')
+  displayElement: HTMLElement = document.createElement('div')
   constructor() {
     super()
     this.updateTags()
@@ -1513,7 +1516,7 @@ class ControlledTagsEditor extends HTMLDivElement {
     this.controlledTags = getControlledTagsFromLocalStorage()
   }
   connectedCallback() {
-    setTimeout( _ => {
+    setTimeout( () => {
       this.displayElement = this.querySelector('.controlledTagsDisplay') as HTMLElement
       this.displayElement.innerHTML = this.controlledTags
       this.labelElement = this.querySelector('.formLabel') as HTMLElement
@@ -1587,7 +1590,7 @@ class AnnotationEditor extends HTMLElement {
     async function _save(self:AnnotationEditor) {
       const text = body.innerText
       const payload = JSON.stringify( { text: text } )
-      const token = self.subjectUserTokens[self.username]
+      const token = self.subjectUserTokens.get(self.username) || ''
       const r = await updateAnnotation(self.annoId, token, payload)
       let updatedText = JSON.parse(r.response).text
       if ( updatedText !== text) {
@@ -1607,7 +1610,7 @@ class AnnotationEditor extends HTMLElement {
         text.style.backgroundColor = 'rgb(241, 238, 234)'
       } else {
         text.removeAttribute('contentEditable')
-        text.style.backgroundColor = null
+        text.style.backgroundColor = ''
         this.save(text)
       }
     tagEditor.setAttribute('state', newValue)
@@ -1751,7 +1754,7 @@ class TagEditor extends HTMLDivElement {
     const annotationEditor = this.closest('annotation-editor') as AnnotationEditor
     const userElement = annotationEditor.querySelector('.user') as HTMLElement
     const username = userElement.innerText
-    const token = subjectUserTokens[username]
+    const token = subjectUserTokens.get(username) || ''
     const r = await updateAnnotation(this.annotationId, token, payload)
     this.formattedTags = this.formatTags(tags)
     this.displayTags()

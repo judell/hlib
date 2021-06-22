@@ -1,3 +1,6 @@
+# start clean
+rm ./hlib2.bundle.*
+
 # transpile hlib.ts to hlib.js
 tsc
 
