@@ -298,42 +298,39 @@ export type gatheredResult = {
 
 export type gatheredResults = Map<string, gatheredResult>
 
-/** Organize a set of annotations, from ${settings.service}/api/search, by url */
+/** Organize a set of annotations, from /api/search, by url */
 export function gatherAnnotationsByUrl(rows: any[]) : gatheredResults {
   const results = new Map() as gatheredResults
   for (let i = 0; i < rows.length; i++) {
-    let result = {} as gatheredResult
-    result.updated = ''
-    result.title = ''
-    result.annos = []
-    result.replies = []
-    const row = rows[i]
-    const anno = parseAnnotation(row) // parse the annotation
-    let url = anno.url 
-    url = url.replace(/\/$/, '') // strip trailing slash
+    const anno = parseAnnotation(rows[i]) // parse the annotation
+    const url = anno.url.replace(/\/$/, '') // strip trailing slash
+    if ( !results.has(url) ) {
+      results.set(url, {
+        updated: anno.updated,
+        title: anno.title,
+        annos: [],
+        replies: []
+      } as gatheredResult
+    )}
 
-    if (anno.isReply) {
-      result.replies.push(anno)
-    } else {
-      result.annos.push(anno)
-    }
+    const result = results.get(url)
 
-    const updated = anno.updated
-    if (updated > result.updated) {
-      result.updated = updated
-    }
+    if (result) {
 
-    let title = anno.title
-    if (! result.title) {
-      result.title = title
-    }
+      if (anno.updated > result.updated) {
+        result.updated = anno.updated
+      }
 
-    if (! results.get(url)) {
+      if (anno.isReply) {
+        result.replies.push(anno)
+      } else {
+        result.annos.push(anno)
+      }
+
       results.set(url, result)
-    } 
+    }
     
   }
-
   return results
 }
 
